@@ -1,0 +1,366 @@
+{{define "content"}}
+<div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ activeTab: 'overview', showAddUserModal: false }">
+    
+    <!-- Admin Header Banner -->
+    <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#FFCC00] via-[#17171B] to-[#FFCC00]"></div>
+        
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="px-3 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-extrabold text-[11px] uppercase tracking-wider font-title shadow-sm flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#FFCC00]"></i> ADMINISTRATOR PANEL
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-green-50 text-green-700 border border-green-200">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Server Online
+                </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold font-title text-[#1A1A1E] tracking-tight">
+                Dashboard Kontrol Nyamimo
+            </h1>
+            <p class="text-xs sm:text-sm text-[#55555B] leading-relaxed max-w-2xl">
+                Selamat datang kembali, <strong class="text-[#1A1A1E]">{{if .User}}{{.User.Name}}{{else}}Administrator{{end}}</strong>! Kelola banner carousel beranda, pantau status server Go + HTMX, dan atur akun pengguna dari dashboard ini.
+            </p>
+        </div>
+
+        <!-- Quick Top Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+            <form action="/api/admin/clear-cache" method="POST" onsubmit="return confirm('Bersihkan memory cache API Animekudesu?');">
+                <button type="submit" class="px-4 py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-bold text-xs border border-[#E2E2DC] transition-all flex items-center gap-2 font-title shadow-sm cursor-pointer" title="Bersihkan API in-memory cache">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-[#55555B]"></i> Clear API Cache
+                </button>
+            </form>
+            <a href="/admin/carousel" class="px-4 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-all flex items-center gap-2 font-title shadow-sm">
+                <i data-lucide="image" class="w-4 h-4"></i> Kelola Carousel
+            </a>
+            <a href="/" class="px-4 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-all flex items-center gap-2 shadow-sm font-title">
+                <i data-lucide="external-link" class="w-4 h-4"></i> Buka Website
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 Key Statistic Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Card 1: Total Anime -->
+        <div class="bg-white border border-[#E2E2DC] rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden group hover:border-[#FFCC00] transition-colors">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-[#55555B] uppercase tracking-wider font-title">Total Anime Database</span>
+                <div class="w-10 h-10 rounded-xl bg-[#FFCC00]/20 text-[#17171B] flex items-center justify-center font-bold">
+                    <i data-lucide="film" class="w-5 h-5 text-[#997A00]"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="text-2xl sm:text-3xl font-extrabold font-title text-[#1A1A1E]">{{.TotalAnimeCount}}+</div>
+                <div class="flex items-center gap-1.5 mt-1 text-[11px] text-green-600 font-bold">
+                    <i data-lucide="zap" class="w-3.5 h-3.5"></i> API Terhubung & Realtime
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Carousel Banner -->
+        <div class="bg-white border border-[#E2E2DC] rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden group hover:border-[#FFCC00] transition-colors">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-[#55555B] uppercase tracking-wider font-title">Banner Carousel</span>
+                <div class="w-10 h-10 rounded-xl bg-[#17171B]/10 text-[#17171B] flex items-center justify-center font-bold">
+                    <i data-lucide="image" class="w-5 h-5 text-[#17171B]"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="text-2xl sm:text-3xl font-extrabold font-title text-[#1A1A1E]">{{.TotalCarouselCount}} Slide</div>
+                <div class="flex items-center gap-1.5 mt-1 text-[11px] text-[#55555B] font-bold">
+                    <a href="/admin/carousel" class="text-[#2563EB] hover:underline flex items-center gap-1">
+                        Atur banner slide <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Registered Users -->
+        <div class="bg-white border border-[#E2E2DC] rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden group hover:border-[#FFCC00] transition-colors">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-[#55555B] uppercase tracking-wider font-title">Pengguna Terdaftar</span>
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="text-2xl sm:text-3xl font-extrabold font-title text-[#1A1A1E]">{{.TotalUsersCount}} Akun</div>
+                <div class="flex items-center gap-1.5 mt-1 text-[11px] text-[#55555B] font-bold">
+                    <span class="text-blue-600">Admin & Member aktif</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Server Engine -->
+        <div class="bg-white border border-[#E2E2DC] rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden group hover:border-[#FFCC00] transition-colors">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-[#55555B] uppercase tracking-wider font-title">Engine Server</span>
+                <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="text-xl sm:text-2xl font-extrabold font-title text-[#1A1A1E]">Go 1.22 + HTMX</div>
+                <div class="flex items-center gap-1.5 mt-1 text-[11px] text-purple-600 font-bold">
+                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> Uptime: {{.ServerUptime}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="border-b border-[#E2E2DC] flex items-center gap-2 overflow-x-auto pb-2">
+        <button 
+            type="button" 
+            @click="activeTab = 'overview'" 
+            :class="activeTab === 'overview' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+        >
+            <i data-lucide="layout-grid" class="w-4 h-4"></i> Ringkasan & Carousel
+        </button>
+
+        <button 
+            type="button" 
+            @click="activeTab = 'users'" 
+            :class="activeTab === 'users' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+        >
+            <i data-lucide="users" class="w-4 h-4"></i> Manajemen Pengguna ({{.TotalUsersCount}})
+        </button>
+
+        <button 
+            type="button" 
+            @click="activeTab = 'trending'" 
+            :class="activeTab === 'trending' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+        >
+            <i data-lucide="trending-up" class="w-4 h-4"></i> Anime Populer & Rilis Terbaru
+        </button>
+    </div>
+
+    <!-- TAB 1: OVERVIEW & CAROUSEL PREVIEW -->
+    <div x-show="activeTab === 'overview'" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Carousel Preview Cards (8 Cols) -->
+            <div class="lg:col-span-8 bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-4">
+                    <div>
+                        <h2 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2">
+                            <span class="w-3 h-3 bg-[#FFCC00] rounded-sm"></span> Slide Hero Carousel Aktif
+                        </h2>
+                        <p class="text-xs text-[#55555B] mt-0.5">Banner anime yang saat ini sedang tampil di halaman depan beranda.</p>
+                    </div>
+                    <a href="/admin/carousel" class="px-4 py-2 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-all flex items-center gap-1.5 font-title shadow-sm">
+                        <i data-lucide="settings" class="w-3.5 h-3.5"></i> Kelola Lengkap
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{range $index, $item := .HeroAnime}}
+                    <div class="flex gap-3.5 p-3 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] hover:border-[#FFCC00] transition-all group">
+                        <div class="w-20 h-24 rounded-xl overflow-hidden bg-black shrink-0 relative">
+                            <img src="{{$item.Img}}" alt="{{$item.Title}}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#FFCC00] text-[#17171B]">
+                                #{{add $index 1}}
+                            </span>
+                        </div>
+                        <div class="flex flex-col justify-between flex-1 min-w-0 py-0.5">
+                            <div>
+                                <h3 class="font-bold font-title text-xs text-[#1A1A1E] truncate group-hover:text-[#2563EB] transition-colors" title="{{$item.Title}}">
+                                    {{$item.Title}}
+                                </h3>
+                                <div class="flex items-center gap-2 mt-1 text-[11px] text-[#55555B]">
+                                    <span class="px-1.5 py-0.5 rounded bg-white font-bold text-[10px] border border-[#E2E2DC]">{{$item.Type}}</span>
+                                    <span class="font-semibold text-amber-600 flex items-center gap-0.5">★ {{$item.Score}}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between pt-2 border-t border-[#E2E2DC]/60 mt-2">
+                                <span class="text-[10px] font-medium text-[#71717A] truncate">Eps: {{$item.Episode}}</span>
+                                <a href="/anime/{{$item.Slug}}" target="_blank" class="text-[11px] font-bold text-[#17171B] hover:text-[#2563EB] flex items-center gap-1">
+                                    Tonton <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+
+            <!-- System Information & Server Controls (4 Cols) -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- System Status Box -->
+                <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 shadow-sm space-y-5">
+                    <div class="border-b border-[#E2E2DC] pb-3.5">
+                        <h2 class="text-base font-extrabold font-title text-[#1A1A1E] flex items-center gap-2">
+                            <i data-lucide="server" class="w-4 h-4 text-[#FFCC00]"></i> Spesifikasi & Environment
+                        </h2>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F5F0]">
+                            <span class="text-[#55555B] font-semibold">Backend Engine:</span>
+                            <span class="font-bold text-[#1A1A1E]">Go 1.22 Net/HTTP</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F5F0]">
+                            <span class="text-[#55555B] font-semibold">Frontend SSR:</span>
+                            <span class="font-bold text-[#1A1A1E]">HTMX + Go Templates</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F5F0]">
+                            <span class="text-[#55555B] font-semibold">Port Server:</span>
+                            <span class="font-bold text-[#1A1A1E]">3000 (:3000)</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F5F0]">
+                            <span class="text-[#55555B] font-semibold">Sumber API Anime:</span>
+                            <span class="font-bold text-green-700">api.animekudesu.web.id</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F5F0]">
+                            <span class="text-[#55555B] font-semibold">Auto-Switch Player:</span>
+                            <span class="font-bold text-blue-600">Aktif (Fallback Auto)</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Tools -->
+                    <div class="pt-2 border-t border-[#E2E2DC] space-y-2">
+                        <form action="/api/admin/clear-cache" method="POST">
+                            <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-colors flex items-center justify-center gap-2 font-title cursor-pointer">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Flush Memory Cache
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Admin Help & Shortcuts Card -->
+                <div class="bg-gradient-to-br from-[#17171B] to-[#25252B] text-white rounded-3xl p-6 shadow-md space-y-3">
+                    <div class="flex items-center gap-2 text-[#FFCC00] font-bold font-title text-sm">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Tips Pengelolaan
+                    </div>
+                    <p class="text-xs text-white/80 leading-relaxed">
+                        Gunakan fitur <strong>Cari Wallpaper HD</strong> saat menambah carousel banner untuk secara otomatis menarik poster ultra-high-definition landscape 4K dari WallpaperCat.
+                    </p>
+                    <div class="pt-2">
+                        <a href="/admin/carousel" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFCC00] text-[#17171B] text-xs font-bold font-title hover:bg-[#e6b800] transition-colors">
+                            Buka Form Banner <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TAB 2: USER MANAGEMENT -->
+    <div x-show="activeTab === 'users'" style="display: none;" class="space-y-6">
+        <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E2DC] pb-4">
+                <div>
+                    <h2 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2">
+                        <i data-lucide="users" class="w-5 h-5 text-[#FFCC00]"></i> Daftar Akun Pengguna Terdaftar
+                    </h2>
+                    <p class="text-xs text-[#55555B] mt-0.5">Kelola akun administrator dan member yang memiliki akses ke platform.</p>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="overflow-x-auto rounded-2xl border border-[#E2E2DC]">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-[#F6F5F0] text-[#55555B] font-bold font-title uppercase tracking-wider border-b border-[#E2E2DC]">
+                        <tr>
+                            <th class="p-4">Pengguna</th>
+                            <th class="p-4">Username</th>
+                            <th class="p-4">Role Akses</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#E2E2DC] font-medium text-[#1A1A1E]">
+                        {{range .UsersList}}
+                        <tr class="hover:bg-[#F6F5F0]/50 transition-colors">
+                            <td class="p-4 flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-[#17171B] text-[#FFCC00] font-bold font-title flex items-center justify-center text-xs shrink-0">
+                                    {{.Name | firstChar}}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-sm text-[#1A1A1E]">{{.Name}}</div>
+                                    <div class="text-[11px] text-[#55555B]">{{.Username}}</div>
+                                </div>
+                            </td>
+                            <td class="p-4 font-mono font-bold text-xs text-[#55555B]">
+                                @{{.Username}}
+                            </td>
+                            <td class="p-4">
+                                {{if eq .Role "admin"}}
+                                <span class="px-2.5 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-extrabold text-[10px] uppercase font-title tracking-wider shadow-sm">
+                                    👑 ADMINISTRATOR
+                                </span>
+                                {{else}}
+                                <span class="px-2.5 py-1 rounded-lg bg-[#F6F5F0] text-[#55555B] border border-[#E2E2DC] font-bold text-[10px] uppercase font-title tracking-wider">
+                                    MEMBER
+                                </span>
+                                {{end}}
+                            </td>
+                            <td class="p-4">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Aktif
+                                </span>
+                            </td>
+                            <td class="p-4 text-right">
+                                {{if ne .Username "admin"}}
+                                <form action="/api/admin/user/delete" method="POST" class="inline" onsubmit="return confirm('Hapus akun {{$name := .Name}}{{$name}}?');">
+                                    <input type="hidden" name="username" value="{{.Username}}" />
+                                    <button type="submit" class="p-1.5 rounded-lg text-[#55555B] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Hapus Akun">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                                {{else}}
+                                <span class="text-[11px] font-bold text-[#A0A0A8] italic">Utama</span>
+                                {{end}}
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: TRENDING & POPULAR ANIME -->
+    <div x-show="activeTab === 'trending'" style="display: none;" class="space-y-6">
+        <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-4">
+                <div>
+                    <h2 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-[#FFCC00]"></i> Anime Sedang Populer & Rilis Terbaru
+                    </h2>
+                    <p class="text-xs text-[#55555B] mt-0.5">Pantau anime yang sedang banyak ditonton pengunjung Nyamimo.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {{range .PopularAnime}}
+                <div class="group relative rounded-2xl overflow-hidden bg-white border border-[#E2E2DC] hover:border-[#FFCC00] transition-all shadow-sm flex flex-col">
+                    <div class="aspect-[3/4] overflow-hidden bg-black relative">
+                        <img src="{{.Img}}" alt="{{.Title}}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFCC00] text-[#17171B] shadow">
+                            ★ {{.Score}}
+                        </span>
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col justify-between">
+                        <h4 class="font-bold font-title text-xs text-[#1A1A1E] line-clamp-2 group-hover:text-[#2563EB] transition-colors">
+                            {{.Title}}
+                        </h4>
+                        <div class="mt-2 pt-2 border-t border-[#E2E2DC] flex items-center justify-between text-[10px] text-[#55555B] font-semibold">
+                            <span>{{.Type}}</span>
+                            <a href="/anime/{{.Slug}}" target="_blank" class="font-bold text-[#17171B] hover:text-[#2563EB]">Lihat →</a>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    if (window.lucide) lucide.createIcons();
+</script>
+{{end}}

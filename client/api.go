@@ -34,6 +34,13 @@ func NewAPIClient(ttl time.Duration) *APIClient {
 	}
 }
 
+func (c *APIClient) ClearCache() {
+	c.cache.Range(func(key, value interface{}) bool {
+		c.cache.Delete(key)
+		return true
+	})
+}
+
 func (c *APIClient) GetJSON(endpoint string, target interface{}) error {
 	// Clean endpoint URL
 	endpoint = strings.TrimSpace(endpoint)

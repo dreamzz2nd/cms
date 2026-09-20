@@ -166,5 +166,10 @@
     <span class="text-xs font-title font-semibold">Gagal memuat video dari server ini. Silakan coba server lain.</span>
 </div>
 {{end}}
-<script>if (window.lucide) lucide.createIcons();</script>
+<script>
+    if (window.lucide) lucide.createIcons();
+    if (typeof initHybridPlayer === 'function') {
+        initHybridPlayer("{{.VideoURL}}", "");
+    }
+</script>
 {{end}}

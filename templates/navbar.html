@@ -92,12 +92,12 @@
                 <i data-lucide="search" class="w-5 h-5"></i>
             </button>
 
-            <!-- Setting Carousel (Admin only) -->
+            <!-- Admin Dashboard Link (Admin only) -->
             {{if .User}}
                 {{if eq .User.Role "admin"}}
-                <a href="/admin/carousel" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] border border-[#FFCC00] transition-colors shadow-sm" title="Pengaturan Carousel Banner (Role Admin)">
-                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
-                    <span class="hidden sm:inline">Admin</span>
+                <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] border border-[#FFCC00] transition-colors shadow-sm" title="Panel Kontrol Administrator">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Dashboard</span>
                 </a>
                 {{end}}
             {{end}}

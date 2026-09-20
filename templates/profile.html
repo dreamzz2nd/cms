@@ -37,8 +37,8 @@
         <div class="flex flex-wrap items-center gap-3 shrink-0">
             {{if .User}}
                 {{if eq .User.Role "admin"}}
-                <a href="/admin/carousel" class="px-4 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-colors flex items-center gap-2 font-title shadow-sm">
-                    <i data-lucide="settings" class="w-4 h-4"></i> Pengaturan Carousel Admin
+                <a href="/admin" class="px-4 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-colors flex items-center gap-2 font-title shadow-sm">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Dashboard Admin
                 </a>
                 {{end}}
                 <a href="/logout" class="px-4 py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-red-50 text-red-600 hover:text-red-700 font-bold text-xs border border-[#E2E2DC] transition-colors flex items-center gap-2 font-title">
@@ -48,9 +48,9 @@
                 <button type="button" @click="showLoginModal = true; loginView = 'options'" class="px-5 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-colors flex items-center gap-2 font-title shadow-sm">
                     <i data-lucide="log-in" class="w-4 h-4"></i> Masuk Akun
                 </button>
-                <a href="/register" class="px-5 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-colors flex items-center gap-2 font-title shadow-sm">
+                <button type="button" @click="showLoginModal = true; loginView = 'register'" class="px-5 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-colors flex items-center gap-2 font-title shadow-sm cursor-pointer">
                     <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Member
-                </a>
+                </button>
             {{end}}
         </div>
     </div>
@@ -109,11 +109,9 @@
                 class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 font-title"
             >
                 <i data-lucide="history" class="w-4 h-4"></i> Riwayat Tontonan
-                {{if .User}}
-                    {{if .User.WatchHistory}}
-                    <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-[#FFCC00] text-[#17171B] font-extrabold">{{len .User.WatchHistory}}</span>
-                    {{end}}
-                {{end}}
+                <template x-if="historyItems.length > 0">
+                    <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-[#FFCC00] text-[#17171B] font-extrabold" x-text="historyItems.length"></span>
+                </template>
             </button>
 
             <button 
@@ -151,44 +149,44 @@
 
     <!-- TAB 1: WATCH HISTORY -->
     <div x-show="activeTab === 'history'" class="space-y-6">
-        {{if .User}}
-            {{if .User.WatchHistory}}
-            <!-- Server Database Watch History Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {{range .User.WatchHistory}}
+        <template x-if="historyItems.length === 0">
+            <div class="text-center py-16 bg-white border border-[#E2E2DC] rounded-2xl space-y-4 shadow-sm">
+                <div class="w-14 h-14 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-center text-[#55555B] mx-auto">
+                    <i data-lucide="history" class="w-7 h-7 text-[#FFCC00]"></i>
+                </div>
+                <h3 class="text-lg font-extrabold font-title text-[#1A1A1E]">Belum ada riwayat tontonan</h3>
+                <p class="text-xs text-[#55555B] max-w-md mx-auto">Silakan pilih dan tonton anime untuk mulai menyimpan riwayat tontonan secara otomatis.</p>
+                <a href="/popular" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] text-xs font-bold font-title transition-all shadow-md">
+                    <i data-lucide="play" class="w-4 h-4"></i> Jelajahi Anime
+                </a>
+            </div>
+        </template>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" x-show="historyItems.length > 0">
+            <template x-for="item in historyItems" :key="item.slug">
                 <div class="group relative bg-white border border-[#E2E2DC] hover:border-[#FFCC00] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                     <div>
-                        <a href="{{.Link}}" class="block relative aspect-video overflow-hidden bg-[#17171B]">
-                            <img src="{{.Img}}" alt="{{.Title}}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <a :href="item.link" class="block relative aspect-video overflow-hidden bg-[#17171B]">
+                            <img :src="item.img" :alt="item.title" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
-                            
-                            <!-- Badges -->
                             <div class="absolute top-3 left-3 flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded-md bg-[#FFCC00] text-[#17171B] font-extrabold text-[10px] uppercase tracking-wider font-title shadow-sm">
-                                    {{if .Episode}}{{.Episode}}{{else}}Tontonan{{end}}
-                                </span>
-                            </div>
-
-                            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-[11px] font-medium">
-                                <span class="flex items-center gap-1 text-white/90">
-                                    <i data-lucide="clock" class="w-3.5 h-3.5 text-[#FFCC00]"></i> {{.WatchedAt | timeAgo}}
-                                </span>
+                                <span class="px-2 py-0.5 rounded-md bg-[#FFCC00] text-[#17171B] font-extrabold text-[10px] uppercase tracking-wider font-title shadow-sm" x-text="item.episode || 'Episode'"></span>
                             </div>
                         </a>
 
                         <div class="p-4 space-y-2">
                             <h3 class="font-extrabold text-sm text-[#1A1A1E] line-clamp-1 group-hover:text-[#FFCC00] transition-colors font-title">
-                                <a href="{{.Link}}">{{.Title}}</a>
+                                <a :href="item.link" x-text="item.title"></a>
                             </h3>
                         </div>
                     </div>
 
                     <div class="px-4 pb-4 pt-1 flex items-center justify-between border-t border-[#F6F5F0]">
-                        <a href="{{.Link}}" class="px-3.5 py-1.5 rounded-xl bg-[#17171B] hover:bg-[#FFCC00] text-[#FFCC00] hover:text-[#17171B] font-bold text-xs font-title transition-all flex items-center gap-1.5 shadow-sm">
+                        <a :href="item.link" class="px-3.5 py-1.5 rounded-xl bg-[#17171B] hover:bg-[#FFCC00] text-[#FFCC00] hover:text-[#17171B] font-bold text-xs font-title transition-all flex items-center gap-1.5 shadow-sm">
                             <i data-lucide="play-circle" class="w-3.5 h-3.5"></i> Lanjut Nonton
                         </a>
                         <button 
-                            @click="WatchHistory.remove('{{.Slug}}'); location.reload();"
+                            @click="WatchHistory.remove(item.slug); historyItems = WatchHistory.get()"
                             class="p-2 text-[#71717A] hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
                             title="Hapus dari Riwayat"
                         >
@@ -196,71 +194,8 @@
                         </button>
                     </div>
                 </div>
-                {{end}}
-            </div>
-            {{else}}
-            <!-- Empty Server History State -->
-            <div class="text-center py-16 bg-white border border-[#E2E2DC] rounded-2xl space-y-4 shadow-sm">
-                <div class="w-14 h-14 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-center text-[#55555B] mx-auto">
-                    <i data-lucide="history" class="w-7 h-7 text-[#FFCC00]"></i>
-                </div>
-                <h3 class="text-lg font-extrabold font-title text-[#1A1A1E]">Belum ada riwayat tontonan</h3>
-                <p class="text-xs text-[#55555B] max-w-md mx-auto">Tonton anime favoritmu di Nyamimo! Semua episode yang kamu klik akan otomatis tersimpan rapi di sini.</p>
-                <a href="/popular" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] text-xs font-bold font-title transition-all shadow-md">
-                    <i data-lucide="play" class="w-4 h-4"></i> Mulai Nonton Anime Sekarang
-                </a>
-            </div>
-            {{end}}
-        {{else}}
-            <!-- Client Side History for Guests -->
-            <template x-if="historyItems.length === 0">
-                <div class="text-center py-16 bg-white border border-[#E2E2DC] rounded-2xl space-y-4 shadow-sm">
-                    <div class="w-14 h-14 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-center text-[#55555B] mx-auto">
-                        <i data-lucide="history" class="w-7 h-7 text-[#FFCC00]"></i>
-                    </div>
-                    <h3 class="text-lg font-extrabold font-title text-[#1A1A1E]">Belum ada riwayat tontonan</h3>
-                    <p class="text-xs text-[#55555B] max-w-md mx-auto">Silakan pilih dan tonton anime untuk mulai menyimpan riwayat tontonan secara otomatis.</p>
-                    <a href="/popular" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] text-xs font-bold font-title transition-all shadow-md">
-                        <i data-lucide="play" class="w-4 h-4"></i> Jelajahi Anime
-                    </a>
-                </div>
             </template>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" x-show="historyItems.length > 0">
-                <template x-for="item in historyItems" :key="item.slug">
-                    <div class="group relative bg-white border border-[#E2E2DC] hover:border-[#FFCC00] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
-                        <div>
-                            <a :href="item.link" class="block relative aspect-video overflow-hidden bg-[#17171B]">
-                                <img :src="item.img" :alt="item.title" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
-                                <div class="absolute top-3 left-3 flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded-md bg-[#FFCC00] text-[#17171B] font-extrabold text-[10px] uppercase tracking-wider font-title shadow-sm" x-text="item.episode || 'Episode'"></span>
-                                </div>
-                            </a>
-
-                            <div class="p-4 space-y-2">
-                                <h3 class="font-extrabold text-sm text-[#1A1A1E] line-clamp-1 group-hover:text-[#FFCC00] transition-colors font-title">
-                                    <a :href="item.link" x-text="item.title"></a>
-                                </h3>
-                            </div>
-                        </div>
-
-                        <div class="px-4 pb-4 pt-1 flex items-center justify-between border-t border-[#F6F5F0]">
-                            <a :href="item.link" class="px-3.5 py-1.5 rounded-xl bg-[#17171B] hover:bg-[#FFCC00] text-[#FFCC00] hover:text-[#17171B] font-bold text-xs font-title transition-all flex items-center gap-1.5 shadow-sm">
-                                <i data-lucide="play-circle" class="w-3.5 h-3.5"></i> Lanjut Nonton
-                            </a>
-                            <button 
-                                @click="WatchHistory.remove(item.slug); historyItems = WatchHistory.get()"
-                                class="p-2 text-[#71717A] hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                                title="Hapus dari Riwayat"
-                            >
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        {{end}}
+        </div>
     </div>
 
     <!-- TAB 2: MY LIST / FAVORIT -->

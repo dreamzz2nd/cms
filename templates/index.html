@@ -78,10 +78,6 @@
                 {{end}}
             </div>
 
-            <!-- Left / Right Navigation Arrows -->
-            <button class="swiper-button-prev !left-4 sm:!left-8 !text-white/70 hover:!text-white after:!text-2xl transition-colors !w-12 !h-12 !rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center"></button>
-            <button class="swiper-button-next !right-4 sm:!right-8 !text-white/70 hover:!text-white after:!text-2xl transition-colors !w-12 !h-12 !rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center"></button>
-
             <!-- Bottom Left Pagination Dots -->
             <div class="swiper-pagination !bottom-8 sm:!bottom-10 !left-6 sm:!left-12 lg:!left-16 !w-auto text-left z-30"></div>
         </div>
@@ -115,7 +111,6 @@
         loop: true,
         autoplay: { delay: 5000, disableOnInteraction: false },
         pagination: { el: '.swiper-pagination', clickable: true },
-        navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
         effect: 'fade',
         fadeEffect: { crossFade: true }
     });

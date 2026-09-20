@@ -65,6 +65,7 @@ type DetailPageData struct {
 	ActiveRawIframe    template.HTML
 	RawIframe          template.HTML
 	VideoURL           string
+	IsDirectVideo      bool
 	Videos             []client.PlayerOption
 	GroupedVideos      map[string][]client.PlayerOption
 }
@@ -134,6 +135,20 @@ type AuthPageData struct {
 	ErrorMessage string
 }
 
+type AdminDashboardData struct {
+	SEOData
+	Title              string
+	CurrentPage        string
+	User               *User
+	TotalAnimeCount    int
+	TotalUsersCount    int
+	TotalCarouselCount int
+	ServerUptime       string
+	UsersList          []User
+	HeroAnime          []client.AnimeItem
+	PopularAnime       []client.AnimeItem
+}
+
 type ResolutionOption struct {
 	Quality    string `json:"quality"`
 	Title      string `json:"title"`
@@ -146,6 +161,7 @@ type ModalPlayerData struct {
 	Title             string
 	VideoURL          string
 	RawIframe         template.HTML
+	IsDirectVideo     bool
 	Videos            []client.PlayerOption
 	GroupedVideos     map[string][]client.PlayerOption
 	Resolutions       []ResolutionOption
@@ -205,6 +221,8 @@ var defaultHDHeroAnime = []client.AnimeItem{
 	},
 }
 
+var serverStartTime = time.Now()
+
 var (
 	usersDb = map[string]User{
 		"admin": {
@@ -254,6 +272,8 @@ func main() {
 	mux.HandleFunc("/schedule", handleSchedule)
 	mux.HandleFunc("/profile", handleProfile)
 	mux.HandleFunc("/profile/settings", handleProfileSettings)
+	mux.HandleFunc("/admin", handleAdminDashboard)
+	mux.HandleFunc("/admin/dashboard", handleAdminDashboard)
 	mux.HandleFunc("/admin/carousel", handleAdminCarousel)
 
 	// SEO Routes
@@ -269,6 +289,8 @@ func main() {
 	mux.HandleFunc("/logout", handleLogout)
 
 	// Admin API Endpoints
+	mux.HandleFunc("/api/admin/clear-cache", handleAdminClearCache)
+	mux.HandleFunc("/api/admin/user/delete", handleAdminUserDelete)
 	mux.HandleFunc("/api/admin/carousel/add", handleAdminCarouselAdd)
 	mux.HandleFunc("/api/admin/carousel/delete", handleAdminCarouselDelete)
 	mux.HandleFunc("/api/admin/carousel/reset", handleAdminCarouselReset)
@@ -592,6 +614,7 @@ func handleAnimeDetail(w http.ResponseWriter, r *http.Request) {
 		ActiveRawIframe:    activeRawIframe,
 		RawIframe:          activeRawIframe,
 		VideoURL:           activeVideoURL,
+		IsDirectVideo:      isDirectStreamURL(activeVideoURL, string(activeRawIframe)),
 		Videos:             activeVideos,
 		GroupedVideos:      activeGroupedVideos,
 	}
@@ -879,7 +902,7 @@ func getAutoSwitchServerSetting(r *http.Request, user *User) bool {
 	if user != nil && user.AutoSwitchServer != nil {
 		return *user.AutoSwitchServer
 	}
-	return true
+	return false
 }
 
 func handleProfileSettings(w http.ResponseWriter, r *http.Request) {
@@ -1140,6 +1163,14 @@ func handleNotifications(w http.ResponseWriter, r *http.Request) {
 	renderPartial(w, "search_results.html", "search_results", data)
 }
 
+func isDirectStreamURL(urlStr, rawStr string) bool {
+	combined := strings.ToLower(urlStr + " " + rawStr)
+	if strings.Contains(combined, ".mp4") || strings.Contains(combined, ".m3u8") || strings.Contains(combined, "pixeldrain.com/api/file/") {
+		return true
+	}
+	return false
+}
+
 func formatPlayerHTML(rawIframe template.HTML, videoURL string) (template.HTML, string) {
 	rawStr := string(rawIframe)
 
@@ -1339,11 +1370,14 @@ func buildModalPlayerData(epsDetail client.EpisodeDetailResponse, ep, title stri
 		}
 	}
 
+	isDirect := isDirectStreamURL(firstVideoURL, string(firstIframe))
+
 	return ModalPlayerData{
 		EpisodeNum:        ep,
 		Title:             title,
 		VideoURL:          firstVideoURL,
 		RawIframe:         firstIframe,
+		IsDirectVideo:     isDirect,
 		Videos:            epsDetail.Videos,
 		GroupedVideos:     grouped,
 		Resolutions:       resolutions,
@@ -1398,11 +1432,13 @@ func handleVideoURL(w http.ResponseWriter, r *http.Request) {
 	formattedIframe, formattedURL := formatPlayerHTML(template.HTML(vidResp.Response), vidResp.URL)
 
 	data := struct {
-		VideoURL  string
-		RawIframe template.HTML
+		VideoURL      string
+		RawIframe     template.HTML
+		IsDirectVideo bool
 	}{
-		VideoURL:  formattedURL,
-		RawIframe: formattedIframe,
+		VideoURL:      formattedURL,
+		RawIframe:     formattedIframe,
+		IsDirectVideo: isDirectStreamURL(formattedURL, string(formattedIframe)),
 	}
 
 	renderPartial(w, "modal_player.html", "iframe_player", data)
@@ -1458,17 +1494,95 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(bodyStr))
 }
 
-// Admin Carousel Management Handlers
+// Admin Dashboard & Management Handlers
+func handleAdminDashboard(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Redirect(w, r, "/?show_login=true", http.StatusSeeOther)
+		return
+	}
+
+	heroAnime := customHeroCarousel
+	if len(heroAnime) == 0 {
+		heroAnime = defaultHDHeroAnime
+	}
+
+	// Fetch registered users list
+	usersDbLock.RLock()
+	var usersList []User
+	for _, u := range usersDb {
+		usersList = append(usersList, u)
+	}
+	usersDbLock.RUnlock()
+
+	// Fetch popular anime from API
+	var popularResp client.AnimeListResponse
+	_ = api.GetJSON("/popular", &popularResp)
+	popularItems := popularResp.Data
+	if len(popularItems) > 12 {
+		popularItems = popularItems[:12]
+	}
+	for i := range popularItems {
+		popularItems[i].Slug = client.GetAnimeSlug(popularItems[i])
+		popularItems[i].Score = client.FormatScore(popularItems[i].Score)
+		popularItems[i].Img = client.GetCleanHDImage(popularItems[i].Img)
+	}
+
+	uptimeDuration := time.Since(serverStartTime).Round(time.Second)
+	uptimeStr := fmt.Sprintf("%dm %ds", int(uptimeDuration.Minutes()), int(uptimeDuration.Seconds())%60)
+	if uptimeDuration.Hours() >= 1 {
+		uptimeStr = fmt.Sprintf("%dh %dm", int(uptimeDuration.Hours()), int(uptimeDuration.Minutes())%60)
+	}
+
+	data := AdminDashboardData{
+		SEOData: SEOData{
+			MetaDescription: "Panel Administrator Nyamimo Anime Stream.",
+		},
+		Title:              "Dashboard Administrator",
+		CurrentPage:        "admin",
+		User:               currentUser,
+		TotalAnimeCount:    api.GetTotalAnimeCount(),
+		TotalUsersCount:    len(usersList),
+		TotalCarouselCount: len(heroAnime),
+		ServerUptime:       uptimeStr,
+		UsersList:          usersList,
+		HeroAnime:          heroAnime,
+		PopularAnime:       popularItems,
+	}
+
+	renderPage(w, "admin_dashboard.html", data)
+}
+
+func handleAdminClearCache(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Redirect(w, r, "/?show_login=true", http.StatusSeeOther)
+		return
+	}
+	api.ClearCache()
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
+
+func handleAdminUserDelete(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Redirect(w, r, "/?show_login=true", http.StatusSeeOther)
+		return
+	}
+	r.ParseForm()
+	targetUsername := strings.ToLower(strings.TrimSpace(r.FormValue("username")))
+	if targetUsername != "" && targetUsername != "admin" {
+		usersDbLock.Lock()
+		delete(usersDb, targetUsername)
+		usersDbLock.Unlock()
+	}
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
+
 func handleAdminCarousel(w http.ResponseWriter, r *http.Request) {
 	currentUser := getLoggedInUser(r)
 	if currentUser == nil || currentUser.Role != "admin" {
-		data := AuthPageData{
-			Title:        "Akses Ditolak - Role Admin Diperlukan",
-			CurrentPage:  "login",
-			User:         currentUser,
-			ErrorMessage: "Akses Ditolak: Kamu harus masuk sebagai Admin (username: admin / pass: admin123) untuk mengelola Carousel.",
-		}
-		renderPage(w, "login.html", data)
+		http.Redirect(w, r, "/?show_login=true", http.StatusSeeOther)
 		return
 	}
 
@@ -1580,12 +1694,12 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/profile", http.StatusSeeOther)
 		return
 	}
-	renderPage(w, "login.html", AuthPageData{Title: "Masuk Akun", CurrentPage: "login"})
+	http.Redirect(w, r, "/?show_login=true", http.StatusSeeOther)
 }
 
 func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		http.Redirect(w, r, "/?show_login=true", http.StatusSeeOther)
 		return
 	}
 
@@ -1599,21 +1713,15 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 
 	if !exists || user.Password != password {
 		referer := r.Header.Get("Referer")
-		if referer != "" && !strings.Contains(referer, "/login") {
-			errMsg := url.QueryEscape("Username atau kata sandi salah. Gunakan admin/admin123 atau user/user123!")
-			sep := "?"
-			if strings.Contains(referer, "?") {
-				sep = "&"
-			}
-			http.Redirect(w, r, referer+sep+"login_error="+errMsg, http.StatusSeeOther)
-			return
+		if referer == "" || strings.Contains(referer, "/login") {
+			referer = "/"
 		}
-		data := AuthPageData{
-			Title:        "Masuk Akun",
-			CurrentPage:  "login",
-			ErrorMessage: "Username atau kata sandi salah. Gunakan admin/admin123 atau user/user123!",
+		errMsg := url.QueryEscape("Username atau kata sandi salah")
+		sep := "?"
+		if strings.Contains(referer, "?") {
+			sep = "&"
 		}
-		renderPage(w, "login.html", data)
+		http.Redirect(w, r, referer+sep+"login_error="+errMsg, http.StatusSeeOther)
 		return
 	}
 
@@ -1663,12 +1771,16 @@ func handleGoogleLoginAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRegister(w http.ResponseWriter, r *http.Request) {
-	renderPage(w, "register.html", AuthPageData{Title: "Daftar Akun Member", CurrentPage: "register"})
+	if getLoggedInUser(r) != nil {
+		http.Redirect(w, r, "/profile", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/?show_register=true", http.StatusSeeOther)
 }
 
 func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/register", http.StatusSeeOther)
+		http.Redirect(w, r, "/?show_register=true", http.StatusSeeOther)
 		return
 	}
 
@@ -1676,16 +1788,33 @@ func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.FormValue("name"))
 	username := strings.ToLower(strings.TrimSpace(r.FormValue("username")))
 	password := strings.TrimSpace(r.FormValue("password"))
+	referer := r.Header.Get("Referer")
 
 	if username == "" || password == "" {
-		renderPage(w, "register.html", AuthPageData{Title: "Daftar Akun", CurrentPage: "register", ErrorMessage: "Mohon isi semua bidang formulir!"})
+		if referer == "" || strings.Contains(referer, "/register") {
+			referer = "/"
+		}
+		errMsg := url.QueryEscape("Mohon isi semua bidang formulir!")
+		sep := "?"
+		if strings.Contains(referer, "?") {
+			sep = "&"
+		}
+		http.Redirect(w, r, referer+sep+"register_error="+errMsg, http.StatusSeeOther)
 		return
 	}
 
 	usersDbLock.Lock()
 	if _, exists := usersDb[username]; exists {
 		usersDbLock.Unlock()
-		renderPage(w, "register.html", AuthPageData{Title: "Daftar Akun", CurrentPage: "register", ErrorMessage: "Username sudah terdaftar! Gunakan username lain."})
+		if referer == "" || strings.Contains(referer, "/register") {
+			referer = "/"
+		}
+		errMsg := url.QueryEscape("Username sudah terdaftar! Gunakan username lain.")
+		sep := "?"
+		if strings.Contains(referer, "?") {
+			sep = "&"
+		}
+		http.Redirect(w, r, referer+sep+"register_error="+errMsg, http.StatusSeeOther)
 		return
 	}
 
@@ -1705,7 +1834,10 @@ func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
-	http.Redirect(w, r, "/profile", http.StatusSeeOther)
+	if referer == "" || strings.Contains(referer, "/register") || strings.Contains(referer, "/login") {
+		referer = "/"
+	}
+	http.Redirect(w, r, referer, http.StatusSeeOther)
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request) {
@@ -1716,7 +1848,11 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 	})
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	referer := r.Header.Get("Referer")
+	if referer == "" || strings.Contains(referer, "/login") {
+		referer = "/"
+	}
+	http.Redirect(w, r, referer, http.StatusSeeOther)
 }
 
 type WallpaperItem struct {
