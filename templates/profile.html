@@ -1,11 +1,52 @@
 {{define "content"}}
-<div x-data="{ activeTab: 'history', items: MyList.getAll(), historyItems: WatchHistory.get() }" class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+<div x-data="{ 
+        activeTab: 'history', 
+        items: (window.MyList ? MyList.getAll() : (JSON.parse(localStorage.getItem('animekudesu_mylist') || '[]'))), 
+        historyItems: (window.WatchHistory ? WatchHistory.get() : (JSON.parse(localStorage.getItem('nyamimo_watch_history') || '[]'))),
+        refresh() {
+            try {
+                if (window.WatchHistory) {
+                    this.historyItems = WatchHistory.get();
+                } else {
+                    this.historyItems = JSON.parse(localStorage.getItem('nyamimo_watch_history') || '[]');
+                }
+            } catch(e) { this.historyItems = []; }
+
+            try {
+                if (window.MyList) {
+                    this.items = MyList.getAll();
+                } else {
+                    this.items = JSON.parse(localStorage.getItem('animekudesu_mylist') || '[]');
+                }
+            } catch(e) { this.items = []; }
+
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        }
+     }" 
+     x-init="
+        refresh();
+        if (window.WatchHistory && typeof WatchHistory.syncWithServer === 'function') {
+            WatchHistory.syncWithServer(() => refresh());
+        }
+        window.addEventListener('watch-history-updated', () => refresh());
+        window.addEventListener('mylist-updated', () => refresh());
+        window.addEventListener('focus', () => refresh());
+        window.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+        window.addEventListener('storage', (e) => { if (e.key === 'nyamimo_watch_history' || e.key === 'animekudesu_mylist') refresh(); });
+     " 
+     class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
     <!-- Profile Account Card -->
     <div class="bg-white border border-[#E2E2DC] rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="flex items-center gap-5">
-            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-extrabold text-2xl sm:text-3xl font-title shadow-md shrink-0">
-                {{if .User}}{{.User.Name | firstChar}}{{else}}G{{end}}
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-extrabold text-2xl sm:text-3xl font-title shadow-md shrink-0 border border-[#E2E2DC]">
+                {{if .User}}
+                    {{if .User.Avatar}}
+                    <img src="{{.User.Avatar}}" alt="{{.User.Name}}" class="w-full h-full object-cover" />
+                    {{else}}
+                    {{.User.Name | firstChar}}
+                    {{end}}
+                {{else}}G{{end}}
             </div>
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
@@ -104,9 +145,9 @@
     <div class="border-b border-[#E2E2DC] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2 bg-[#F6F5F0] p-1.5 rounded-2xl border border-[#E2E2DC] self-start">
             <button 
-                @click="activeTab = 'history'" 
+                @click="activeTab = 'history'; refresh();" 
                 :class="activeTab === 'history' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] font-medium'"
-                class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 font-title"
+                class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 font-title cursor-pointer"
             >
                 <i data-lucide="history" class="w-4 h-4"></i> Riwayat Tontonan
                 <template x-if="historyItems.length > 0">
@@ -115,9 +156,9 @@
             </button>
 
             <button 
-                @click="activeTab = 'mylist'" 
+                @click="activeTab = 'mylist'; refresh();" 
                 :class="activeTab === 'mylist' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] font-medium'"
-                class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 font-title"
+                class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 font-title cursor-pointer"
             >
                 <i data-lucide="bookmark" class="w-4 h-4"></i> Favorit Saya
                 <template x-if="items.length > 0">
@@ -162,32 +203,59 @@
             </div>
         </template>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" x-show="historyItems.length > 0">
+        <!-- Watch History Grid (Poster Cards) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6" x-show="historyItems.length > 0">
             <template x-for="item in historyItems" :key="item.slug">
                 <div class="group relative bg-white border border-[#E2E2DC] hover:border-[#FFCC00] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                     <div>
-                        <a :href="item.link" class="block relative aspect-video overflow-hidden bg-[#17171B]">
+                        <!-- Poster Image Container (Aspect 3/4) -->
+                        <a :href="item.link" class="block relative aspect-[3/4] overflow-hidden bg-[#17171B]">
                             <img :src="item.img" :alt="item.title" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
-                            <div class="absolute top-3 left-3 flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded-md bg-[#FFCC00] text-[#17171B] font-extrabold text-[10px] uppercase tracking-wider font-title shadow-sm" x-text="item.episode || 'Episode'"></span>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-70 group-hover:opacity-50 transition-opacity"></div>
+                            
+                            <!-- Episode Badge -->
+                            <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10">
+                                <span class="px-2 py-0.5 rounded-md bg-[#FFCC00] text-[#17171B] font-black text-[10px] uppercase tracking-wider font-title shadow-sm" x-text="item.episode || 'Episode'"></span>
+                            </div>
+
+                            <!-- Timestamp Badge -->
+                            <div class="absolute top-2.5 right-2.5 z-10" x-show="item.time > 5">
+                                <span class="px-1.5 py-0.5 rounded-md bg-[#17171B]/80 backdrop-blur-sm border border-white/10 text-[#FFCC00] font-mono font-bold text-[10px] tracking-tight shadow-sm" x-text="'⏱️ ' + item.timeFormatted"></span>
+                            </div>
+
+                            <!-- Hover Play Overlay Icon -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="w-10 h-10 rounded-full bg-[#FFCC00] text-[#17171B] flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                                    <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+                                </div>
+                            </div>
+
+                            <!-- Playback Progress Bar (at bottom of poster) -->
+                            <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-black/60 overflow-hidden" x-show="item.time > 5">
+                                <div class="h-full bg-[#FFCC00] transition-all duration-300" :style="'width: ' + (item.progressPercent > 0 ? item.progressPercent : 25) + '%'"></div>
                             </div>
                         </a>
 
-                        <div class="p-4 space-y-2">
-                            <h3 class="font-extrabold text-sm text-[#1A1A1E] line-clamp-1 group-hover:text-[#FFCC00] transition-colors font-title">
+                        <!-- Card Info -->
+                        <div class="p-3 space-y-1.5">
+                            <h3 class="font-extrabold text-xs sm:text-sm text-[#1A1A1E] line-clamp-2 group-hover:text-[#FFCC00] transition-colors font-title leading-snug">
                                 <a :href="item.link" x-text="item.title"></a>
                             </h3>
+                            <div class="flex items-center justify-between text-[10px] text-[#71717A] font-title" x-show="item.time > 5">
+                                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3 text-[#FFCC00]"></i> Menit <strong class="text-[#1A1A1E]" x-text="item.timeFormatted"></strong></span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="px-4 pb-4 pt-1 flex items-center justify-between border-t border-[#F6F5F0]">
-                        <a :href="item.link" class="px-3.5 py-1.5 rounded-xl bg-[#17171B] hover:bg-[#FFCC00] text-[#FFCC00] hover:text-[#17171B] font-bold text-xs font-title transition-all flex items-center gap-1.5 shadow-sm">
-                            <i data-lucide="play-circle" class="w-3.5 h-3.5"></i> Lanjut Nonton
+                    <!-- Actions -->
+                    <div class="px-3 pb-3 pt-1 flex items-center justify-between gap-2 border-t border-[#F6F5F0]">
+                        <a :href="item.link" class="flex-1 py-1.5 px-2 rounded-xl bg-[#17171B] hover:bg-[#FFCC00] text-[#FFCC00] hover:text-[#17171B] font-bold text-[11px] font-title transition-all flex items-center justify-center gap-1 shadow-sm">
+                            <i data-lucide="play-circle" class="w-3.5 h-3.5 shrink-0"></i>
+                            <span class="truncate" x-text="item.time > 5 ? ('Lanjut ' + item.timeFormatted) : 'Lanjut'"></span>
                         </a>
                         <button 
                             @click="WatchHistory.remove(item.slug); historyItems = WatchHistory.get()"
-                            class="p-2 text-[#71717A] hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                            class="p-1.5 text-[#71717A] hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 shrink-0"
                             title="Hapus dari Riwayat"
                         >
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -214,19 +282,42 @@
             </div>
         </template>
 
-        <!-- My List Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6" x-show="items.length > 0">
+        <!-- My List Grid (Poster Cards) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6" x-show="items.length > 0">
             <template x-for="item in items" :key="item.link">
-                <div class="group relative bg-white border border-[#E2E2DC] hover:border-[#FFCC00] rounded-2xl overflow-hidden shadow-sm transition-all duration-200">
-                    <a :href="item.link" class="block relative aspect-[3/4] overflow-hidden bg-black">
-                        <img :src="item.img" :alt="item.title" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </a>
-                    <div class="p-3 bg-white flex items-center justify-between">
-                        <a :href="item.link" class="font-bold text-xs text-[#1A1A1E] line-clamp-1 group-hover:text-[#FFCC00] transition-colors flex-grow font-title" x-text="item.title"></a>
+                <div class="group relative bg-white border border-[#E2E2DC] hover:border-[#FFCC00] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                    <div>
+                        <!-- Poster Image Container (Aspect 3/4) -->
+                        <a :href="item.link" class="block relative aspect-[3/4] overflow-hidden bg-[#17171B]">
+                            <img :src="item.img" :alt="item.title" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
+                            
+                            <!-- Hover Play Overlay Icon -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="w-10 h-10 rounded-full bg-[#FFCC00] text-[#17171B] flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                                    <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- Card Info -->
+                        <div class="p-3">
+                            <h3 class="font-extrabold text-xs sm:text-sm text-[#1A1A1E] line-clamp-2 group-hover:text-[#FFCC00] transition-colors font-title leading-snug">
+                                <a :href="item.link" x-text="item.title"></a>
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="px-3 pb-3 pt-1 flex items-center justify-between gap-2 border-t border-[#F6F5F0]">
+                        <a :href="item.link" class="flex-1 py-1.5 px-2 rounded-xl bg-[#17171B] hover:bg-[#FFCC00] text-[#FFCC00] hover:text-[#17171B] font-bold text-[11px] font-title transition-all flex items-center justify-center gap-1 shadow-sm">
+                            <i data-lucide="play-circle" class="w-3.5 h-3.5 shrink-0"></i>
+                            <span>Tonton</span>
+                        </a>
                         <button 
                             @click="MyList.toggle({link: item.link}); items = MyList.getAll()"
-                            class="p-1 text-[#55555B] hover:text-red-600 transition-colors ml-2"
-                            title="Hapus dari My List"
+                            class="p-1.5 text-[#71717A] hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 shrink-0"
+                            title="Hapus dari Favorit"
                         >
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>

@@ -12,15 +12,16 @@
     <div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-2 md:gap-4">
         
         <!-- Left: Logo & Navigation Links -->
+        {{$cfg := siteConfig}}
         <div class="flex items-center gap-4 md:gap-8 shrink-0">
             <!-- Brand Logo -->
             <a href="/" class="flex items-center gap-2 group" data-purpose="site-logo">
                 <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                    <img src="/static/logo.png" alt="Nyamimo Logo" class="w-full h-full object-contain filter drop-shadow-sm" />
+                    <img src="{{$cfg.SiteLogo}}" alt="{{$cfg.SiteName}} Logo" class="w-full h-full object-contain filter drop-shadow-sm" />
                 </div>
                 <div class="flex flex-col leading-none">
                     <span class="text-lg md:text-xl font-extrabold font-title tracking-tight" :class="(isHome && !scrolled) ? 'text-white' : 'text-[#1A1A1E]'">
-                        Nyamimo
+                        {{$cfg.SiteName}}
                     </span>
                     <span class="text-[8px] md:text-[9px] font-bold font-title uppercase tracking-widest text-[#FFCC00]">
                         ANIME STREAM
@@ -49,19 +50,23 @@
         </div>
 
         <!-- Center: Search Input Bar (Desktop & Tablet) -->
-        <div class="flex-1 max-w-xl mx-2 relative hidden sm:block">
-            <form action="/search" method="GET" class="relative w-full" onsubmit="SearchHistory.add(this.q.value)">
+        <div class="flex-1 max-w-xl mx-2 relative hidden sm:block" @click.outside="searchOpen = false">
+            <form action="/search" method="GET" class="relative w-full" onsubmit="SearchHistory.add(this.q.value)" autocomplete="off">
                 <input 
                     type="search" 
                     name="q" 
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
                     placeholder="Cari anime, karakter, atau studio..." 
                     class="w-full text-xs sm:text-sm pl-4 pr-11 py-2 rounded-lg border focus:outline-none transition-colors"
                     :class="(isHome && !scrolled) ? 'bg-white/15 hover:bg-white/25 focus:bg-white text-white focus:text-[#1A1A1E] placeholder-white/70 border-white/20 focus:border-[#FFCC00]' : 'bg-[#F6F5F0] hover:bg-[#E2E2DC]/50 focus:bg-white text-[#1A1A1E] placeholder-[#55555B] border-[#E2E2DC] focus:border-[#FFCC00]'"
                     hx-get="/api/search-suggest" 
                     hx-target="#search-results" 
-                    hx-trigger="focus, keyup changed delay:200ms, search"
-                    @focus="searchOpen = true"
-                    @click.away="searchOpen = false"
+                    hx-trigger="focus, click, keyup changed delay:200ms, search"
+                    @focus="searchOpen = true; $nextTick(() => { if (typeof renderSearchHistory === 'function') renderSearchHistory(); })"
+                    @click="searchOpen = true; $nextTick(() => { if (typeof renderSearchHistory === 'function') renderSearchHistory(); })"
                 />
                 <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" :class="(isHome && !scrolled) ? 'text-white/80 hover:text-white' : 'text-[#55555B] hover:text-[#1A1A1E]'">
                     <i data-lucide="search" class="w-4 h-4"></i>
@@ -79,7 +84,7 @@
             </div>
         </div>
 
-        <!-- Right Controls: Mobile Search Toggle, Admin & Profile -->
+        <!-- Right Controls: Mobile Search Toggle, Riwayat, Admin & Profile -->
         <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
             
             <!-- Mobile Search Icon Button (< sm:hidden) -->
@@ -91,6 +96,15 @@
             >
                 <i data-lucide="search" class="w-5 h-5"></i>
             </button>
+
+            <!-- Riwayat Tontonan Link (For Guest & Member) -->
+            <a href="/profile" 
+                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border font-title flex items-center gap-1.5 {{if eq .CurrentPage "profile"}}!bg-[#FFCC00] !text-[#17171B] border-[#FFCC00]{{end}}"
+                :class="(isHome && !scrolled) ? 'bg-white/15 hover:bg-white/25 text-white border-white/20' : 'bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] border-[#E2E2DC]'"
+                title="Riwayat Tontonan">
+                <i data-lucide="history" class="w-3.5 h-3.5 text-[#FFCC00]"></i>
+                <span class="hidden sm:inline">Riwayat</span>
+            </a>
 
             <!-- Admin Dashboard Link (Admin only) -->
             {{if .User}}
@@ -104,11 +118,15 @@
 
             <!-- User Profile / Login Button -->
             {{if .User}}
-                <a href="/profile" class="w-8 h-8 rounded-lg bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] flex items-center justify-center font-bold font-title text-xs border border-[#17171B] transition-colors shadow-sm" title="{{.User.Name}} (@{{.User.Username}})">
+                <a href="/profile" class="w-8 h-8 rounded-lg overflow-hidden bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] flex items-center justify-center font-bold font-title text-xs border border-[#17171B] transition-colors shadow-sm" title="{{.User.Name}} (@{{.User.Username}})">
+                    {{if .User.Avatar}}
+                    <img src="{{.User.Avatar}}" alt="{{.User.Name}}" class="w-full h-full object-cover" />
+                    {{else}}
                     {{.User.Name | firstChar}}
+                    {{end}}
                 </a>
             {{else}}
-                <button type="button" @click="showLoginModal = true; loginView = 'options'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border" :class="(isHome && !scrolled) ? 'bg-white/15 hover:bg-white/25 text-white border-white/20' : 'bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] border-[#17171B]'">
+                <button type="button" @click="showLoginModal = true; loginView = 'options'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border font-title cursor-pointer" :class="(isHome && !scrolled) ? 'bg-white/15 hover:bg-white/25 text-white border-white/20' : 'bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] border-[#17171B]'">
                     Masuk
                 </button>
             {{end}}
@@ -117,15 +135,19 @@
 
     <!-- Mobile Search Expandable Header Bar (< sm:hidden) -->
     <div x-show="mobileSearchOpen" x-transition class="sm:hidden bg-white border-b border-[#E2E2DC] px-4 py-3">
-        <form action="/search" method="GET" class="relative" onsubmit="SearchHistory.add(this.q.value)">
+        <form action="/search" method="GET" class="relative" onsubmit="SearchHistory.add(this.q.value)" autocomplete="off">
             <input 
                 type="search" 
                 name="q" 
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
                 placeholder="Cari anime, karakter..." 
                 class="w-full bg-[#F6F5F0] border border-[#E2E2DC] rounded-lg pl-9 pr-4 py-2 text-sm text-[#1A1A1E] focus:outline-none focus:border-[#FFCC00]"
                 hx-get="/api/search-suggest" 
                 hx-target="#search-results-mobile" 
-                hx-trigger="focus, keyup changed delay:200ms, search"
+                hx-trigger="focus, click, keyup changed delay:200ms, search"
                 autofocus
             />
             <i data-lucide="search" class="w-4 h-4 text-[#55555B] absolute left-3 top-3"></i>
@@ -155,22 +177,28 @@
         <span class="text-[10px] tracking-tight font-title">Jadwal</span>
     </a>
 
-    <!-- 4. Favorit -->
-    <a href="/profile" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all {{if eq .CurrentPage "genres"}}text-[#2563EB] font-bold{{else}}text-[#71717A] hover:text-[#1A1A1E]{{end}}">
-        <i data-lucide="bookmark" class="w-5 h-5 {{if eq .CurrentPage "genres"}}stroke-[2.5px] text-[#2563EB]{{else}}stroke-[1.75px]{{end}}"></i>
-        <span class="text-[10px] tracking-tight font-title">Favorit</span>
+    <!-- 4. Riwayat Tontonan (Guest & Member) -->
+    <a href="/profile" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all {{if eq .CurrentPage "profile"}}text-[#2563EB] font-bold{{else}}text-[#71717A] hover:text-[#1A1A1E]{{end}}">
+        <i data-lucide="history" class="w-5 h-5 {{if eq .CurrentPage "profile"}}stroke-[2.5px] text-[#2563EB]{{else}}stroke-[1.75px]{{end}}"></i>
+        <span class="text-[10px] tracking-tight font-title">Riwayat</span>
     </a>
 
-    <!-- 5. Profil -->
+    <!-- 5. Profil / Masuk -->
     {{if .User}}
-    <a href="/profile" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all {{if eq .CurrentPage "profile"}}text-[#2563EB] font-bold{{else}}text-[#71717A] hover:text-[#1A1A1E]{{end}}">
-        <i data-lucide="user" class="w-5 h-5 {{if eq .CurrentPage "profile"}}stroke-[2.5px] text-[#2563EB]{{else}}stroke-[1.75px]{{end}}"></i>
-        <span class="text-[10px] tracking-tight font-title">Profil</span>
+    <a href="/profile" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all text-[#71717A] hover:text-[#1A1A1E]">
+        <div class="w-5 h-5 rounded-md overflow-hidden bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-bold text-[10px] font-title">
+            {{if .User.Avatar}}
+            <img src="{{.User.Avatar}}" alt="{{.User.Name}}" class="w-full h-full object-cover" />
+            {{else}}
+            {{.User.Name | firstChar}}
+            {{end}}
+        </div>
+        <span class="text-[10px] tracking-tight font-title">Akun</span>
     </a>
     {{else}}
     <button type="button" @click="showLoginModal = true; loginView = 'options'" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all text-[#71717A] hover:text-[#1A1A1E]">
-        <i data-lucide="user" class="w-5 h-5 stroke-[1.75px]"></i>
-        <span class="text-[10px] tracking-tight font-title">Profil</span>
+        <i data-lucide="log-in" class="w-5 h-5 stroke-[1.75px]"></i>
+        <span class="text-[10px] tracking-tight font-title">Masuk</span>
     </button>
     {{end}}
 

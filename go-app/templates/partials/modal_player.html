@@ -1,43 +1,36 @@
 {{define "modal_player"}}
-<div 
-    x-data="{ show: true }" 
-    x-show="show" 
-    x-transition 
+<div x-data="{ show: true }" x-show="show" x-transition
     class="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-md overflow-y-auto"
-    @keydown.escape.window="show = false; setTimeout(() => document.getElementById('modal-container').innerHTML = '', 200)"
->
-    <div class="relative bg-[#17171B] border border-[#2B2B32] rounded-2xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
-        
+    @keydown.escape.window="show = false; setTimeout(() => document.getElementById('modal-container').innerHTML = '', 200)">
+    <div
+        class="relative bg-[#17171B] border border-[#2B2B32] rounded-2xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+
         <!-- Modal Header Toolbar -->
-        <div class="bg-[#212126] px-4 py-3 border-b border-[#2B2B32] flex items-center justify-between z-10 gap-2 flex-wrap sm:flex-nowrap">
+        <div
+            class="bg-[#212126] px-4 py-3 border-b border-[#2B2B32] flex items-center justify-between z-10 gap-2 flex-wrap sm:flex-nowrap">
             <div class="flex items-center gap-2.5 min-w-0">
-                <span class="bg-[#FFCC00] text-[#17171B] font-extrabold font-title text-xs px-2.5 py-1 rounded-md shadow flex-shrink-0">
+                <span
+                    class="bg-[#FFCC00] text-[#17171B] font-extrabold font-title text-xs px-2.5 py-1 rounded-md shadow flex-shrink-0">
                     Eps {{.EpisodeNum}}
-                </span>
-                <span class="bg-[#2B2B32] text-[#FFCC00] font-bold font-title text-[11px] px-2.5 py-1 rounded-md border border-[#2B2B32] flex items-center gap-1 shrink-0">
-                    <i data-lucide="tv" class="w-3 h-3"></i> {{if .ActiveResolution}}{{.ActiveResolution}}{{else}}720p HD{{end}}
                 </span>
                 <h3 class="text-xs sm:text-sm font-bold font-title text-white truncate max-w-xs sm:max-w-md">
                     {{.Title}}
                 </h3>
             </div>
-            
+
             <div class="flex items-center gap-2">
                 <!-- Dedicated Full Screen Button -->
-                <button 
-                    onclick="toggleFullScreenPlayer()" 
+                <button onclick="toggleFullScreenPlayer()"
                     class="px-3 py-1.5 rounded-lg bg-[#FFCC00] hover:bg-[#E5B800] text-[#17171B] font-bold font-title text-xs flex items-center gap-1.5 transition-colors shadow"
-                    title="Buka Pemutar dalam Layar Penuh"
-                >
+                    title="Buka Pemutar dalam Layar Penuh">
                     <i data-lucide="maximize" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Layar Penuh</span>
+                    <span class="hidden sm:inline">Layar Penuh (Full Screen)</span>
                 </button>
 
                 <!-- Close Button -->
-                <button 
-                    @click="show = false; setTimeout(() => document.getElementById('modal-container').innerHTML = '', 200)" 
-                    class="w-8 h-8 rounded-lg bg-[#17171B] hover:bg-[#2B2B32] text-[#A0A0A8] hover:text-white border border-[#2B2B32] flex items-center justify-center transition-colors"
-                >
+                <button
+                    @click="show = false; setTimeout(() => document.getElementById('modal-container').innerHTML = '', 200)"
+                    class="w-8 h-8 rounded-lg bg-[#17171B] hover:bg-[#2B2B32] text-[#A0A0A8] hover:text-white border border-[#2B2B32] flex items-center justify-center transition-colors">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -45,83 +38,49 @@
 
         <!-- Scrollable Modal Content -->
         <div class="overflow-y-auto max-h-[calc(95vh-56px)] space-y-4">
-            
+
             <!-- Video Player iFrame Container -->
-            <div id="player-iframe-container" class="relative aspect-video bg-black flex items-center justify-center border-b border-[#2B2B32]">
+            <div id="player-iframe-container"
+                class="relative aspect-video bg-black flex items-center justify-center border-b border-[#2B2B32]">
                 {{if .RawIframe}}
-                    {{.RawIframe}}
+                {{.RawIframe}}
                 {{else if .VideoURL}}
-                    <iframe 
-                        id="player-iframe"
-                        src="{{.VideoURL}}" 
-                        class="w-full h-full border-0" 
-                        allowfullscreen="true"
-                        webkitallowfullscreen="true"
-                        mozallowfullscreen="true"
-                        allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"
-                    ></iframe>
+                <iframe id="player-iframe" src="{{.VideoURL}}" class="w-full h-full border-0" allowfullscreen="true"
+                    webkitallowfullscreen="true" mozallowfullscreen="true"
+                    allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>
                 {{else}}
-                    <div class="flex flex-col items-center justify-center gap-3 text-[#A0A0A8] p-8">
-                        <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-[#FFCC00]"></i>
-                        <span class="text-sm font-medium font-title">Memuat pemutar video HD...</span>
-                    </div>
+                <div class="flex flex-col items-center justify-center gap-3 text-[#A0A0A8] p-8">
+                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-[#FFCC00]"></i>
+                    <span class="text-sm font-medium font-title">Memuat pemutar video...</span>
+                </div>
                 {{end}}
             </div>
 
             <!-- Server & Resolution Options -->
-            <div class="p-4 sm:p-6 space-y-5">
-                
-                <!-- 1. Dedicated Resolution Switcher Bar -->
-                {{if .Resolutions}}
-                <div class="bg-[#212126] border border-[#2B2B32] rounded-2xl p-4 space-y-3 shadow-sm">
-                    <div class="flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center gap-2 text-white font-bold font-title text-xs sm:text-sm">
-                            <span class="w-2.5 h-2.5 bg-[#FFCC00] rounded-full animate-pulse"></span> Ganti Kualitas Resolusi Video
-                        </div>
-                        <span class="text-[10px] text-[#FFCC00] font-bold font-title bg-[#17171B] px-2.5 py-1 rounded-md border border-[#2B2B32] flex items-center gap-1">
-                            ★ Minimal 720p HD Diutamakan
-                        </span>
-                    </div>
+            <div class="p-4 sm:p-6 space-y-4">
 
-                    <div class="flex flex-wrap gap-2">
-                        {{range .Resolutions}}
-                        <button 
-                            hx-get="/api/video-url?path={{.Path}}" 
-                            hx-target="#player-iframe-container"
-                            class="px-4 py-2 rounded-xl text-xs font-extrabold font-title transition-all flex items-center gap-2 border shadow-sm {{if .IsSelected}}bg-[#FFCC00] text-[#17171B] border-[#FFCC00] scale-105{{else}}bg-[#17171B] hover:bg-[#FFCC00] text-[#A0A0A8] hover:text-[#17171B] border-[#2B2B32]{{end}}"
-                        >
-                            <i data-lucide="tv" class="w-3.5 h-3.5"></i>
-                            {{.Title}}
-                        </button>
-                        {{end}}
-                    </div>
-                </div>
-                {{end}}
-
-                <!-- 2. Server Streaming Provider Options -->
                 {{if .GroupedVideos}}
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 text-white font-bold font-title text-xs sm:text-sm">
-                            <i data-lucide="server" class="w-4 h-4 text-[#FFCC00]"></i> Pilihan Server Alternatif (Provider)
+                            <span class="w-2 h-2 bg-[#FFCC00] rounded-sm"></span> Pilihan Server Streaming (Provider)
                         </div>
-                        <span class="text-[10px] text-[#A0A0A8]">Otomatis memilih server paling stabil & aman</span>
+                        <span class="text-[10px] text-[#A0A0A8]">Otomatis berpindah server jika terjadi gangguan</span>
                     </div>
 
                     <div class="grid gap-3">
                         {{range $provider, $videos := .GroupedVideos}}
                         <div class="bg-[#212126] border border-[#2B2B32] rounded-xl p-3 sm:p-4">
-                            <div class="text-[10px] font-extrabold font-title text-[#FFCC00] uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                                <i data-lucide="shield-check" class="w-3 h-3"></i> {{$provider}}
+                            <div
+                                class="text-[10px] font-extrabold font-title text-[#FFCC00] uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                                {{$provider}}
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 {{range $videos}}
-                                <button 
-                                    hx-get="/api/video-url?path={{.Video}}" 
-                                    hx-target="#player-iframe-container" 
-                                    class="px-3.5 py-1.5 rounded-lg bg-[#17171B] hover:bg-[#FFCC00] text-[#A0A0A8] hover:text-[#17171B] text-xs font-bold font-title transition-colors flex items-center gap-1.5 border border-[#2B2B32] focus:bg-[#FFCC00] focus:text-[#17171B]"
-                                >
-                                    <i data-lucide="play-circle" class="w-3.5 h-3.5 text-[#FFCC00]"></i>
+                                <button hx-get="/api/video-url?path={{.Video}}" hx-target="#player-iframe-container"
+                                    class="px-3.5 py-1.5 rounded-lg bg-[#17171B] hover:bg-[#FFCC00] text-[#A0A0A8] hover:text-[#17171B] text-xs font-bold font-title transition-colors flex items-center gap-1.5 border border-[#2B2B32] focus:bg-[#FFCC00] focus:text-[#17171B]">
+                                    <i data-lucide="play-circle"
+                                        class="w-3.5 h-3.5 text-[#FFCC00] group-focus:text-[#17171B]"></i>
                                     {{.Title}}
                                 </button>
                                 {{end}}
@@ -132,24 +91,27 @@
                 </div>
                 {{end}}
 
-                <!-- 3. Episode Download Links -->
+                <!-- Episode Download Links -->
                 {{if .Downloads}}
                 <div class="space-y-3 pt-2">
                     <div class="flex items-center gap-2 text-white font-bold font-title text-xs sm:text-sm">
                         <i data-lucide="download" class="w-4 h-4 text-[#FFCC00]"></i> Download Episode Ini
                     </div>
-                    
+
                     <div class="space-y-2">
                         {{range .Downloads}}
                         <div class="bg-[#212126] border border-[#2B2B32] rounded-xl p-3 space-y-2">
-                            <span class="text-[10px] font-extrabold font-title text-[#FFCC00] uppercase tracking-wider block">{{.Format}}</span>
+                            <span
+                                class="text-[10px] font-extrabold font-title text-[#FFCC00] uppercase tracking-wider block">{{.Format}}</span>
                             <div class="space-y-1.5">
                                 {{range .List}}
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#17171B] p-2 rounded-lg text-xs">
+                                <div
+                                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#17171B] p-2 rounded-lg text-xs">
                                     <span class="font-bold font-title text-white text-[11px]">{{.Resolution}}</span>
                                     <div class="flex flex-wrap gap-1.5">
                                         {{range .Links}}
-                                        <a href="{{.Link}}" target="_blank" class="px-2.5 py-1 bg-[#212126] hover:bg-[#FFCC00] text-[#A0A0A8] hover:text-[#17171B] text-[10px] font-bold font-title rounded border border-[#2B2B32] transition-colors">
+                                        <a href="{{.Link}}" target="_blank"
+                                            class="px-2.5 py-1 bg-[#212126] hover:bg-[#FFCC00] text-[#A0A0A8] hover:text-[#17171B] text-[10px] font-bold font-title rounded border border-[#2B2B32] transition-colors">
                                             {{.Title}}
                                         </a>
                                         {{end}}
@@ -175,7 +137,7 @@
         const container = document.getElementById('player-iframe-container');
         const iframe = container.querySelector('iframe');
         const target = iframe || container;
-        
+
         if (target) {
             if (target.requestFullscreen) {
                 target.requestFullscreen();
@@ -193,22 +155,16 @@
 
 {{define "iframe_player"}}
 {{if .RawIframe}}
-    {{.RawIframe}}
+{{.RawIframe}}
 {{else if .VideoURL}}
-    <iframe 
-        id="player-iframe"
-        src="{{.VideoURL}}" 
-        class="w-full h-full border-0" 
-        allowfullscreen="true"
-        webkitallowfullscreen="true"
-        mozallowfullscreen="true"
-        allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"
-    ></iframe>
+<iframe id="player-iframe" src="{{.VideoURL}}" class="w-full h-full border-0" allowfullscreen="true"
+    webkitallowfullscreen="true" mozallowfullscreen="true"
+    allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>
 {{else}}
-    <div class="flex flex-col items-center justify-center gap-3 text-[#A0A0A8] p-8">
-        <i data-lucide="alert-circle" class="w-8 h-8 text-[#FFCC00]"></i>
-        <span class="text-xs font-title font-semibold">Gagal memuat video dari server ini. Silakan coba server lain di bawah.</span>
-    </div>
+<div class="flex flex-col items-center justify-center gap-3 text-[#A0A0A8] p-8">
+    <i data-lucide="alert-circle" class="w-8 h-8 text-[#FFCC00]"></i>
+    <span class="text-xs font-title font-semibold">Gagal memuat video dari server ini. Silakan coba server lain.</span>
+</div>
 {{end}}
 <script>
     if (window.lucide) lucide.createIcons();

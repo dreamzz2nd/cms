@@ -3,21 +3,27 @@
     "username": "admin",
     "password": "admin123",
     "name": "Administrator Nyamimo",
-    "role": "admin",
-    "created_at": "2026-09-15T02:49:56.463852427+07:00"
+    "role": "admin"
+  },
+  "ibrahimrizky696": {
+    "username": "ibrahimrizky696",
+    "password": "oauth_google_113782044341089888985",
+    "name": "Rizky ibrahim Nasrullah",
+    "role": "user",
+    "email": "ibrahimrizky696@gmail.com",
+    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKIqO-6LYD6lpKIJcK3I0V9hgZcvb0JuTpCOklDKoJrRIJ896Cc=s96-c",
+    "google_id": "113782044341089888985"
   },
   "nyamimofan": {
     "username": "nyamimofan",
     "password": "nyamimopass",
     "name": "OtakuMember",
-    "role": "user",
-    "created_at": "2026-09-15T02:50:03.861759317+07:00"
+    "role": "user"
   },
   "user": {
     "username": "user",
     "password": "user123",
     "name": "Member Nyamimo",
-    "role": "user",
-    "created_at": "2026-09-15T02:49:56.463853099+07:00"
+    "role": "user"
   }
 }

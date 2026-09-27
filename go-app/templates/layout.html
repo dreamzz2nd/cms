@@ -6,18 +6,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Popunder / Direct Script Ad -->
+    {{getAdSlot "popunder"}}
+
+    {{$cfg := siteConfig}}
     <!-- Primary Meta Tags -->
-    <title>{{if .Title}}{{.Title}} - Nyamimo{{else}}Nyamimo - Nonton Anime Subtitle Indonesia Gratis HD{{end}}</title>
+    <title>{{if .Title}}{{.Title}} - {{$cfg.SiteName}}{{else}}{{$cfg.SiteName}} - {{$cfg.SiteTagline}}{{end}}</title>
     <meta name="description"
-        content="{{if .MetaDescription}}{{.MetaDescription}}{{else}}Nonton anime subtitle Indonesia gratis tanpa iklan kualitas HD 1080p di Nyamimo. Update episode terbaru setiap hari!{{end}}">
+        content="{{if .MetaDescription}}{{.MetaDescription}}{{else}}Nonton anime subtitle Indonesia gratis kualitas HD 1080p di {{$cfg.SiteName}}. Update episode terbaru setiap hari!{{end}}">
     <meta name="keywords"
-        content="{{if .MetaKeywords}}{{.MetaKeywords}}{{else}}nyamimo, nonton anime sub indo, stream anime gratis, anime subtitle indonesia, anime sub indo hd, download anime sub indo, animeindo, otakudesu, bstation, anime 2026{{end}}">
+        content="{{if .MetaKeywords}}{{.MetaKeywords}}{{else}}{{$cfg.SiteName}}, nonton anime sub indo, stream anime gratis, anime subtitle indonesia, anime sub indo hd, download anime sub indo, anime 2026{{end}}">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <meta name="author" content="Nyamimo Team">
-    <meta name="theme-color" content="#FFCC00">
+    <meta name="author" content="{{$cfg.SiteName}} Team">
+    <meta name="theme-color" content="{{if $cfg.PrimaryColor}}{{$cfg.PrimaryColor}}{{else}}#FFCC00{{end}}">
     <link rel="canonical" href="{{if .CanonicalURL}}{{.CanonicalURL}}{{else}}https://nyamimo.onrender.com{{end}}">
-    <link rel="shortcut icon" href="/static/logo.png" type="image/png">
-    <link rel="apple-touch-icon" href="/static/logo.png">
+    <link rel="shortcut icon" href="{{$cfg.SiteFavicon}}" type="image/png">
+    <link rel="apple-touch-icon" href="{{$cfg.SiteLogo}}">
 
     <!-- Open Graph / Facebook / WhatsApp / Discord / Telegram -->
     <meta property="og:locale" content="id_ID">
@@ -66,7 +70,16 @@
     </script>
     {{end}}
 
-    <!-- Google Fonts: Space Grotesk & Plus Jakarta Sans -->
+    <!-- DNS Prefetch & Preconnect for High-Speed Asset Loading on Low-End Devices -->
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://api.animekudesu.web.id">
+    <link rel="dns-prefetch" href="https://wallpapercat.com">
+
+    <!-- Google Fonts: Space Grotesk & Plus Jakarta Sans with font-display swap -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -112,6 +125,270 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
 
+    <!-- Global Client Stores: WatchHistory, MyList, SearchHistory -->
+    <script>
+        var MyList = {
+            getKey: function() { return 'animekudesu_mylist'; },
+            getAll: function() {
+                try {
+                    return JSON.parse(localStorage.getItem(this.getKey())) || [];
+                } catch (e) { return []; }
+            },
+            has: function(link) {
+                return this.getAll().some(function(item) { return item.link === link; });
+            },
+            toggle: function(item) {
+                var list = this.getAll();
+                var index = list.findIndex(function(i) { return i.link === item.link; });
+                if (index >= 0) {
+                    list.splice(index, 1);
+                } else {
+                    list.push(item);
+                }
+                localStorage.setItem(this.getKey(), JSON.stringify(list));
+                window.dispatchEvent(new Event('mylist-updated'));
+                return index < 0;
+            }
+        };
+        window.MyList = MyList;
+
+        function formatWatchTime(sec) {
+            if (!sec || isNaN(sec) || sec <= 0) return '00:00';
+            var s = Math.floor(sec);
+            var hrs = Math.floor(s / 3600);
+            var mins = Math.floor((s % 3600) / 60);
+            var secs = s % 60;
+            if (hrs > 0) {
+                return (hrs < 10 ? '0' : '') + hrs + ':' + (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+            }
+            return (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+        window.formatWatchTime = formatWatchTime;
+
+        var WatchHistory = {
+            getKey: function() { return 'nyamimo_watch_history'; },
+            get: function() {
+                try {
+                    var raw = localStorage.getItem(this.getKey());
+                    if (!raw) return [];
+                    var parsed = JSON.parse(raw);
+                    if (!Array.isArray(parsed)) return [];
+                    return parsed.map(function(item) {
+                        if (!item) return null;
+                        var slug = (item.slug || '').toString().replace(/^["']+|["']+$/g, '').trim();
+                        if (!slug) return null;
+                        var epClean = (item.episodeNum || item.episode || '1').toString().replace(/^["']+|["']+$/g, '').replace(/^Episode\s*/i, '').trim();
+                        var epDisplay = 'Episode ' + epClean;
+                        var title = (item.title || '').toString().replace(/^["']+|["']+$/g, '').trim();
+                        var img = (item.img || '').toString().replace(/^["']+|["']+$/g, '').trim();
+                        var watchTime = parseFloat(item.time || item.currentTime || 0) || 0;
+                        var duration = parseFloat(item.duration || 0) || 0;
+                        var progressPercent = duration > 0 ? Math.min(100, Math.round((watchTime / duration) * 100)) : 0;
+                        var cleanLink = '/anime/' + slug + '/?ep=' + encodeURIComponent(epClean) + (watchTime > 5 ? ('&t=' + Math.floor(watchTime)) : '');
+                        return {
+                            slug: slug,
+                            title: title,
+                            img: img,
+                            episode: epDisplay,
+                            episodeNum: epClean,
+                            episodeTitle: (item.episodeTitle || '').toString().replace(/^["']+|["']+$/g, '').trim(),
+                            time: Math.floor(watchTime),
+                            duration: Math.floor(duration),
+                            timeFormatted: formatWatchTime(watchTime),
+                            durationFormatted: formatWatchTime(duration),
+                            progressPercent: progressPercent,
+                            link: cleanLink,
+                            updatedAt: item.updatedAt || Date.now()
+                        };
+                    }).filter(Boolean);
+                } catch (e) {
+                    return [];
+                }
+            },
+            getBySlug: function(slug) {
+                if (!slug) return null;
+                var cleanSlug = slug.toString().replace(/^["']+|["']+$/g, '').trim();
+                var list = this.get();
+                return list.find(function(item) { return item.slug === cleanSlug; }) || null;
+            },
+            getLastWatchedEp: function(slug) {
+                var item = this.getBySlug(slug);
+                return item ? (item.episodeNum || item.episode) : null;
+            },
+            syncProgressToServer: function(item) {
+                try {
+                    if (!item || !item.slug) return;
+                    fetch('/api/history/progress', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            slug: item.slug,
+                            title: item.title,
+                            img: item.img,
+                            episode: item.episode,
+                            episodeNum: item.episodeNum,
+                            episodeTitle: item.episodeTitle,
+                            time: item.time,
+                            duration: item.duration
+                        }),
+                        keepalive: true
+                    }).catch(function(){});
+                } catch(e) {}
+            },
+            syncWithServer: function(callback) {
+                var self = this;
+                fetch('/api/history')
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data && data.status === 'ok' && Array.isArray(data.items)) {
+                            var localList = self.get();
+                            var map = {};
+                            localList.forEach(function(it) { if (it && it.slug) map[it.slug] = it; });
+                            data.items.forEach(function(it) {
+                                if (it && it.slug) {
+                                    if (!map[it.slug] || (it.updatedAt > (map[it.slug].updatedAt || 0))) {
+                                        map[it.slug] = it;
+                                    }
+                                }
+                            });
+                            var merged = Object.values(map);
+                            merged.sort(function(a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+                            if (merged.length > 50) merged = merged.slice(0, 50);
+                            localStorage.setItem(self.getKey(), JSON.stringify(merged));
+                            window.dispatchEvent(new Event('watch-history-updated'));
+                            if (typeof callback === 'function') callback(merged);
+                        }
+                    })
+                    .catch(function(e) {
+                        if (typeof callback === 'function') callback(self.get());
+                    });
+            },
+            add: function(entry) {
+                if (!entry || !entry.slug) return;
+                var cleanSlug = entry.slug.toString().replace(/^["']+|["']+$/g, '').trim();
+                if (!cleanSlug) return;
+                var list = this.get();
+                var existing = list.find(function(item) { return item.slug === cleanSlug; });
+                list = list.filter(function(item) { return item.slug !== cleanSlug; });
+                var epClean = (entry.episodeNum || entry.episode || (existing ? existing.episodeNum : '1')).toString().replace(/^["']+|["']+$/g, '').replace(/^Episode\s*/i, '').trim();
+                var epDisplay = 'Episode ' + epClean;
+                var cleanTitle = (entry.title || (existing ? existing.title : '')).toString().replace(/^["']+|["']+$/g, '').trim();
+                var cleanImg = (entry.img || (existing ? existing.img : '')).toString().replace(/^["']+|["']+$/g, '').trim();
+                
+                var watchTime = typeof entry.time !== 'undefined' ? parseFloat(entry.time) : (existing && existing.episodeNum === epClean ? existing.time : 0);
+                var duration = typeof entry.duration !== 'undefined' ? parseFloat(entry.duration) : (existing && existing.episodeNum === epClean ? existing.duration : 0);
+                if (isNaN(watchTime)) watchTime = 0;
+                if (isNaN(duration)) duration = 0;
+                var progressPercent = duration > 0 ? Math.min(100, Math.round((watchTime / duration) * 100)) : 0;
+                var cleanLink = '/anime/' + cleanSlug + '/?ep=' + encodeURIComponent(epClean) + (watchTime > 5 ? ('&t=' + Math.floor(watchTime)) : '');
+
+                var newItem = {
+                    slug: cleanSlug,
+                    title: cleanTitle,
+                    img: cleanImg,
+                    episode: epDisplay,
+                    episodeNum: epClean,
+                    episodeTitle: (entry.episodeTitle || (existing ? existing.episodeTitle : '')).toString().replace(/^["']+|["']+$/g, '').trim(),
+                    time: Math.floor(watchTime),
+                    duration: Math.floor(duration),
+                    timeFormatted: formatWatchTime(watchTime),
+                    durationFormatted: formatWatchTime(duration),
+                    progressPercent: progressPercent,
+                    link: cleanLink,
+                    updatedAt: Date.now()
+                };
+                list.unshift(newItem);
+                if (list.length > 50) list = list.slice(0, 50);
+                try {
+                    localStorage.setItem(this.getKey(), JSON.stringify(list));
+                    console.log('[WatchHistory] Successfully saved:', newItem.title, '(' + newItem.episode + ')', 'Slug:', newItem.slug);
+                } catch(e) {
+                    console.error('Failed to save to localStorage:', e);
+                }
+                this.syncProgressToServer(newItem);
+                window.dispatchEvent(new CustomEvent('watch-history-updated', { detail: newItem }));
+                return newItem;
+            },
+            remove: function(slug) {
+                var cleanSlug = (slug || '').toString().replace(/^["']+|["']+$/g, '').trim();
+                var list = this.get().filter(function(item) { return item.slug !== cleanSlug; });
+                localStorage.setItem(this.getKey(), JSON.stringify(list));
+                fetch('/api/history/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug: cleanSlug })
+                }).catch(function(){});
+                window.dispatchEvent(new Event('watch-history-updated'));
+            },
+            clear: function() {
+                localStorage.removeItem(this.getKey());
+                fetch('/api/history/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ all: true })
+                }).catch(function(){});
+                window.dispatchEvent(new Event('watch-history-updated'));
+            }
+        };
+        window.WatchHistory = WatchHistory;
+
+        // Auto-sync watch history with server on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.WatchHistory && typeof WatchHistory.syncWithServer === 'function') {
+                WatchHistory.syncWithServer();
+            }
+        });
+
+        // Smart link enhancer: when user clicks an anime card anywhere, navigate directly to last watched episode and timestamp if present
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest('a');
+            if (!a || !a.href) return;
+            try {
+                var url = new URL(a.href, window.location.origin);
+                if (url.origin === window.location.origin && url.pathname.startsWith('/anime/')) {
+                    var parts = url.pathname.split('/').filter(Boolean);
+                    if (parts.length === 2 && !url.searchParams.has('ep') && !url.searchParams.has('first') && window.WatchHistory) {
+                        var slug = parts[1].replace(/^["']+|["']+$/g, '').trim();
+                        var lastWatched = WatchHistory.getBySlug(slug);
+                        if (lastWatched && lastWatched.episodeNum) {
+                            url.pathname = '/anime/' + slug + '/';
+                            url.searchParams.set('ep', lastWatched.episodeNum);
+                            if (lastWatched.time > 5) {
+                                url.searchParams.set('t', lastWatched.time);
+                            }
+                            a.href = url.pathname + '?' + url.searchParams.toString();
+                        }
+                    }
+                }
+            } catch (err) {}
+        }, true);
+
+        var SearchHistory = {
+            getKey: function() { return 'nyamimo_search_history'; },
+            get: function() {
+                try { return JSON.parse(localStorage.getItem(this.getKey())) || []; }
+                catch (e) { return []; }
+            },
+            add: function(query) {
+                if (!query || !query.trim()) return;
+                var list = this.get().filter(function(q) { return q.toLowerCase() !== query.trim().toLowerCase(); });
+                list.unshift(query.trim());
+                if (list.length > 8) list = list.slice(0, 8);
+                localStorage.setItem(this.getKey(), JSON.stringify(list));
+            },
+            clear: function() {
+                localStorage.removeItem(this.getKey());
+                if (typeof renderSearchHistory === 'function') renderSearchHistory();
+            },
+            remove: function(query) {
+                var list = this.get().filter(function(q) { return q !== query; });
+                localStorage.setItem(this.getKey(), JSON.stringify(list));
+                if (typeof renderSearchHistory === 'function') renderSearchHistory();
+            }
+        };
+        window.SearchHistory = SearchHistory;
+    </script>
+
     <style>
         body {
             background-color: #F6F5F0;
@@ -152,6 +429,34 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #FFCC00;
         }
+
+        /* ─── Low-Spec Device & Mobile Performance Enhancements ─── */
+        html {
+            text-rendering: optimizeSpeed;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Prevent layout thrashing on image decoding */
+        img {
+            content-visibility: auto;
+        }
+
+        /* Hardware Acceleration for dynamic interactive elements */
+        .swiper-slide, .hero-swiper, .group {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        /* Reduced motion / GPU fallback for power saving */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
 </head>
 
@@ -165,10 +470,26 @@
     <!-- Navbar -->
     {{template "navbar" .}}
 
+    <!-- Header Banner Ad Slot -->
+    {{$headerAd := getAdSlot "header_banner"}}
+    {{if $headerAd}}
+    <div class="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        {{$headerAd}}
+    </div>
+    {{end}}
+
     <!-- Main Content -->
     <main class="flex-grow pb-16 md:pb-0">
         {{template "content" .}}
     </main>
+
+    <!-- Footer Banner Ad Slot -->
+    {{$footerAd := getAdSlot "footer_banner"}}
+    {{if $footerAd}}
+    <div class="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+        {{$footerAd}}
+    </div>
+    {{end}}
 
     <!-- Footer -->
     {{template "footer" .}}
@@ -198,54 +519,6 @@
             if (window.lucide) lucide.createIcons();
         });
 
-        const MyList = {
-            getKey() { return 'animekudesu_mylist'; },
-            getAll() {
-                try {
-                    return JSON.parse(localStorage.getItem(this.getKey())) || [];
-                } catch (e) { return []; }
-            },
-            has(link) {
-                return this.getAll().some(item => item.link === link);
-            },
-            toggle(item) {
-                let list = this.getAll();
-                const index = list.findIndex(i => i.link === item.link);
-                if (index >= 0) {
-                    list.splice(index, 1);
-                } else {
-                    list.push(item);
-                }
-                localStorage.setItem(this.getKey(), JSON.stringify(list));
-                window.dispatchEvent(new Event('mylist-updated'));
-                return index < 0;
-            }
-        };
-
-        const SearchHistory = {
-            getKey() { return 'nyamimo_search_history'; },
-            get() {
-                try { return JSON.parse(localStorage.getItem(this.getKey())) || []; }
-                catch (e) { return []; }
-            },
-            add(query) {
-                if (!query || !query.trim()) return;
-                let list = this.get().filter(q => q.toLowerCase() !== query.trim().toLowerCase());
-                list.unshift(query.trim());
-                if (list.length > 8) list = list.slice(0, 8);
-                localStorage.setItem(this.getKey(), JSON.stringify(list));
-            },
-            clear() {
-                localStorage.removeItem(this.getKey());
-                renderSearchHistory();
-            },
-            remove(query) {
-                let list = this.get().filter(q => q !== query);
-                localStorage.setItem(this.getKey(), JSON.stringify(list));
-                renderSearchHistory();
-            }
-        };
-
         function renderSearchHistory() {
             const chipsContainer = document.getElementById('search-history-chips');
             const clearBtn = document.getElementById('btn-clear-history');
@@ -262,9 +535,9 @@
             if (clearBtn) clearBtn.classList.remove('hidden');
 
             chipsContainer.innerHTML = list.map(q => `
-                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] text-xs font-semibold border border-[#E2E2DC] transition-colors group">
-                    <span class="cursor-pointer" onclick="executeHistorySearch('${q.replace(/'/g, "\\'")}')">${q}</span>
-                    <button type="button" onclick="event.stopPropagation(); SearchHistory.remove('${q.replace(/'/g, "\\'")}')" class="text-[#55555B] hover:text-red-600 opacity-60 group-hover:opacity-100 transition-opacity">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] text-xs font-semibold border border-[#E2E2DC] transition-colors group cursor-pointer" onclick="executeHistorySearch('${q.replace(/'/g, "\\'")}')">
+                    <span>${q}</span>
+                    <button type="button" onclick="event.stopPropagation(); SearchHistory.remove('${q.replace(/'/g, "\\'")}')" class="text-[#55555B] hover:text-red-600 opacity-60 group-hover:opacity-100 transition-opacity" title="Hapus keyword ini">
                         <i data-lucide="x" class="w-3 h-3"></i>
                     </button>
                 </div>
@@ -284,6 +557,7 @@
             });
             const activeInput = document.querySelector('input[name="q"]:focus') || searchInputs[0];
             if (activeInput) {
+                activeInput.focus();
                 htmx.trigger(activeInput, 'search');
             }
         }
@@ -310,7 +584,8 @@
                 </div>
                 <h2 class="text-2xl font-extrabold font-title text-[#1A1A1E] tracking-tight"
                     x-text="loginView === 'register' ? 'Daftar Member Nyamimo' : 'Login Nyamimo'">Login Nyamimo</h2>
-                <p x-show="loginView === 'register'" class="text-xs text-[#55555B]">Buat akun baru gratis untuk menikmati anime HD.</p>
+                <p x-show="loginView === 'register'" class="text-xs text-[#55555B]">Buat akun baru gratis untuk
+                    menikmati anime HD.</p>
             </div>
 
             <!-- Dynamic Error Alert -->
@@ -419,8 +694,7 @@
                             <span class="absolute left-3.5 text-[#A0A0A8]">
                                 <i data-lucide="user-check" class="w-4 h-4"></i>
                             </span>
-                            <input type="text" name="name" required
-                                placeholder="Nama Lengkap Kamu"
+                            <input type="text" name="name" required placeholder="Nama Lengkap Kamu"
                                 class="w-full bg-[#F6F5F0] border border-[#E2E2DC] focus:border-[#FFCC00] focus:bg-white rounded-xl pl-10 pr-4 py-3 text-[#1A1A1E] text-xs font-medium outline-none transition-all" />
                         </div>
                     </div>
@@ -431,8 +705,7 @@
                             <span class="absolute left-3.5 text-[#A0A0A8]">
                                 <i data-lucide="user" class="w-4 h-4"></i>
                             </span>
-                            <input type="text" name="username" required
-                                placeholder="Pilih username unik kamu"
+                            <input type="text" name="username" required placeholder="Pilih username unik kamu"
                                 class="w-full bg-[#F6F5F0] border border-[#E2E2DC] focus:border-[#FFCC00] focus:bg-white rounded-xl pl-10 pr-4 py-3 text-[#1A1A1E] text-xs font-medium outline-none transition-all" />
                         </div>
                     </div>
@@ -443,14 +716,15 @@
                             <span class="absolute left-3.5 text-[#A0A0A8]">
                                 <i data-lucide="lock" class="w-4 h-4"></i>
                             </span>
-                            <input :type="showRegPass ? 'text' : 'password'" name="password"
-                                required placeholder="Buat kata sandi minimal 6 karakter"
+                            <input :type="showRegPass ? 'text' : 'password'" name="password" required
+                                placeholder="Buat kata sandi minimal 6 karakter"
                                 class="w-full bg-[#F6F5F0] border border-[#E2E2DC] focus:border-[#FFCC00] focus:bg-white rounded-xl pl-10 pr-10 py-3 text-[#1A1A1E] text-xs font-medium outline-none transition-all" />
                             <button type="button" @click="showRegPass = !showRegPass"
                                 class="absolute right-3.5 text-[#A0A0A8] hover:text-[#17171B] transition-colors"
                                 title="Tampilkan / Sembunyikan Kata Sandi">
                                 <i x-show="!showRegPass" data-lucide="eye" class="w-4 h-4"></i>
-                                <i x-show="showRegPass" data-lucide="eye-off" class="w-4 h-4" style="display: none;"></i>
+                                <i x-show="showRegPass" data-lucide="eye-off" class="w-4 h-4"
+                                    style="display: none;"></i>
                             </button>
                         </div>
                     </div>
@@ -473,12 +747,16 @@
                 </label>
                 <div>
                     <span x-show="loginView !== 'register'">
-                        Tidak punya akun? <button type="button" @click="loginView = 'register'; loginErrorMessage = ''; $nextTick(() => { if (window.lucide) lucide.createIcons(); })"
-                            class="font-extrabold text-[#17171B] underline hover:text-[#FFCC00] cursor-pointer">Registrasi Sekarang</button>
+                        Tidak punya akun? <button type="button"
+                            @click="loginView = 'register'; loginErrorMessage = ''; $nextTick(() => { if (window.lucide) lucide.createIcons(); })"
+                            class="font-extrabold text-[#17171B] underline hover:text-[#FFCC00] cursor-pointer">Registrasi
+                            Sekarang</button>
                     </span>
                     <span x-show="loginView === 'register'" style="display: none;">
-                        Sudah memiliki akun? <button type="button" @click="loginView = 'form'; loginErrorMessage = ''; $nextTick(() => { if (window.lucide) lucide.createIcons(); })"
-                            class="font-extrabold text-[#17171B] underline hover:text-[#FFCC00] cursor-pointer">Masuk di Sini</button>
+                        Sudah memiliki akun? <button type="button"
+                            @click="loginView = 'form'; loginErrorMessage = ''; $nextTick(() => { if (window.lucide) lucide.createIcons(); })"
+                            class="font-extrabold text-[#17171B] underline hover:text-[#FFCC00] cursor-pointer">Masuk di
+                            Sini</button>
                     </span>
                 </div>
             </div>

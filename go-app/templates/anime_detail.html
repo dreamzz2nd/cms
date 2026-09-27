@@ -1,4 +1,5 @@
 {{define "content"}}
+<div id="anime-meta-context" class="hidden" data-slug="{{.Slug}}" data-title="{{.Detail.Title}}" data-img="{{.Detail.Img}}" data-active-ep="{{.ActiveEpisodeNum}}"></div>
 <div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
     <!-- Breadcrumb Bar -->
@@ -9,19 +10,19 @@
         <span>/</span>
         <a href="/anime/{{.Slug}}" class="hover:text-[#1A1A1E] transition-colors">{{.Detail.Title}}</a>
         <span>/</span>
-        <span class="text-[#1A1A1E] font-bold">Episode {{.ActiveEpisodeNum}}</span>
+        <span id="breadcrumb-ep-num" class="text-[#1A1A1E] font-bold">Episode {{.ActiveEpisodeNum}}</span>
     </nav>
 
     <!-- Top Headline Header -->
     <div class="border-b border-[#E2E2DC] pb-4 space-y-1">
         <div class="flex items-center gap-2 text-xs font-semibold">
-            <span
+            <span id="headline-badge-ep"
                 class="bg-[#FFCC00] text-[#17171B] font-extrabold px-2.5 py-0.5 rounded-md uppercase tracking-wider text-[11px] font-title shadow-sm">
                 EPISODE {{.ActiveEpisodeNum}}
             </span>
             <span class="text-[#55555B] font-medium">• Subtitle Indonesia • Playback Auto</span>
         </div>
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold font-title text-[#1A1A1E] tracking-tight">
+        <h1 id="headline-main-title" class="text-xl sm:text-2xl md:text-3xl font-bold font-title text-[#1A1A1E] tracking-tight">
             {{.Detail.Title}} — Episode {{.ActiveEpisodeNum}}{{if .ActiveEpisodeTitle}}: {{.ActiveEpisodeTitle}}{{end}}
         </h1>
     </div>
@@ -69,35 +70,36 @@
                     </div>
                 </div>
 
-                {{if .GroupedVideos}}
-                {{$firstVideoPath := ""}}
-                {{if .Videos}}{{$firstVideoPath = (index .Videos 0).Video}}{{end}}
-                <div class="grid gap-3">
-                    {{range $provider, $videos := .GroupedVideos}}
-                    <div class="bg-[#F6F5F0] border border-[#E2E2DC] rounded-xl p-3">
-                        <div
-                            class="text-[11px] font-extrabold font-title text-[#17171B] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                            <i data-lucide="server" class="w-3.5 h-3.5 text-[#FFCC00]"></i> {{$provider}}
+                <div id="server-list-container">
+                    {{if .GroupedVideos}}
+                    {{$firstVideoPath := ""}}
+                    {{if .Videos}}{{$firstVideoPath = (index .Videos 0).Video}}{{end}}
+                    <div class="grid gap-3">
+                        {{range $provider, $videos := .GroupedVideos}}
+                        <div class="bg-[#F6F5F0] border border-[#E2E2DC] rounded-xl p-3">
+                            <div
+                                class="text-[11px] font-extrabold font-title text-[#17171B] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <i data-lucide="server" class="w-3.5 h-3.5 text-[#FFCC00]"></i> {{$provider}}
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                {{range $videos}}
+                                {{$isActive := eq .Video $firstVideoPath}}
+                                <button data-video-path="{{.Video}}" data-video-title="{{.Title}}"
+                                    onclick="onServerBtnClick(this, '{{.Video}}', '{{.Title}}')"
+                                    class="server-btn px-3.5 py-1.5 rounded-lg text-xs font-bold font-title transition-all flex items-center gap-1.5 border shadow-sm cursor-pointer {{if $isActive}}active-server bg-[#17171B] text-[#FFCC00] border-[#17171B] ring-2 ring-[#FFCC00]/40 shadow-md{{else}}bg-white text-[#1A1A1E] border-[#E2E2DC] hover:bg-[#FFCC00] hover:text-[#17171B]{{end}}">
+                                    <span
+                                        class="server-active-dot w-2 h-2 rounded-full bg-[#FFCC00] animate-pulse {{if not $isActive}}hidden{{end}}"></span>
+                                    <span>{{.Title}}</span>
+                                </button>
+                                {{end}}
+                            </div>
                         </div>
-                        <div class="flex flex-wrap gap-2">
-                            {{range $videos}}
-                            {{$isActive := eq .Video $firstVideoPath}}
-                            <button data-video-path="{{.Video}}" data-video-title="{{.Title}}"
-                                hx-get="/api/video-url?path={{.Video}}" hx-target="#player-iframe-container"
-                                onclick="setActiveServerBtn(this); showServerToast('Beralih ke {{.Title}}...'); if(window.autoSwitchServerEnabled) { startServerHealthWatchdog(); } else { clearAllServerTimers(); }"
-                                class="server-btn px-3.5 py-1.5 rounded-lg text-xs font-bold font-title transition-all flex items-center gap-1.5 border shadow-sm cursor-pointer {{if $isActive}}active-server bg-[#17171B] text-[#FFCC00] border-[#17171B] ring-2 ring-[#FFCC00]/40 shadow-md{{else}}bg-white text-[#1A1A1E] border-[#E2E2DC] hover:bg-[#FFCC00] hover:text-[#17171B]{{end}}">
-                                <span
-                                    class="server-active-dot w-2 h-2 rounded-full bg-[#FFCC00] animate-pulse {{if not $isActive}}hidden{{end}}"></span>
-                                <span>{{.Title}}</span>
-                            </button>
-                            {{end}}
-                        </div>
+                        {{end}}
                     </div>
+                    {{else}}
+                    <p class="text-xs text-[#55555B]">Server dikonfigurasi otomatis dalam mode optimal.</p>
                     {{end}}
                 </div>
-                {{else}}
-                <p class="text-xs text-[#55555B]">Server dikonfigurasi otomatis dalam mode optimal.</p>
-                {{end}}
             </div>
 
             <!-- Catatan Diagnostik Pemutaran Video Box -->
@@ -122,46 +124,13 @@
                 </button>
             </div>
 
-            <!-- ===== EPISODE SELECTOR (Always Visible, Mobile-Friendly) ===== -->
-            {{if .Detail.Episodes}}
-            <div class="bg-white border border-[#E2E2DC] rounded-xl p-4 shadow-sm space-y-3">
-                <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-2.5">
-                    <h3 class="font-title font-bold text-sm text-[#1A1A1E] flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 bg-[#FFCC00] rounded-sm"></span>
-                        Pilih Episode
-                    </h3>
-                    <span
-                        class="text-xs text-[#55555B] font-semibold bg-[#F6F5F0] border border-[#E2E2DC] px-2 py-0.5 rounded-md">{{len
-                        .Detail.Episodes}} Episode</span>
-                </div>
-                <!-- Episode Grid responsive: 5 col on mobile, 8 on sm, 10 on md -->
-                <div
-                    class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-8 xl:grid-cols-10 gap-1.5 max-h-52 overflow-y-auto pr-0.5 episode-scroll-container">
-                    {{range .Detail.Episodes}}
-                    <a href="/anime/{{$.Slug}}/?ep={{.Number}}" title="Episode {{.Number}}"
-                        class="h-9 rounded-lg font-title font-bold text-xs flex items-center justify-center relative transition-all border select-none {{if eq .Number $.ActiveEpisodeNum}}bg-[#17171B] text-[#FFCC00] border-[#17171B] shadow-sm ring-1 ring-[#FFCC00]/60{{else}}bg-[#F6F5F0] hover:bg-[#FFCC00] hover:text-[#17171B] text-[#1A1A1E] border-[#E2E2DC]{{end}}">
-                        {{.Number}}
-                    </a>
-                    {{end}}
-                </div>
-                <style>
-                    .episode-scroll-container::-webkit-scrollbar {
-                        width: 4px;
-                    }
-
-                    .episode-scroll-container::-webkit-scrollbar-track {
-                        background: #F6F5F0;
-                        border-radius: 4px;
-                    }
-
-                    .episode-scroll-container::-webkit-scrollbar-thumb {
-                        background: #FFCC00;
-                        border-radius: 4px;
-                    }
-                </style>
+            <!-- Below Video Player Ad Slot -->
+            {{$belowAd := getAdSlot "below_player"}}
+            {{if $belowAd}}
+            <div class="w-full my-1">
+                {{$belowAd}}
             </div>
             {{end}}
-            <!-- ===== END EPISODE SELECTOR ===== -->
 
             <!-- Anime Info Card -->
             <div class="bg-white border border-[#E2E2DC] rounded-xl p-6 shadow-sm space-y-4">
@@ -214,15 +183,17 @@
                 </div>
 
                 <!-- Episode Grid (4 cols) -->
-                <div class="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto pr-1">
+                <div class="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto pr-1 sidebar-episode-container">
                     {{range .Detail.Episodes}}
-                    <a href="/anime/{{$.Slug}}/?ep={{.Number}}"
-                        class="h-10 rounded-lg font-title font-bold text-xs flex items-center justify-center relative transition-all border {{if eq .Number $.ActiveEpisodeNum}}bg-[#17171B] text-white border-[#17171B] shadow-sm ring-2 ring-[#17171B]{{else}}bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] border-[#E2E2DC]{{end}}">
+                    <button type="button"
+                        data-ep-num="{{.Number}}"
+                        data-detail-eps="{{.DetailEps}}"
+                        data-ep-title="{{.Title}}"
+                        onclick="switchEpisodeAjax(event, this); return false;"
+                        class="sidebar-ep-btn h-10 rounded-lg font-title font-bold text-xs flex items-center justify-center relative transition-all border cursor-pointer {{if eq .Number $.ActiveEpisodeNum}}bg-[#17171B] text-white border-[#17171B] shadow-sm ring-2 ring-[#17171B] active-ep-btn{{else}}bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] border-[#E2E2DC]{{end}}">
                         <span>{{.Number}}</span>
-                        {{if eq .Number $.ActiveEpisodeNum}}
-                        <span class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FFCC00]"></span>
-                        {{end}}
-                    </a>
+                        <span class="ep-active-dot absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FFCC00] {{if ne .Number $.ActiveEpisodeNum}}hidden{{end}}"></span>
+                    </button>
                     {{end}}
                 </div>
 
@@ -511,8 +482,77 @@
     </div>
 </div>
 
+<!-- Hidden container to safely pass Go template variables to client-side JS -->
+<div id="nyamimo-anime-data"
+    data-slug="{{.Slug}}"
+    data-ep="{{.ActiveEpisodeNum}}"
+    data-title="{{.Detail.Title}}"
+    data-img="{{.Detail.Img}}"
+    data-ep-title="{{.ActiveEpisodeTitle}}"
+    style="display:none;"></div>
+
 <script>
     if (window.lucide) lucide.createIcons();
+
+    // Episode & Anime Context safely retrieved from DOM attributes
+    var animeDataEl = document.getElementById('nyamimo-anime-data');
+    var currentAnimeSlug = (animeDataEl ? animeDataEl.getAttribute('data-slug') : '') || '';
+    var currentActiveEp = (animeDataEl ? animeDataEl.getAttribute('data-ep') : '1') || '1';
+    var currentAnimeTitle = (animeDataEl ? animeDataEl.getAttribute('data-title') : '') || '';
+    var currentAnimeImg = (animeDataEl ? animeDataEl.getAttribute('data-img') : '') || '';
+    var currentEpTitle = (animeDataEl ? animeDataEl.getAttribute('data-ep-title') : '') || '';
+
+    if (!currentAnimeSlug) {
+        var pathParts = window.location.pathname.split('/').filter(Boolean);
+        if (pathParts.length >= 2 && pathParts[0] === 'anime') {
+            currentAnimeSlug = pathParts[1];
+        }
+    }
+    if (!currentAnimeTitle) {
+        var h1 = document.querySelector('h1');
+        if (h1) currentAnimeTitle = h1.textContent.trim();
+    }
+    if (!currentAnimeImg) {
+        var poster = document.querySelector('img[alt*="' + currentAnimeSlug + '"]') || document.querySelector('img');
+        if (poster) currentAnimeImg = poster.src;
+    }
+
+    // Check if user should be redirected to last watched episode with timestamp, otherwise save watch history
+    (function () {
+        try {
+            var urlParams = new URLSearchParams(window.location.search);
+            var lastWatched = window.WatchHistory ? WatchHistory.getBySlug(currentAnimeSlug) : null;
+            if (!urlParams.has('ep') && !urlParams.has('first') && lastWatched) {
+                if (lastWatched.episodeNum && lastWatched.episodeNum !== currentActiveEp) {
+                    var targetUrl = '/anime/' + currentAnimeSlug + '/?ep=' + encodeURIComponent(lastWatched.episodeNum);
+                    if (lastWatched.time > 5) {
+                        targetUrl += '&t=' + encodeURIComponent(lastWatched.time);
+                    }
+                    window.location.replace(targetUrl);
+                    return;
+                }
+            }
+
+            // Record this watch into WatchHistory (works for guests & logged in users)
+            if (currentAnimeSlug) {
+                var initialTime = urlParams.has('t') ? parseFloat(urlParams.get('t')) : (lastWatched && lastWatched.episodeNum === currentActiveEp ? lastWatched.time : 0);
+                if (window.WatchHistory) {
+                    WatchHistory.add({
+                        slug: currentAnimeSlug,
+                        title: currentAnimeTitle,
+                        img: currentAnimeImg,
+                        episode: 'Episode ' + currentActiveEp,
+                        episodeNum: currentActiveEp,
+                        episodeTitle: currentEpTitle,
+                        time: initialTime || 0,
+                        link: '/anime/' + currentAnimeSlug + '/?ep=' + encodeURIComponent(currentActiveEp) + (initialTime > 5 ? ('&t=' + Math.floor(initialTime)) : '')
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('History record error:', e);
+        }
+    })();
 
     window.currentEpisodeServers = [
         {{ range .Videos }}
@@ -546,8 +586,55 @@
     })();
     window.activeArtplayerInstance = null;
 
+    var lastPlaybackSaveTimestamp = 0;
+    function savePlaybackProgress(currentTime, duration) {
+        if (!currentTime || currentTime < 2 || !currentAnimeSlug) return;
+        var now = Date.now();
+        if (now - lastPlaybackSaveTimestamp > 2500) {
+            lastPlaybackSaveTimestamp = now;
+            if (window.WatchHistory) {
+                WatchHistory.add({
+                    slug: currentAnimeSlug,
+                    title: currentAnimeTitle,
+                    img: currentAnimeImg,
+                    episode: 'Episode ' + currentActiveEp,
+                    episodeNum: currentActiveEp,
+                    episodeTitle: currentEpTitle,
+                    time: currentTime,
+                    duration: duration
+                });
+            }
+        }
+    }
+
+    // Interval to track progress from any native video elements
+    if (window.nyamimoProgressTimer) clearInterval(window.nyamimoProgressTimer);
+    window.nyamimoProgressTimer = setInterval(function() {
+        var vid = document.querySelector('#player-iframe-container video');
+        if (vid && !vid.paused && vid.currentTime > 2) {
+            savePlaybackProgress(vid.currentTime, vid.duration);
+        }
+    }, 3000);
+
+    function fallbackToIframe(container, videoUrl, rawHtml) {
+        var existingIframe = container.querySelector('iframe');
+        if (existingIframe && videoUrl && existingIframe.src === videoUrl) {
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        if (rawHtml && rawHtml.trim() !== '' && rawHtml.includes('<iframe')) {
+            container.innerHTML = rawHtml;
+        } else if (videoUrl && videoUrl.trim() !== '') {
+            container.innerHTML = '<iframe id="player-iframe" src="' + videoUrl + '" class="w-full h-full border-0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>';
+        } else {
+            container.innerHTML = '<div class="flex flex-col items-center justify-center p-8 text-center space-y-4 max-w-lg mx-auto"><div class="w-14 h-14 rounded-2xl bg-[#212126] border border-[#2B2B32] flex items-center justify-center text-[#FFCC00] shadow-md"><i data-lucide="tv" class="w-7 h-7"></i></div><div class="space-y-1"><h3 class="text-base sm:text-lg font-bold font-title text-white">Video Sedang Diproses</h3><p class="text-xs text-[#A0A0A8]">Silakan pilih server alternatif di bawah.</p></div></div>';
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+
     function initHybridPlayer(videoUrl, rawHtml) {
-        const container = document.getElementById('player-iframe-container');
+        var container = document.getElementById('player-iframe-container');
         if (!container) return;
 
         // Destroy previous Artplayer instance to free memory & audio
@@ -561,22 +648,19 @@
         }
 
         // Check if stream is direct media (MP4, M3U8, Pixeldrain direct file)
-        const combined = ((videoUrl || '') + ' ' + (rawHtml || '')).toLowerCase();
-        const isDirect = combined.includes('.mp4') || combined.includes('.m3u8') || combined.includes('pixeldrain.com/api/file/');
+        var combined = ((videoUrl || '') + ' ' + (rawHtml || '')).toLowerCase();
+        var isDirect = combined.includes('.mp4') || combined.includes('.m3u8') || combined.includes('pixeldrain.com/api/file/');
 
         if (isDirect && window.Artplayer) {
-            let directUrl = videoUrl;
+            var directUrl = videoUrl;
             if (!directUrl || (!directUrl.includes('.mp4') && !directUrl.includes('.m3u8') && !directUrl.includes('pixeldrain.com/api/file/'))) {
-                const m = (rawHtml || '').match(/src=["']([^"']+\.(?:mp4|m3u8)[^"']*)["']/i) || (rawHtml || '').match(/src=["']([^"']*pixeldrain\.com\/api\/file\/[^"']*)["']/i);
+                var m = (rawHtml || '').match(/src=["']([^"']+\.(?:mp4|m3u8)[^"']*)["']/i) || (rawHtml || '').match(/src=["']([^"']*pixeldrain\.com\/api\/file\/[^"']*)["']/i);
                 if (m && m[1]) directUrl = m[1];
             }
 
             if (directUrl) {
                 container.innerHTML = '<div id="nyamimo-artplayer" class="w-full h-full"></div>';
                 try {
-                    const progressKey = 'nyamimo_ep_progress_' + window.location.pathname;
-                    const savedTime = parseFloat(localStorage.getItem(progressKey) || '0');
-
                     window.activeArtplayerInstance = new Artplayer({
                         container: '#nyamimo-artplayer',
                         url: directUrl,
@@ -629,17 +713,20 @@
                     });
 
                     window.activeArtplayerInstance.on('ready', () => {
-                        if (savedTime > 10 && savedTime < (window.activeArtplayerInstance.duration - 30)) {
-                            window.activeArtplayerInstance.currentTime = savedTime;
-                            window.activeArtplayerInstance.notice.show = 'Melanjutkan dari episode sebelumnya...';
+                        var urlParams = new URLSearchParams(window.location.search);
+                        var targetSeekTime = urlParams.has('t') ? (parseFloat(urlParams.get('t')) || 0) : 0;
+                        if (targetSeekTime > 5) {
+                            window.activeArtplayerInstance.currentTime = targetSeekTime;
+                            var formattedTime = window.formatWatchTime ? formatWatchTime(targetSeekTime) : (targetSeekTime + 's');
+                            window.activeArtplayerInstance.notice.show = '⏩ Melanjutkan dari menit ' + formattedTime;
                         }
                         if (window.serverWatchdogTimer) clearTimeout(window.serverWatchdogTimer);
                         hideServerToast();
                     });
 
                     window.activeArtplayerInstance.on('video:timeupdate', () => {
-                        if (window.activeArtplayerInstance && window.activeArtplayerInstance.currentTime > 5) {
-                            localStorage.setItem(progressKey, window.activeArtplayerInstance.currentTime);
+                        if (window.activeArtplayerInstance) {
+                            savePlaybackProgress(window.activeArtplayerInstance.currentTime, window.activeArtplayerInstance.duration);
                         }
                     });
 
@@ -655,18 +742,59 @@
             }
         }
 
-        // Fallback to responsive iframe/raw
+        // Non-direct media (Blogger, Proxy, Embed iframe): render directly to container!
         fallbackToIframe(container, videoUrl, rawHtml);
     }
 
-    function fallbackToIframe(container, videoUrl, rawHtml) {
-        if (rawHtml && rawHtml.trim() !== '') {
-            container.innerHTML = rawHtml;
-        } else if (videoUrl && videoUrl.trim() !== '') {
-            container.innerHTML = `<iframe id="player-iframe" src="${videoUrl}" class="w-full h-full border-0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>`;
+    // Listen for progress and ready events from iframe proxy player
+    window.addEventListener('message', function(evt) {
+        if (!evt.data) return;
+        if (evt.data.type === 'nyamimo-video-progress' && typeof evt.data.currentTime === 'number') {
+            savePlaybackProgress(evt.data.currentTime, evt.data.duration);
+        } else if (evt.data.type === 'nyamimo-player-ready') {
+            var urlParams = new URLSearchParams(window.location.search);
+            var targetSeek = urlParams.has('t') ? (parseFloat(urlParams.get('t')) || 0) : 0;
+            if (targetSeek > 5) {
+                var ifr = document.querySelector('#player-iframe-container iframe');
+                if (ifr && ifr.contentWindow) {
+                    ifr.contentWindow.postMessage({ type: 'nyamimo-seek', time: targetSeek }, '*');
+                    var formattedTime = window.formatWatchTime ? formatWatchTime(targetSeek) : (targetSeek + 's');
+                    showServerToast('⏩ Melanjutkan dari menit ' + formattedTime);
+                    setTimeout(hideServerToast, 2500);
+                }
+            }
         }
-        if (window.lucide) lucide.createIcons();
+    });
+
+    function onPlayerIframeLoad() {
+        if (window.serverWatchdogTimer) clearTimeout(window.serverWatchdogTimer);
+        hideServerToast();
+        var urlParams = new URLSearchParams(window.location.search);
+        var lastWatched = window.WatchHistory ? WatchHistory.getBySlug(currentAnimeSlug) : null;
+        var targetSeek = 0;
+        if (urlParams.has('t')) {
+            targetSeek = parseFloat(urlParams.get('t')) || 0;
+        } else if (lastWatched && lastWatched.episodeNum === currentActiveEp && lastWatched.time > 5) {
+            targetSeek = parseFloat(lastWatched.time) || 0;
+        }
+        if (targetSeek > 5) {
+            setTimeout(function() {
+                var ifr = document.querySelector('#player-iframe-container iframe');
+                if (ifr && ifr.contentWindow) {
+                    ifr.contentWindow.postMessage({ type: 'nyamimo-seek', time: targetSeek }, '*');
+                    var formattedTime = window.formatWatchTime ? formatWatchTime(targetSeek) : (targetSeek + 's');
+                    showServerToast('⏩ Melanjutkan dari menit ' + formattedTime);
+                    setTimeout(hideServerToast, 2500);
+                }
+            }, 800);
+        }
     }
+    window.onPlayerIframeLoad = onPlayerIframeLoad;
+
+    function onPlayerIframeError() {
+        if (window.handleServerFailure) window.handleServerFailure();
+    }
+    window.onPlayerIframeError = onPlayerIframeError;
 
     function skipVideoIntro() {
         if (window.activeArtplayerInstance) {
@@ -1001,54 +1129,370 @@
     initHybridPlayer("{{.VideoURL}}", "");
     {{end}}
 
-    // ===== Prev / Next Episode Navigation =====
-    (function () {
-        const episodes = [
-            {{range .Detail.Episodes}}
-            { num: "{{.Number}}" },
-            {{end}}
-        ];
-        const currentNum = "{{.ActiveEpisodeNum}}";
-        const slug = "{{.Slug}}";
-        const currentIdx = episodes.findIndex(e => e.num === currentNum);
+    // ===== Seamless Episode Switching (No Page Refresh / SPA Mode) =====
+    function getAnimeMetadata() {
+        var el = document.getElementById('anime-meta-context');
+        return {
+            slug: el ? (el.getAttribute('data-slug') || '') : '',
+            title: el ? (el.getAttribute('data-title') || '') : '',
+            img: el ? (el.getAttribute('data-img') || '') : '',
+            activeEp: el ? (el.getAttribute('data-active-ep') || '1') : '1'
+        };
+    }
 
-        const btnPrev = document.getElementById('btn-prev-ep');
-        const btnNext = document.getElementById('btn-next-ep');
-        const prevLabel = document.getElementById('prev-ep-label');
-        const nextLabel = document.getElementById('next-ep-label');
+    function initEpisodeList() {
+        var buttons = document.querySelectorAll('.sidebar-ep-btn');
+        var list = [];
+        buttons.forEach(function(btn) {
+            list.push({
+                number: (btn.getAttribute('data-ep-num') || '').trim(),
+                detailEps: btn.getAttribute('data-detail-eps') || '',
+                title: btn.getAttribute('data-ep-title') || ''
+            });
+        });
+        window.allEpisodesList = list;
+    }
+    initEpisodeList();
+
+    function updatePrevNextButtons() {
+        var episodes = window.allEpisodesList || [];
+        var activeEp = (window.currentActiveEp || getAnimeMetadata().activeEp || '1').toString().trim();
+        var currentIdx = episodes.findIndex(function(e) { return e.number === activeEp; });
+
+        var btnPrev = document.getElementById('btn-prev-ep');
+        var btnNext = document.getElementById('btn-next-ep');
+        var prevLabel = document.getElementById('prev-ep-label');
+        var nextLabel = document.getElementById('next-ep-label');
 
         if (currentIdx > 0 && btnPrev) {
-            const prevEp = episodes[currentIdx - 1];
+            var prevEp = episodes[currentIdx - 1];
             btnPrev.style.display = 'flex';
-            btnPrev.title = 'Episode Sebelumnya (Eps ' + prevEp.num + ')';
-            if (prevLabel) prevLabel.textContent = 'Eps ' + prevEp.num;
-            btnPrev._epNum = prevEp.num;
+            btnPrev.title = 'Episode Sebelumnya (Eps ' + prevEp.number + ')';
+            if (prevLabel) prevLabel.textContent = 'Eps ' + prevEp.number;
+            btnPrev._epItem = prevEp;
+        } else if (btnPrev) {
+            btnPrev.style.display = 'none';
         }
+
         if (currentIdx >= 0 && currentIdx < episodes.length - 1 && btnNext) {
-            const nextEp = episodes[currentIdx + 1];
+            var nextEp = episodes[currentIdx + 1];
             btnNext.style.display = 'flex';
-            btnNext.title = 'Episode Berikutnya (Eps ' + nextEp.num + ')';
-            if (nextLabel) nextLabel.textContent = 'Eps ' + nextEp.num;
-            btnNext._epNum = nextEp.num;
+            btnNext.title = 'Episode Berikutnya (Eps ' + nextEp.number + ')';
+            if (nextLabel) nextLabel.textContent = 'Eps ' + nextEp.number;
+            btnNext._epItem = nextEp;
+        } else if (btnNext) {
+            btnNext.style.display = 'none';
+        }
+    }
+    updatePrevNextButtons();
+
+    window.goToPrevEpisode = function () {
+        var btn = document.getElementById('btn-prev-ep');
+        if (btn && btn._epItem) {
+            switchEpisodeAjax(null, null, btn._epItem.number, btn._epItem.detailEps, btn._epItem.title, true);
+        }
+    };
+
+    window.goToNextEpisode = function () {
+        var btn = document.getElementById('btn-next-ep');
+        if (btn && btn._epItem) {
+            switchEpisodeAjax(null, null, btn._epItem.number, btn._epItem.detailEps, btn._epItem.title, true);
+        }
+    };
+
+    function renderServerButtons(groupedVideos, videos) {
+        var container = document.getElementById('server-list-container');
+        if (!container) return;
+
+        if (!groupedVideos || Object.keys(groupedVideos).length === 0) {
+            container.innerHTML = '<p class="text-xs text-[#55555B]">Server dikonfigurasi otomatis dalam mode optimal.</p>';
+            return;
         }
 
-        window.goToPrevEpisode = function () {
-            const btn = document.getElementById('btn-prev-ep');
-            if (btn && btn._epNum) window.location.href = '/anime/' + slug + '/?ep=' + btn._epNum;
-        };
-        window.goToNextEpisode = function () {
-            const btn = document.getElementById('btn-next-ep');
-            if (btn && btn._epNum) window.location.href = '/anime/' + slug + '/?ep=' + btn._epNum;
-        };
+        var firstVideoPath = (videos && videos.length > 0) ? (videos[0].videoPath || videos[0].video || videos[0].Video) : '';
+        var html = '<div class="grid gap-3">';
+        for (var provider in groupedVideos) {
+            if (!groupedVideos.hasOwnProperty(provider)) continue;
+            var vList = groupedVideos[provider] || [];
+            html += '<div class="bg-[#F6F5F0] border border-[#E2E2DC] rounded-xl p-3">';
+            html += '<div class="text-[11px] font-extrabold font-title text-[#17171B] uppercase tracking-wider mb-2 flex items-center gap-1.5">';
+            html += '<i data-lucide="server" class="w-3.5 h-3.5 text-[#FFCC00]"></i> ' + provider;
+            html += '</div><div class="flex flex-wrap gap-2">';
+            vList.forEach(function(v) {
+                var vPath = v.videoPath || v.video || v.Video || '';
+                var vTitle = v.title || v.Title || '';
+                var isActive = (vPath === firstVideoPath);
+                var safePath = vPath.replace(/'/g, "\\'");
+                var safeTitle = vTitle.replace(/'/g, "\\'");
+                html += '<button type="button" data-video-path="' + safePath + '" data-video-title="' + safeTitle + '" ';
+                html += 'onclick="onServerBtnClick(this, \'' + safePath + '\', \'' + safeTitle + '\')" ';
+                html += 'class="server-btn px-3.5 py-1.5 rounded-lg text-xs font-bold font-title transition-all flex items-center gap-1.5 border shadow-sm cursor-pointer ' + (isActive ? 'active-server bg-[#17171B] text-[#FFCC00] border-[#17171B] ring-2 ring-[#FFCC00]/40 shadow-md' : 'bg-white text-[#1A1A1E] border-[#E2E2DC] hover:bg-[#FFCC00] hover:text-[#17171B]') + '">';
+                html += '<span class="server-active-dot w-2 h-2 rounded-full bg-[#FFCC00] animate-pulse ' + (isActive ? '' : 'hidden') + '"></span>';
+                html += '<span>' + vTitle + '</span>';
+                html += '</button>';
+            });
+            html += '</div></div>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+        if (window.lucide) lucide.createIcons();
+    }
 
-        // Auto-scroll episode grid to active episode
-        setTimeout(function () {
-            const activeEpEl = document.querySelector('.episode-scroll-container a.bg-\\[\\#17171B\\]');
-            if (activeEpEl) {
-                activeEpEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    window.onServerBtnClick = function(btnEl, videoPath, videoTitle) {
+        setActiveServerBtn(btnEl);
+        showServerToast('Beralih ke ' + videoTitle + '...');
+        if (window.autoSwitchServerEnabled) {
+            startServerHealthWatchdog();
+        } else {
+            clearAllServerTimers();
+        }
+        htmx.ajax('GET', '/api/video-url?path=' + encodeURIComponent(videoPath), {
+            target: '#player-iframe-container',
+            swap: 'innerHTML'
+        });
+    };
+
+    window.handleServerFailure = function() {
+        if (!window.currentEpisodeServers || window.currentEpisodeServers.length <= 1) return;
+        var currentIdx = window.activeServerIdx || 0;
+        if (currentIdx + 1 < window.currentEpisodeServers.length) {
+            var nextIdx = currentIdx + 1;
+            var nextServer = window.currentEpisodeServers[nextIdx];
+            window.activeServerIdx = nextIdx;
+            setActiveServerByIdx(nextIdx);
+            showServerToast('⚠️ Server lambat/bermasalah, beralih ke ' + nextServer.title + '...');
+            htmx.ajax('GET', '/api/video-url?path=' + encodeURIComponent(nextServer.videoPath), {
+                target: '#player-iframe-container',
+                swap: 'innerHTML'
+            });
+        }
+    };
+
+    // ===== Intelligent In-Memory RAM Caching & Episode Prefetching =====
+    window.episodeDataCache = window.episodeDataCache || {};
+
+    function applyEpisodeData(data, cleanEpNum) {
+        if (!data || data.status !== 'ok') return;
+
+        var serverVideos = (data.videos || []).map(function(v) {
+            return { id: v.id || v.ID, title: v.title || v.Title, videoPath: v.video || v.Video };
+        });
+        window.currentEpisodeServers = serverVideos;
+        window.activeServerIdx = 0;
+
+        // Update active server display text
+        var activeServerNameEl = document.getElementById('active-server-name');
+        if (activeServerNameEl && data.activeServerTitle) {
+            activeServerNameEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-[#FFCC00] animate-pulse"></span>' + data.activeServerTitle;
+        }
+
+        // Render updated server buttons
+        renderServerButtons(data.groupedVideos, serverVideos);
+
+        // Initialize player with instant cached stream
+        initHybridPlayer(data.videoURL, data.rawIframe);
+
+        if (window.autoSwitchServerEnabled) {
+            startServerHealthWatchdog();
+        }
+        hideServerToast();
+    }
+
+    function prefetchSingleEpisode(epNum, detailEps, epTitle) {
+        var numStr = (epNum || '').toString().trim();
+        if (!numStr || window.episodeDataCache[numStr]) return;
+
+        var meta = getAnimeMetadata();
+        var apiUrl = '/api/episode-data?detail_eps=' + encodeURIComponent(detailEps || '') + '&ep=' + encodeURIComponent(numStr) + '&title=' + encodeURIComponent(meta.title);
+        fetch(apiUrl)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.status === 'ok') {
+                    window.episodeDataCache[numStr] = data;
+                }
+            })
+            .catch(function() {});
+    }
+
+    function prefetchAdjacentEpisodes() {
+        var episodes = window.allEpisodesList || [];
+        var activeEp = (window.currentActiveEp || getAnimeMetadata().activeEp || '1').toString().trim();
+        var currentIdx = episodes.findIndex(function(e) { return e.number === activeEp; });
+        if (currentIdx === -1) return;
+
+        // 1. Instantly prefetch Next Episode (Episode Selanjutnya)
+        if (currentIdx + 1 < episodes.length) {
+            var next = episodes[currentIdx + 1];
+            prefetchSingleEpisode(next.number, next.detailEps, next.title);
+        }
+        // 2. Prefetch Previous Episode (Episode Sebelumnya)
+        if (currentIdx - 1 >= 0) {
+            var prev = episodes[currentIdx - 1];
+            setTimeout(function() {
+                prefetchSingleEpisode(prev.number, prev.detailEps, prev.title);
+            }, 600);
+        }
+        // 3. Prefetch Next + 2
+        if (currentIdx + 2 < episodes.length) {
+            var next2 = episodes[currentIdx + 2];
+            setTimeout(function() {
+                prefetchSingleEpisode(next2.number, next2.detailEps, next2.title);
+            }, 1200);
+        }
+        // 4. Background prefetch remaining episodes progressively into RAM
+        episodes.forEach(function(ep, i) {
+            if (Math.abs(i - currentIdx) > 2) {
+                setTimeout(function() {
+                    prefetchSingleEpisode(ep.number, ep.detailEps, ep.title);
+                }, 2500 + i * 600);
             }
-        }, 300);
-    })();
-    // ===== End Prev / Next Episode Navigation =====
+        });
+    }
+
+    window.switchEpisodeAjax = function(event, el, epNum, detailEps, epTitle, shouldPushState) {
+        if (event) {
+            if (event.preventDefault) event.preventDefault();
+            if (event.stopPropagation) event.stopPropagation();
+        }
+        if (shouldPushState === undefined) shouldPushState = true;
+
+        var meta = getAnimeMetadata();
+        if (el) {
+            if (!epNum) epNum = el.getAttribute('data-ep-num');
+            if (!detailEps) detailEps = el.getAttribute('data-detail-eps');
+            if (!epTitle) epTitle = el.getAttribute('data-ep-title');
+        }
+
+        var cleanEpNum = (epNum || '1').toString().trim();
+        window.currentActiveEp = cleanEpNum;
+        window.currentEpTitle = epTitle || ('Episode ' + cleanEpNum);
+
+        // 1. Update UI Headline & Breadcrumb
+        var badgeEl = document.getElementById('headline-badge-ep');
+        if (badgeEl) badgeEl.textContent = 'EPISODE ' + cleanEpNum;
+
+        var breadcrumbEl = document.getElementById('breadcrumb-ep-num');
+        if (breadcrumbEl) breadcrumbEl.textContent = 'Episode ' + cleanEpNum;
+
+        var titleEl = document.getElementById('headline-main-title');
+        if (titleEl) {
+            var subText = (window.currentEpTitle && !window.currentEpTitle.startsWith('Episode')) ? (': ' + window.currentEpTitle) : '';
+            titleEl.textContent = meta.title + ' — Episode ' + cleanEpNum + subText;
+        }
+
+        // 2. Update Sidebar Active Button Styles
+        document.querySelectorAll('.sidebar-ep-btn').forEach(function(btn) {
+            btn.classList.remove('bg-[#17171B]', 'text-white', 'border-[#17171B]', 'ring-2', 'ring-[#17171B]', 'active-ep-btn', 'shadow-sm');
+            btn.classList.add('bg-[#F6F5F0]', 'text-[#1A1A1E]', 'border-[#E2E2DC]');
+            var dot = btn.querySelector('.ep-active-dot');
+            if (dot) dot.classList.add('hidden');
+        });
+
+        var targetBtn = el || document.querySelector('.sidebar-ep-btn[data-ep-num="' + cleanEpNum + '"]');
+        if (targetBtn) {
+            targetBtn.classList.remove('bg-[#F6F5F0]', 'text-[#1A1A1E]', 'border-[#E2E2DC]');
+            targetBtn.classList.add('bg-[#17171B]', 'text-white', 'border-[#17171B]', 'ring-2', 'ring-[#17171B]', 'active-ep-btn', 'shadow-sm');
+            var dot = targetBtn.querySelector('.ep-active-dot');
+            if (dot) dot.classList.remove('hidden');
+            targetBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+
+        // 3. Update Browser URL cleanly without reload
+        if (shouldPushState && meta.slug) {
+            var newUrl = '/anime/' + meta.slug + '/?ep=' + encodeURIComponent(cleanEpNum);
+            window.history.pushState({ ep: cleanEpNum, detailEps: detailEps, epTitle: epTitle }, '', newUrl);
+        }
+
+        // 4. Record to WatchHistory
+        if (window.WatchHistory && meta.slug) {
+            try {
+                WatchHistory.add({
+                    slug: meta.slug,
+                    title: meta.title,
+                    img: meta.img,
+                    episode: 'Episode ' + cleanEpNum,
+                    episodeNum: cleanEpNum,
+                    episodeTitle: window.currentEpTitle,
+                    time: 0,
+                    link: '/anime/' + meta.slug + '/?ep=' + encodeURIComponent(cleanEpNum)
+                });
+            } catch(e) {
+                console.warn('WatchHistory add error:', e);
+            }
+        }
+
+        // 5. Update Prev/Next buttons
+        updatePrevNextButtons();
+
+        // 6. Check In-Memory RAM Cache for instant 0ms episode switch!
+        if (window.episodeDataCache && window.episodeDataCache[cleanEpNum]) {
+            var cachedData = window.episodeDataCache[cleanEpNum];
+            applyEpisodeData(cachedData, cleanEpNum);
+            prefetchAdjacentEpisodes();
+            return false;
+        }
+
+        // 7. If not yet in RAM cache, show loading spinner and fetch
+        var container = document.getElementById('player-iframe-container');
+        if (container) {
+            container.innerHTML = '<div class="flex flex-col items-center justify-center p-8 text-center space-y-4 max-w-lg mx-auto"><div class="w-10 h-10 border-4 border-[#FFCC00] border-t-transparent rounded-full animate-spin"></div><div class="space-y-1"><h3 class="text-sm font-bold font-title text-white">Memuat Episode ' + cleanEpNum + '...</h3><p class="text-xs text-[#A0A0A8]">Menghubungkan server pemutar terbaik...</p></div></div>';
+            if (window.lucide) lucide.createIcons();
+        }
+
+        showServerToast('Memuat Episode ' + cleanEpNum + '...');
+
+        if (!detailEps && window.allEpisodesList) {
+            var found = window.allEpisodesList.find(function(e) { return e.number === cleanEpNum; });
+            if (found) {
+                detailEps = found.detailEps;
+                if (!epTitle) epTitle = found.title;
+            }
+        }
+
+        var apiUrl = '/api/episode-data?detail_eps=' + encodeURIComponent(detailEps || '') + '&ep=' + encodeURIComponent(cleanEpNum) + '&title=' + encodeURIComponent(meta.title);
+        fetch(apiUrl)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.status === 'ok') {
+                    window.episodeDataCache[cleanEpNum] = data; // Save to client RAM cache
+                    applyEpisodeData(data, cleanEpNum);
+                    prefetchAdjacentEpisodes(); // Keep prefetching ahead
+                } else {
+                    showServerToast('⚠️ Gagal memuat video episode ini');
+                }
+            })
+            .catch(function(err) {
+                console.error('Failed to load episode data:', err);
+                showServerToast('⚠️ Gagal terhubung ke server episode');
+            });
+
+        return false;
+    };
+
+    // Listen to browser Back/Forward navigation
+    window.addEventListener('popstate', function(event) {
+        var urlParams = new URLSearchParams(window.location.search);
+        var targetEp = urlParams.get('ep') || '1';
+        if (window.allEpisodesList) {
+            var found = window.allEpisodesList.find(function(e) { return e.number === targetEp; });
+            if (found) {
+                switchEpisodeAjax(null, null, found.number, found.detailEps, found.title, false);
+            }
+        }
+    });
+
+    // Start background prefetching of adjacent episodes immediately on page load
+    setTimeout(function () {
+        prefetchAdjacentEpisodes();
+    }, 1000);
+
+    // Auto-scroll episode grid to active episode on initial load
+    setTimeout(function () {
+        var activeEpEl = document.querySelector('.sidebar-episode-container .active-ep-btn');
+        if (activeEpEl) {
+            activeEpEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }, 300);
+    // ===== End Seamless Episode Switching =====
 </script>
 {{end}}

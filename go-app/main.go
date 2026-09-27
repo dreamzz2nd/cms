@@ -1,17 +1,22 @@
 package main
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"nyamimo-go/client"
@@ -116,7 +121,37 @@ type User struct {
 	Password         string `json:"password"`
 	Name             string `json:"name"`
 	Role             string `json:"role"` // "admin" or "user"
+	Email            string `json:"email,omitempty"`
+	Avatar           string `json:"avatar,omitempty"`
+	GoogleID         string `json:"google_id,omitempty"`
 	AutoSwitchServer *bool  `json:"auto_switch_server,omitempty"`
+}
+
+type WatchHistoryItem struct {
+	Slug              string  `json:"slug"`
+	Title             string  `json:"title"`
+	Img               string  `json:"img"`
+	Episode           string  `json:"episode"`
+	EpisodeNum        string  `json:"episodeNum"`
+	EpisodeTitle      string  `json:"episodeTitle"`
+	Time              float64 `json:"time"`
+	Duration          float64 `json:"duration"`
+	TimeFormatted     string  `json:"timeFormatted"`
+	DurationFormatted string  `json:"durationFormatted"`
+	ProgressPercent   int     `json:"progressPercent"`
+	Link              string  `json:"link"`
+	UpdatedAt         int64   `json:"updatedAt"`
+}
+
+type ProgressRequest struct {
+	Slug         string  `json:"slug"`
+	Title        string  `json:"title"`
+	Img          string  `json:"img"`
+	Episode      string  `json:"episode"`
+	EpisodeNum   string  `json:"episodeNum"`
+	EpisodeTitle string  `json:"episodeTitle"`
+	Time         float64 `json:"time"`
+	Duration     float64 `json:"duration"`
 }
 
 type ProfilePageData struct {
@@ -135,6 +170,32 @@ type AuthPageData struct {
 	ErrorMessage string
 }
 
+type AdSlot struct {
+	Enabled bool   `json:"enabled"`
+	Title   string `json:"title"`
+	Code    string `json:"code"`
+}
+
+type AdSettings struct {
+	HeaderBanner AdSlot `json:"header_banner"`
+	BelowPlayer  AdSlot `json:"below_player"`
+	Popunder     AdSlot `json:"popunder"`
+	FooterBanner AdSlot `json:"footer_banner"`
+}
+
+type AppConfig struct {
+	SiteName           string     `json:"site_name"`
+	SiteTagline        string     `json:"site_tagline"`
+	SiteLogo           string     `json:"site_logo"`
+	SiteFavicon        string     `json:"site_favicon"`
+	PrimaryColor       string     `json:"primary_color"`
+	APIBaseURL         string     `json:"api_base_url"`
+	Port               string     `json:"port"`
+	GoogleClientID     string     `json:"google_client_id"`
+	GoogleClientSecret string     `json:"google_client_secret"`
+	Ads                AdSettings `json:"ads"`
+}
+
 type AdminDashboardData struct {
 	SEOData
 	Title              string
@@ -147,6 +208,14 @@ type AdminDashboardData struct {
 	UsersList          []User
 	HeroAnime          []client.AnimeItem
 	PopularAnime       []client.AnimeItem
+	Config             AppConfig
+	SavedNotice        string
+	// Visitor Stats
+	TotalPageViews    int64
+	TodayPageViews    int64
+	UniqueVisitors    int64
+	TodayUniqueVisitors int64
+	PopularPages      []PageViewStat
 }
 
 type ResolutionOption struct {
@@ -223,6 +292,116 @@ var defaultHDHeroAnime = []client.AnimeItem{
 
 var serverStartTime = time.Now()
 
+// ─── Visitor / Analytics Tracking ───────────────────────────────────────────
+
+type PageViewStat struct {
+	Path  string
+	Views int64
+}
+
+var (
+	// Atomic counters – safe to read/write without mutex
+	totalPageViews int64
+	todayPageViews int64
+
+	// Unique visitor sets (IP → struct{})
+	visitorLock          sync.RWMutex
+	allTimeVisitors      = make(map[string]struct{})
+	todayVisitors        = make(map[string]struct{})
+	visitorDayReset      = time.Now().Truncate(24 * time.Hour)
+
+	// Per-page view counter
+	pageViewLock sync.RWMutex
+	pageViews    = make(map[string]int64)
+)
+
+// getClientIP extracts the real IP from the request.
+func getClientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		return strings.TrimSpace(parts[0])
+	}
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return strings.TrimSpace(xri)
+	}
+	host := r.RemoteAddr
+	if idx := strings.LastIndex(host, ":"); idx != -1 {
+		return host[:idx]
+	}
+	return host
+}
+
+// recordVisit tracks a page request. Call at the top of every page handler.
+func recordVisit(r *http.Request) {
+	// Skip API, static, and admin endpoints
+	p := r.URL.Path
+	if strings.HasPrefix(p, "/api/") ||
+		strings.HasPrefix(p, "/static/") ||
+		strings.HasPrefix(p, "/admin") ||
+		p == "/favicon.ico" || p == "/robots.txt" || p == "/sitemap.xml" {
+		return
+	}
+
+	atomic.AddInt64(&totalPageViews, 1)
+
+	// Daily reset check
+	visitorLock.Lock()
+	today := time.Now().Truncate(24 * time.Hour)
+	if today.After(visitorDayReset) {
+		visitorDayReset = today
+		todayVisitors = make(map[string]struct{})
+		atomic.StoreInt64(&todayPageViews, 0)
+	}
+	atomic.AddInt64(&todayPageViews, 1)
+
+	ip := getClientIP(r)
+	allTimeVisitors[ip] = struct{}{}
+	todayVisitors[ip] = struct{}{}
+	visitorLock.Unlock()
+
+	// Per-page counter
+	pageViewLock.Lock()
+	pageViews[p]++
+	pageViewLock.Unlock()
+}
+
+// getVisitorStats returns a snapshot of visitor statistics.
+func getVisitorStats() (totalPV, todayPV, uniqueAll, uniqueToday int64, topPages []PageViewStat) {
+	totalPV = atomic.LoadInt64(&totalPageViews)
+	todayPV = atomic.LoadInt64(&todayPageViews)
+
+	visitorLock.RLock()
+	uniqueAll = int64(len(allTimeVisitors))
+	uniqueToday = int64(len(todayVisitors))
+	visitorLock.RUnlock()
+
+	pageViewLock.RLock()
+	type kv struct {
+		Path  string
+		Views int64
+	}
+	var sorted []kv
+	for k, v := range pageViews {
+		sorted = append(sorted, kv{k, v})
+	}
+	pageViewLock.RUnlock()
+
+	// Simple insertion sort (list is small)
+	for i := 1; i < len(sorted); i++ {
+		for j := i; j > 0 && sorted[j].Views > sorted[j-1].Views; j-- {
+			sorted[j], sorted[j-1] = sorted[j-1], sorted[j]
+		}
+	}
+	max := 8
+	if len(sorted) < max {
+		max = len(sorted)
+	}
+	for _, item := range sorted[:max] {
+		topPages = append(topPages, PageViewStat{Path: item.Path, Views: item.Views})
+	}
+	return
+}
+
 var (
 	usersDb = map[string]User{
 		"admin": {
@@ -239,7 +418,278 @@ var (
 		},
 	}
 	usersDbLock sync.RWMutex
+	usersFile   = "data/users.json"
+
+	watchHistoryDb     = make(map[string][]WatchHistoryItem)
+	watchHistoryDbLock sync.RWMutex
+	watchHistoryFile   = "data/watch_history.json"
+
+	appConfig     AppConfig
+	appConfigLock sync.RWMutex
+	configPath    = "config.json"
 )
+
+func initUsersDb() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := os.ReadFile(usersFile); err == nil {
+		usersDbLock.Lock()
+		_ = json.Unmarshal(data, &usersDb)
+		usersDbLock.Unlock()
+	}
+}
+
+func saveUsersDbUnsafe() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := json.MarshalIndent(usersDb, "", "  "); err == nil {
+		_ = os.WriteFile(usersFile, data, 0644)
+	}
+}
+
+func initWatchHistory() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := os.ReadFile(watchHistoryFile); err == nil {
+		watchHistoryDbLock.Lock()
+		_ = json.Unmarshal(data, &watchHistoryDb)
+		watchHistoryDbLock.Unlock()
+	}
+}
+
+func saveWatchHistoryUnsafe() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := json.MarshalIndent(watchHistoryDb, "", "  "); err == nil {
+		_ = os.WriteFile(watchHistoryFile, data, 0644)
+	}
+}
+
+func formatTimeSec(sec float64) string {
+	if sec <= 0 {
+		return "00:00"
+	}
+	s := int(sec)
+	hrs := s / 3600
+	mins := (s % 3600) / 60
+	secs := s % 60
+	if hrs > 0 {
+		return fmt.Sprintf("%02d:%02d:%02d", hrs, mins, secs)
+	}
+	return fmt.Sprintf("%02d:%02d", mins, secs)
+}
+
+func getOrSetGuestID(w http.ResponseWriter, r *http.Request) string {
+	if c, err := r.Cookie("nyamimo_guest_id"); err == nil && strings.TrimSpace(c.Value) != "" {
+		return c.Value
+	}
+	guestID := "g_" + strconv.FormatInt(time.Now().UnixNano(), 36)
+	if w != nil {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "nyamimo_guest_id",
+			Value:    guestID,
+			Path:     "/",
+			MaxAge:   3600 * 24 * 90, // 90 days
+			HttpOnly: false,
+		})
+	}
+	return guestID
+}
+
+func getHistoryStorageKey(w http.ResponseWriter, r *http.Request) string {
+	if u := getLoggedInUser(r); u != nil {
+		return "user:" + u.Username
+	}
+	return "guest:" + getOrSetGuestID(w, r)
+}
+
+func upsertWatchHistory(key string, req ProgressRequest) WatchHistoryItem {
+	cleanSlug := strings.Trim(strings.TrimSpace(req.Slug), "\"'/")
+	epNum := strings.TrimSpace(req.EpisodeNum)
+	if epNum == "" {
+		epNum = "1"
+	}
+	epDisplay := "Episode " + epNum
+	timeFmt := formatTimeSec(req.Time)
+	durFmt := formatTimeSec(req.Duration)
+	progressPct := 0
+	if req.Duration > 0 {
+		progressPct = int(math.Min(100, math.Round((req.Time/req.Duration)*100)))
+	}
+	cleanLink := fmt.Sprintf("/anime/%s/?ep=%s", url.PathEscape(cleanSlug), url.QueryEscape(epNum))
+	if req.Time > 5 {
+		cleanLink += fmt.Sprintf("&t=%d", int(req.Time))
+	}
+
+	item := WatchHistoryItem{
+		Slug:              cleanSlug,
+		Title:             strings.TrimSpace(req.Title),
+		Img:               strings.TrimSpace(req.Img),
+		Episode:           epDisplay,
+		EpisodeNum:        epNum,
+		EpisodeTitle:      strings.TrimSpace(req.EpisodeTitle),
+		Time:              math.Floor(req.Time),
+		Duration:          math.Floor(req.Duration),
+		TimeFormatted:     timeFmt,
+		DurationFormatted: durFmt,
+		ProgressPercent:   progressPct,
+		Link:              cleanLink,
+		UpdatedAt:         time.Now().UnixMilli(),
+	}
+
+	watchHistoryDbLock.Lock()
+	defer watchHistoryDbLock.Unlock()
+
+	list := watchHistoryDb[key]
+	var newList []WatchHistoryItem
+	for _, it := range list {
+		if it.Slug != cleanSlug {
+			newList = append(newList, it)
+		}
+	}
+	newList = append([]WatchHistoryItem{item}, newList...)
+	if len(newList) > 50 {
+		newList = newList[:50]
+	}
+	watchHistoryDb[key] = newList
+	saveWatchHistoryUnsafe()
+	return item
+}
+
+func mergeGuestHistory(w http.ResponseWriter, r *http.Request, username string) {
+	cookie, err := r.Cookie("nyamimo_guest_id")
+	if err != nil || cookie.Value == "" {
+		return
+	}
+	guestKey := "guest:" + cookie.Value
+	userKey := "user:" + username
+
+	watchHistoryDbLock.Lock()
+	defer watchHistoryDbLock.Unlock()
+
+	guestList := watchHistoryDb[guestKey]
+	if len(guestList) == 0 {
+		return
+	}
+
+	userList := watchHistoryDb[userKey]
+	slugMap := make(map[string]WatchHistoryItem)
+	for _, item := range userList {
+		slugMap[item.Slug] = item
+	}
+	for _, item := range guestList {
+		if existing, exists := slugMap[item.Slug]; exists {
+			if item.UpdatedAt > existing.UpdatedAt {
+				slugMap[item.Slug] = item
+			}
+		} else {
+			slugMap[item.Slug] = item
+		}
+	}
+
+	var merged []WatchHistoryItem
+	for _, it := range slugMap {
+		merged = append(merged, it)
+	}
+	sort.Slice(merged, func(i, j int) bool {
+		return merged[i].UpdatedAt > merged[j].UpdatedAt
+	})
+	if len(merged) > 50 {
+		merged = merged[:50]
+	}
+
+	watchHistoryDb[userKey] = merged
+	delete(watchHistoryDb, guestKey)
+	saveWatchHistoryUnsafe()
+}
+
+func getDefaultConfig() AppConfig {
+	return AppConfig{
+		SiteName:           "Nyamimo",
+		SiteTagline:        "Streaming Anime Sub Indo Tercepat & Terlengkap",
+		SiteLogo:           "/static/logo.png",
+		SiteFavicon:        "/static/logo.png",
+		PrimaryColor:       "#FFCC00",
+		APIBaseURL:         "https://api.animekudesu.web.id",
+		Port:               "3000",
+		GoogleClientID:     "494465077307-bt9dlfv5ungb9gd7ectnln3auu77edlm.apps.googleusercontent.com",
+		GoogleClientSecret: "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",
+		Ads: AdSettings{
+			HeaderBanner: AdSlot{
+				Enabled: false,
+				Title:   "Header Top Banner (728x90 / Responsive)",
+				Code:    "<div class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#FFCC00]/50 rounded-xl text-center text-xs text-[#55555B]\">🚀 Pasang Iklan Banner Header di Sini (Atur di Dashboard Admin)</div>",
+			},
+			BelowPlayer: AdSlot{
+				Enabled: false,
+				Title:   "Bawah Pemutar Video",
+				Code:    "<div class=\"w-full max-w-4xl mx-auto my-3 p-4 bg-[#FFCC00]/10 border border-dashed border-[#FFCC00] rounded-xl text-center text-xs font-bold text-[#17171B]\">🎬 Slot Iklan Bawah Player (Adsterra / Popunder / Banner)</div>",
+			},
+			Popunder: AdSlot{
+				Enabled: false,
+				Title:   "Popunder / Direct Script (Head/Body Script)",
+				Code:    "<!-- Script Popunder atau Monetag / Adsterra / Adsense ditaruh di sini -->",
+			},
+			FooterBanner: AdSlot{
+				Enabled: false,
+				Title:   "Footer Sticky / Bottom Banner",
+				Code:    "<div class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#E2E2DC] rounded-xl text-center text-xs text-[#55555B]\">📢 Pasang Iklan Footer di Sini</div>",
+			},
+		},
+	}
+}
+
+func loadAppConfig() {
+	appConfigLock.Lock()
+	defer appConfigLock.Unlock()
+
+	appConfig = getDefaultConfig()
+
+	data, err := os.ReadFile(configPath)
+	if err == nil {
+		if err := json.Unmarshal(data, &appConfig); err != nil {
+			log.Printf("Warning: Failed to parse config.json, using defaults: %v", err)
+		}
+	} else {
+		_ = saveAppConfigUnsafe()
+	}
+
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		appConfig.Port = envPort
+	}
+	if envAPI := os.Getenv("API_BASE_URL"); envAPI != "" {
+		appConfig.APIBaseURL = envAPI
+	}
+	if envSite := os.Getenv("SITE_NAME"); envSite != "" {
+		appConfig.SiteName = envSite
+	}
+	if envGoogleID := os.Getenv("GOOGLE_CLIENT_ID"); envGoogleID != "" {
+		appConfig.GoogleClientID = envGoogleID
+	}
+	if envGoogleSec := os.Getenv("GOOGLE_CLIENT_SECRET"); envGoogleSec != "" {
+		appConfig.GoogleClientSecret = envGoogleSec
+	}
+
+	if api != nil && appConfig.APIBaseURL != "" {
+		api.SetBaseURL(appConfig.APIBaseURL)
+	}
+}
+
+func saveAppConfigUnsafe() error {
+	data, err := json.MarshalIndent(appConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func saveAppConfig() error {
+	appConfigLock.Lock()
+	defer appConfigLock.Unlock()
+	return saveAppConfigUnsafe()
+}
+
+func getAppConfig() AppConfig {
+	appConfigLock.RLock()
+	defer appConfigLock.RUnlock()
+	return appConfig
+}
 
 func getLoggedInUser(r *http.Request) *User {
 	cookie, err := r.Cookie("user_session")
@@ -257,6 +707,9 @@ func getLoggedInUser(r *http.Request) *User {
 func main() {
 	// Initialize API client with 10-minute cache TTL
 	api = client.NewAPIClient(10 * time.Minute)
+	loadAppConfig()
+	initUsersDb()
+	initWatchHistory()
 
 	mux := http.NewServeMux()
 
@@ -280,13 +733,19 @@ func main() {
 	mux.HandleFunc("/robots.txt", handleRobotsTXT)
 	mux.HandleFunc("/sitemap.xml", handleSitemapXML)
 
-	// Auth Routes
+	// Auth Routes (Local & Google OAuth 2.0)
 	mux.HandleFunc("/login", handleLogin)
 	mux.HandleFunc("/api/login", handleLoginAPI)
 	mux.HandleFunc("/api/google-login", handleGoogleLoginAPI)
+	mux.HandleFunc("/api/auth/google/callback", handleGoogleCallbackAPI)
 	mux.HandleFunc("/register", handleRegister)
 	mux.HandleFunc("/api/register", handleRegisterAPI)
 	mux.HandleFunc("/logout", handleLogout)
+
+	// Watch History API Endpoints (Bilibili Anonymous Device/Session + User Sync Model)
+	mux.HandleFunc("/api/history", handleGetHistoryAPI)
+	mux.HandleFunc("/api/history/progress", handleHistoryProgressAPI)
+	mux.HandleFunc("/api/history/delete", handleHistoryDeleteAPI)
 
 	// Admin API Endpoints
 	mux.HandleFunc("/api/admin/clear-cache", handleAdminClearCache)
@@ -295,6 +754,8 @@ func main() {
 	mux.HandleFunc("/api/admin/carousel/delete", handleAdminCarouselDelete)
 	mux.HandleFunc("/api/admin/carousel/reset", handleAdminCarouselReset)
 	mux.HandleFunc("/api/admin/wallpaper-search", handleWallpaperSearch)
+	mux.HandleFunc("/api/admin/ads/save", handleAdminAdsSave)
+	mux.HandleFunc("/api/admin/site/save", handleAdminSiteSave)
 
 	// HTMX Partial API Endpoints
 	mux.HandleFunc("/api/section/genre", handleSectionGenre)
@@ -302,21 +763,163 @@ func main() {
 	mux.HandleFunc("/api/notifications", handleNotifications)
 	mux.HandleFunc("/api/episode-modal", handleEpisodeModal)
 	mux.HandleFunc("/api/episode-inline", handleEpisodeInline)
+	mux.HandleFunc("/api/episode-data", handleEpisodeDataAPI)
 	mux.HandleFunc("/api/video-url", handleVideoURL)
 	mux.HandleFunc("/api/proxy-player", handleProxyPlayer)
-	// Static Files (Logo, Assets)
+	// Static Files with HTTP Cache Headers (Logo, Assets)
 	fs := http.FileServer(http.Dir("public"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800")
+		fs.ServeHTTP(w, r)
+	})))
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800")
 		http.ServeFile(w, r, "public/logo.png")
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
+	cfg := getAppConfig()
+	port := cfg.Port
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		port = envPort
 	}
-	fmt.Printf("🚀 Server Go + HTMX running on http://localhost:%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	if port == "" {
+		port = "8080"
+	}
+
+	// Gzip Compression Wrapper for ultra-lightweight network payload on mobile/low-end devices
+	serverHandler := gzipMiddleware(mux)
+
+	fmt.Printf("🚀 Server %s running on http://localhost:%s\n", cfg.SiteName, port)
+	log.Fatal(http.ListenAndServe(":"+port, serverHandler))
+}
+
+// ─── Gzip Compression Middleware ──────────────────────────────────────────────
+
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+	wroteHeader bool
+}
+
+func (w *gzipResponseWriter) WriteHeader(status int) {
+	w.Header().Del("Content-Length")
+	w.ResponseWriter.WriteHeader(status)
+	w.wroteHeader = true
+}
+
+func (w *gzipResponseWriter) Write(b []byte) (int, error) {
+	if !w.wroteHeader {
+		w.Header().Del("Content-Length")
+		w.ResponseWriter.WriteHeader(http.StatusOK)
+		w.wroteHeader = true
+	}
+	return w.Writer.Write(b)
+}
+
+func (w *gzipResponseWriter) Flush() {
+	if flusher, ok := w.Writer.(*gzip.Writer); ok {
+		_ = flusher.Flush()
+	}
+	if flusher, ok := w.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func gzipMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip gzip for direct video streams, proxy player, or clients that don't support gzip
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") || strings.HasPrefix(r.URL.Path, "/api/proxy-player") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Set("Vary", "Accept-Encoding")
+
+		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		defer gz.Close()
+
+		gzw := &gzipResponseWriter{Writer: gz, ResponseWriter: w}
+		next.ServeHTTP(gzw, r)
+	})
+}
+
+// ─── High-Performance Template Pre-parsing & In-Memory Cache ──────────────────
+
+var (
+	pageTemplateCache    = make(map[string]*template.Template)
+	partialTemplateCache = make(map[string]*template.Template)
+	templateCacheLock    sync.RWMutex
+)
+
+func getOrParsePageTemplate(pageTemplate string) (*template.Template, error) {
+	templateCacheLock.RLock()
+	t, ok := pageTemplateCache[pageTemplate]
+	templateCacheLock.RUnlock()
+	if ok {
+		return t, nil
+	}
+
+	templateCacheLock.Lock()
+	defer templateCacheLock.Unlock()
+	if t, ok := pageTemplateCache[pageTemplate]; ok {
+		return t, nil
+	}
+
+	tmpl, err := template.New("layout").Funcs(funcMap).ParseFiles(
+		"templates/layout.html",
+		"templates/navbar.html",
+		"templates/footer.html",
+		"templates/partials/section.html",
+		"templates/"+pageTemplate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	pageTemplateCache[pageTemplate] = tmpl
+	return tmpl, nil
+}
+
+func getOrParsePartialTemplate(partialTemplate string, templateName string) (*template.Template, error) {
+	cacheKey := partialTemplate + ":" + templateName
+	templateCacheLock.RLock()
+	t, ok := partialTemplateCache[cacheKey]
+	templateCacheLock.RUnlock()
+	if ok {
+		return t, nil
+	}
+
+	templateCacheLock.Lock()
+	defer templateCacheLock.Unlock()
+	if t, ok := partialTemplateCache[cacheKey]; ok {
+		return t, nil
+	}
+
+	var tmpl *template.Template
+	var err error
+	if strings.HasPrefix(partialTemplate, "templates/") {
+		tmpl, err = template.New(templateName).Funcs(funcMap).ParseFiles(partialTemplate)
+	} else if strings.HasSuffix(partialTemplate, ".html") && (partialTemplate == "anime_detail.html" || partialTemplate == "profile.html") {
+		tmpl, err = template.New(templateName).Funcs(funcMap).ParseFiles("templates/" + partialTemplate)
+	} else {
+		tmpl, err = template.New(templateName).Funcs(funcMap).ParseFiles("templates/partials/" + partialTemplate)
+	}
+	if err != nil {
+		return nil, err
+	}
+	partialTemplateCache[cacheKey] = tmpl
+	return tmpl, nil
+}
+
+func clearTemplateCache() {
+	templateCacheLock.Lock()
+	pageTemplateCache = make(map[string]*template.Template)
+	partialTemplateCache = make(map[string]*template.Template)
+	templateCacheLock.Unlock()
 }
 
 // Template Helper FuncMap
@@ -341,17 +944,39 @@ var funcMap = template.FuncMap{
 		count := api.GetTotalAnimeCount()
 		return fmt.Sprintf("%d+", count)
 	},
+	"siteConfig": func() AppConfig {
+		return getAppConfig()
+	},
+	"safeHTML": func(s string) template.HTML {
+		return template.HTML(s)
+	},
+	"getAdSlot": func(slotName string) template.HTML {
+		cfg := getAppConfig()
+		switch slotName {
+		case "header_banner":
+			if cfg.Ads.HeaderBanner.Enabled && strings.TrimSpace(cfg.Ads.HeaderBanner.Code) != "" {
+				return template.HTML(cfg.Ads.HeaderBanner.Code)
+			}
+		case "below_player":
+			if cfg.Ads.BelowPlayer.Enabled && strings.TrimSpace(cfg.Ads.BelowPlayer.Code) != "" {
+				return template.HTML(cfg.Ads.BelowPlayer.Code)
+			}
+		case "popunder":
+			if cfg.Ads.Popunder.Enabled && strings.TrimSpace(cfg.Ads.Popunder.Code) != "" {
+				return template.HTML(cfg.Ads.Popunder.Code)
+			}
+		case "footer_banner":
+			if cfg.Ads.FooterBanner.Enabled && strings.TrimSpace(cfg.Ads.FooterBanner.Code) != "" {
+				return template.HTML(cfg.Ads.FooterBanner.Code)
+			}
+		}
+		return ""
+	},
 }
 
-// Render Helper with layout
+// Render Helper with layout (Zero disk reads after first request)
 func renderPage(w http.ResponseWriter, pageTemplate string, data interface{}) {
-	tmpl, err := template.New("layout").Funcs(funcMap).ParseFiles(
-		"templates/layout.html",
-		"templates/navbar.html",
-		"templates/footer.html",
-		"templates/partials/section.html",
-		"templates/"+pageTemplate,
-	)
+	tmpl, err := getOrParsePageTemplate(pageTemplate)
 	if err != nil {
 		http.Error(w, "Template render error: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -363,9 +988,9 @@ func renderPage(w http.ResponseWriter, pageTemplate string, data interface{}) {
 	}
 }
 
-// Render Partial Helper
+// Render Partial Helper (Zero disk reads after first request)
 func renderPartial(w http.ResponseWriter, partialTemplate string, templateName string, data interface{}) {
-	tmpl, err := template.New(templateName).Funcs(funcMap).ParseFiles("templates/partials/" + partialTemplate)
+	tmpl, err := getOrParsePartialTemplate(partialTemplate, templateName)
 	if err != nil {
 		http.Error(w, "Partial error: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -380,6 +1005,7 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	recordVisit(r)
 
 	var newAnimeResp client.AnimeListResponse
 	_ = api.GetJSON("/new-anime", &newAnimeResp)
@@ -455,6 +1081,7 @@ func handleAnimeDetail(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
+	recordVisit(r)
 
 	var detail client.AnimeDetailData
 	err := api.GetJSON("/detail-anime/"+slug, &detail)
@@ -566,8 +1193,9 @@ func handleAnimeDetail(w http.ResponseWriter, r *http.Request) {
 				Response string `json:"response"`
 			}
 			_ = api.GetJSON(epsDetail.Videos[0].Video, &vidResp)
-			activeVideoURL = vidResp.URL
-			activeRawIframe = template.HTML(vidResp.Response)
+			formattedIframe, formattedURL := formatPlayerHTML(template.HTML(vidResp.Response), vidResp.URL)
+			activeVideoURL = formattedURL
+			activeRawIframe = formattedIframe
 		} else if epsDetail.VideoURL != "" && epsDetail.VideoURL != "belum tersedia (segera)" {
 			activeVideoURL = epsDetail.VideoURL
 		}
@@ -683,6 +1311,7 @@ func generateAnimeDetailJSONLD(detail client.AnimeDetailData, slug string) templ
 }
 
 func handlePopular(w http.ResponseWriter, r *http.Request) {
+	recordVisit(r)
 	order := r.URL.Query().Get("order")
 	if order == "" {
 		order = "popular"
@@ -727,6 +1356,7 @@ func handlePopular(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGenres(w http.ResponseWriter, r *http.Request) {
+	recordVisit(r)
 	var genresResp client.GenreListResponse
 	_ = api.GetJSON("/genres", &genresResp)
 
@@ -748,6 +1378,7 @@ func handleGenres(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGenreDetail(w http.ResponseWriter, r *http.Request) {
+	recordVisit(r)
 	id := strings.TrimPrefix(r.URL.Path, "/genres/")
 
 	var genresResp client.GenreListResponse
@@ -794,6 +1425,7 @@ func handleType(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTypeDetail(w http.ResponseWriter, r *http.Request) {
+	recordVisit(r)
 	t := strings.TrimPrefix(r.URL.Path, "/type/")
 	if t == "" {
 		t = "tv"
@@ -827,6 +1459,7 @@ func handleTypeDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSchedule(w http.ResponseWriter, r *http.Request) {
+	recordVisit(r)
 	dayMap := map[string]string{
 		"senin":   "monday",
 		"selasa":  "tuesday",
@@ -934,6 +1567,7 @@ func handleProfileSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleProfile(w http.ResponseWriter, r *http.Request) {
+	recordVisit(r)
 	user := getLoggedInUser(r)
 	autoSwitch := getAutoSwitchServerSetting(r, user)
 
@@ -978,6 +1612,7 @@ func handleSectionGenre(w http.ResponseWriter, r *http.Request) {
 
 // Full Search Page Handler
 func handleSearchPage(w http.ResponseWriter, r *http.Request) {
+	recordVisit(r)
 	q := r.URL.Query().Get("q")
 	var results []client.AnimeItem
 	if strings.TrimSpace(q) != "" {
@@ -1249,10 +1884,10 @@ func formatPlayerHTML(rawIframe template.HTML, videoURL string) (template.HTML, 
 			}
 		}
 		if token != "" {
-			proxyURL := fmt.Sprintf("/api/proxy-player?token=%s", url.QueryEscape(token))
+			directBloggerURL := fmt.Sprintf("https://www.blogger.com/video.g?token=%s", token)
 			html := fmt.Sprintf(`
-			<iframe src="%s" class="w-full h-full border-0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen; autoplay; encrypted-media"></iframe>`, proxyURL)
-			return template.HTML(html), proxyURL
+			<iframe src="%s" class="w-full h-full border-0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen; autoplay; encrypted-media"></iframe>`, directBloggerURL)
+			return template.HTML(html), directBloggerURL
 		}
 	}
 
@@ -1294,36 +1929,16 @@ func buildModalPlayerData(epsDetail client.EpisodeDetailResponse, ep, title stri
 	var activeServerTitle string = "Server Utama"
 
 	if len(epsDetail.Videos) > 0 {
-		if autoSwitch {
-			// Auto Switch ON: Iterate server options in provider's order until a valid stream is found
-			for _, v := range epsDetail.Videos {
-				var vidResp struct {
-					URL      string `json:"url"`
-					Response string `json:"response"`
-				}
-				if err := api.GetJSON(v.Video, &vidResp); err == nil {
-					formattedIframe, formattedURL := formatPlayerHTML(template.HTML(vidResp.Response), vidResp.URL)
-					if formattedIframe != "" || formattedURL != "" {
-						firstIframe = formattedIframe
-						firstVideoURL = formattedURL
-						activeServerTitle = v.Title
-						break
-					}
-				}
-			}
-		} else {
-			// Auto Switch OFF: Strictly use Server #1 (v[0]) without switching/fallback
-			v := epsDetail.Videos[0]
-			var vidResp struct {
-				URL      string `json:"url"`
-				Response string `json:"response"`
-			}
-			if err := api.GetJSON(v.Video, &vidResp); err == nil {
-				formattedIframe, formattedURL := formatPlayerHTML(template.HTML(vidResp.Response), vidResp.URL)
-				firstIframe = formattedIframe
-				firstVideoURL = formattedURL
-				activeServerTitle = v.Title
-			}
+		v := epsDetail.Videos[0]
+		var vidResp struct {
+			URL      string `json:"url"`
+			Response string `json:"response"`
+		}
+		if err := api.GetJSON(v.Video, &vidResp); err == nil {
+			formattedIframe, formattedURL := formatPlayerHTML(template.HTML(vidResp.Response), vidResp.URL)
+			firstIframe = formattedIframe
+			firstVideoURL = formattedURL
+			activeServerTitle = v.Title
 		}
 	} else if epsDetail.VideoURL != "" && epsDetail.VideoURL != "belum tersedia (segera)" {
 		formattedIframe, formattedURL := formatPlayerHTML("", epsDetail.VideoURL)
@@ -1399,6 +2014,33 @@ func handleEpisodeModal(w http.ResponseWriter, r *http.Request) {
 	autoSwitch := getAutoSwitchServerSetting(r, getLoggedInUser(r))
 	data := buildModalPlayerData(epsDetail, ep, title, autoSwitch)
 	renderPartial(w, "modal_player.html", "modal_player", data)
+}
+
+// JSON Episode Data Handler for Seamless SPA Episode Switching without Page Reload
+func handleEpisodeDataAPI(w http.ResponseWriter, r *http.Request) {
+	detailEps := r.URL.Query().Get("detail_eps")
+	title := r.URL.Query().Get("title")
+	ep := r.URL.Query().Get("ep")
+
+	var epsDetail client.EpisodeDetailResponse
+	_ = api.GetJSON(detailEps, &epsDetail)
+
+	autoSwitch := getAutoSwitchServerSetting(r, getLoggedInUser(r))
+	data := buildModalPlayerData(epsDetail, ep, title, autoSwitch)
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":            "ok",
+		"episodeNum":        data.EpisodeNum,
+		"title":             data.Title,
+		"videoURL":          data.VideoURL,
+		"rawIframe":         string(data.RawIframe),
+		"isDirectVideo":     data.IsDirectVideo,
+		"videos":            data.Videos,
+		"groupedVideos":     data.GroupedVideos,
+		"resolutions":       data.Resolutions,
+		"activeServerTitle": data.ActiveServerTitle,
+	})
 }
 
 // HTMX Episode Inline Handler for Detail Page Player Swap
@@ -1489,6 +2131,56 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 	bodyStr := string(bodyBytes)
 	if strings.Contains(targetURL, "wibufile") && strings.Contains(bodyStr, "<head>") {
 		bodyStr = strings.Replace(bodyStr, "<head>", "<head><base href=\"https://api.wibufile.com/\">", 1)
+	} else if strings.Contains(targetURL, "blogger.com") && strings.Contains(bodyStr, "<head>") {
+		bodyStr = strings.Replace(bodyStr, "<head>", "<head><base href=\"https://www.blogger.com/\">", 1)
+	}
+
+	bridgeScript := `
+<script>
+(function() {
+	function initBridge() {
+		var vid = document.querySelector('video');
+		if (!vid) {
+			setTimeout(initBridge, 300);
+			return;
+		}
+		var lastReport = 0;
+		vid.addEventListener('timeupdate', function() {
+			var now = Date.now();
+			if (now - lastReport > 2000 && vid.currentTime > 1) {
+				lastReport = now;
+				try {
+					window.parent.postMessage({
+						type: 'nyamimo-video-progress',
+						currentTime: vid.currentTime,
+						duration: vid.duration || 0
+					}, '*');
+				} catch(e){}
+			}
+		});
+		window.addEventListener('message', function(evt) {
+			if (evt.data && evt.data.type === 'nyamimo-seek' && typeof evt.data.time === 'number') {
+				try {
+					vid.currentTime = evt.data.time;
+				} catch(e){}
+			}
+		});
+		try {
+			window.parent.postMessage({ type: 'nyamimo-player-ready' }, '*');
+		} catch(e){}
+	}
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initBridge);
+	} else {
+		initBridge();
+	}
+})();
+</script>`
+
+	if strings.Contains(bodyStr, "</body>") {
+		bodyStr = strings.Replace(bodyStr, "</body>", bridgeScript+"</body>", 1)
+	} else {
+		bodyStr += bridgeScript
 	}
 
 	w.Write([]byte(bodyStr))
@@ -1548,9 +2240,91 @@ func handleAdminDashboard(w http.ResponseWriter, r *http.Request) {
 		UsersList:          usersList,
 		HeroAnime:          heroAnime,
 		PopularAnime:       popularItems,
+		Config:             getAppConfig(),
+		SavedNotice:        r.URL.Query().Get("saved"),
 	}
 
 	renderPage(w, "admin_dashboard.html", data)
+}
+
+func handleAdminAdsSave(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	_ = r.ParseForm()
+
+	appConfigLock.Lock()
+	appConfig.Ads.HeaderBanner.Enabled = r.FormValue("header_banner_enabled") == "on" || r.FormValue("header_banner_enabled") == "true"
+	appConfig.Ads.HeaderBanner.Code = r.FormValue("header_banner_code")
+
+	appConfig.Ads.BelowPlayer.Enabled = r.FormValue("below_player_enabled") == "on" || r.FormValue("below_player_enabled") == "true"
+	appConfig.Ads.BelowPlayer.Code = r.FormValue("below_player_code")
+
+	appConfig.Ads.Popunder.Enabled = r.FormValue("popunder_enabled") == "on" || r.FormValue("popunder_enabled") == "true"
+	appConfig.Ads.Popunder.Code = r.FormValue("popunder_code")
+
+	appConfig.Ads.FooterBanner.Enabled = r.FormValue("footer_banner_enabled") == "on" || r.FormValue("footer_banner_enabled") == "true"
+	appConfig.Ads.FooterBanner.Code = r.FormValue("footer_banner_code")
+
+	_ = saveAppConfigUnsafe()
+	appConfigLock.Unlock()
+
+	http.Redirect(w, r, "/admin?saved=ads#ads", http.StatusSeeOther)
+}
+
+func handleAdminSiteSave(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	_ = r.ParseForm()
+
+	siteName := strings.TrimSpace(r.FormValue("site_name"))
+	siteTagline := strings.TrimSpace(r.FormValue("site_tagline"))
+	siteLogo := strings.TrimSpace(r.FormValue("site_logo"))
+	apiBaseURL := strings.TrimSpace(r.FormValue("api_base_url"))
+	primaryColor := strings.TrimSpace(r.FormValue("primary_color"))
+
+	if siteName == "" {
+		siteName = "Nyamimo"
+	}
+	if siteLogo == "" {
+		siteLogo = "/static/logo.png"
+	}
+	if apiBaseURL == "" {
+		apiBaseURL = "https://api.animekudesu.web.id"
+	}
+	if primaryColor == "" {
+		primaryColor = "#FFCC00"
+	}
+
+	appConfigLock.Lock()
+	appConfig.SiteName = siteName
+	appConfig.SiteTagline = siteTagline
+	appConfig.SiteLogo = siteLogo
+	appConfig.APIBaseURL = apiBaseURL
+	appConfig.PrimaryColor = primaryColor
+	_ = saveAppConfigUnsafe()
+	appConfigLock.Unlock()
+
+	if api != nil {
+		api.SetBaseURL(apiBaseURL)
+	}
+
+	http.Redirect(w, r, "/admin?saved=site#site", http.StatusSeeOther)
 }
 
 func handleAdminClearCache(w http.ResponseWriter, r *http.Request) {
@@ -1560,6 +2334,7 @@ func handleAdminClearCache(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	api.ClearCache()
+	clearTemplateCache()
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
 
@@ -1574,6 +2349,7 @@ func handleAdminUserDelete(w http.ResponseWriter, r *http.Request) {
 	if targetUsername != "" && targetUsername != "admin" {
 		usersDbLock.Lock()
 		delete(usersDb, targetUsername)
+		saveUsersDbUnsafe()
 		usersDbLock.Unlock()
 	}
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
@@ -1732,6 +2508,8 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
+	mergeGuestHistory(w, r, username)
+
 	referer := r.Header.Get("Referer")
 	if referer == "" || strings.Contains(referer, "/login") {
 		if user.Role == "admin" {
@@ -1743,31 +2521,208 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, referer, http.StatusSeeOther)
 }
 
+func getRedirectBaseURL(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" || strings.Contains(r.Host, "onrender.com") {
+		scheme = "https"
+	}
+	return scheme + "://" + r.Host
+}
+
 func handleGoogleLoginAPI(w http.ResponseWriter, r *http.Request) {
-	username := "google_user"
-	usersDbLock.Lock()
-	if _, exists := usersDb[username]; !exists {
-		usersDb[username] = User{
-			Username: username,
-			Password: "google_account",
-			Name:     "Pengguna Google",
-			Role:     "user",
+	cfg := getAppConfig()
+	clientID := cfg.GoogleClientID
+	if clientID == "" {
+		clientID = os.Getenv("GOOGLE_CLIENT_ID")
+	}
+	if clientID == "" {
+		clientID = "494465077307-bt9dlfv5ungb9gd7ectnln3auu77edlm.apps.googleusercontent.com"
+	}
+
+	referer := r.Header.Get("Referer")
+	if referer == "" || strings.Contains(referer, "/login") || strings.Contains(referer, "/register") {
+		referer = "/"
+	}
+
+	redirectURI := getRedirectBaseURL(r) + "/api/auth/google/callback"
+	state := url.QueryEscape(referer)
+
+	authURL := fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=openid%%20profile%%20email&prompt=select_account&state=%s",
+		url.QueryEscape(clientID),
+		url.QueryEscape(redirectURI),
+		state,
+	)
+
+	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
+}
+
+func handleGoogleCallbackAPI(w http.ResponseWriter, r *http.Request) {
+	cfg := getAppConfig()
+	clientID := cfg.GoogleClientID
+	if clientID == "" {
+		clientID = os.Getenv("GOOGLE_CLIENT_ID")
+	}
+	if clientID == "" {
+		clientID = "494465077307-bt9dlfv5ungb9gd7ectnln3auu77edlm.apps.googleusercontent.com"
+	}
+
+	clientSecret := cfg.GoogleClientSecret
+	if clientSecret == "" {
+		clientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	}
+	if clientSecret == "" {
+		clientSecret = "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"
+	}
+
+	state := r.URL.Query().Get("state")
+	redirectTarget := "/"
+	if state != "" {
+		if unescaped, err := url.QueryUnescape(state); err == nil && unescaped != "" {
+			redirectTarget = unescaped
 		}
 	}
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		errParam := r.URL.Query().Get("error")
+		errMsg := url.QueryEscape("Login Google dibatalkan atau terjadi kesalahan: " + errParam)
+		http.Redirect(w, r, "/?login_error="+errMsg, http.StatusSeeOther)
+		return
+	}
+
+	redirectURI := getRedirectBaseURL(r) + "/api/auth/google/callback"
+
+	// Exchange authorization code for token
+	tokenForm := url.Values{}
+	tokenForm.Set("code", code)
+	tokenForm.Set("client_id", clientID)
+	tokenForm.Set("client_secret", clientSecret)
+	tokenForm.Set("redirect_uri", redirectURI)
+	tokenForm.Set("grant_type", "authorization_code")
+
+	tokenReq, err := http.NewRequest("POST", "https://oauth2.googleapis.com/token", strings.NewReader(tokenForm.Encode()))
+	if err != nil {
+		http.Redirect(w, r, "/?login_error="+url.QueryEscape("Gagal membuat permintaan otentikasi Google"), http.StatusSeeOther)
+		return
+	}
+	tokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	tokenResp, err := httpClient.Do(tokenReq)
+	if err != nil || tokenResp.StatusCode != http.StatusOK {
+		log.Printf("[Google OAuth] Token exchange error: status %v, err %v", tokenResp, err)
+		http.Redirect(w, r, "/?login_error="+url.QueryEscape("Gagal menukar token otentikasi Google"), http.StatusSeeOther)
+		return
+	}
+	defer tokenResp.Body.Close()
+
+	var tokenData struct {
+		AccessToken string `json:"access_token"`
+		IdToken     string `json:"id_token"`
+		TokenType   string `json:"token_type"`
+	}
+	if err := json.NewDecoder(tokenResp.Body).Decode(&tokenData); err != nil || tokenData.AccessToken == "" {
+		http.Redirect(w, r, "/?login_error="+url.QueryEscape("Token akses Google tidak valid"), http.StatusSeeOther)
+		return
+	}
+
+	// Fetch user profile info
+	userReq, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+	if err != nil {
+		http.Redirect(w, r, "/?login_error="+url.QueryEscape("Gagal mengambil data profil Google"), http.StatusSeeOther)
+		return
+	}
+	userReq.Header.Set("Authorization", "Bearer "+tokenData.AccessToken)
+
+	userResp, err := httpClient.Do(userReq)
+	if err != nil || userResp.StatusCode != http.StatusOK {
+		http.Redirect(w, r, "/?login_error="+url.QueryEscape("Gagal membaca profil dari Google"), http.StatusSeeOther)
+		return
+	}
+	defer userResp.Body.Close()
+
+	var googleUser struct {
+		ID      string `json:"id"`
+		Email   string `json:"email"`
+		Name    string `json:"name"`
+		Picture string `json:"picture"`
+	}
+	if err := json.NewDecoder(userResp.Body).Decode(&googleUser); err != nil || googleUser.ID == "" {
+		http.Redirect(w, r, "/?login_error="+url.QueryEscape("Data profil Google tidak valid"), http.StatusSeeOther)
+		return
+	}
+
+	// Find or register user
+	usersDbLock.Lock()
+	var finalUsername string
+	found := false
+
+	// Check existing by GoogleID or Email
+	for uName, u := range usersDb {
+		if (u.GoogleID != "" && u.GoogleID == googleUser.ID) || (u.Email != "" && strings.EqualFold(u.Email, googleUser.Email)) {
+			finalUsername = uName
+			u.GoogleID = googleUser.ID
+			u.Email = googleUser.Email
+			if googleUser.Picture != "" {
+				u.Avatar = googleUser.Picture
+			}
+			if googleUser.Name != "" {
+				u.Name = googleUser.Name
+			}
+			usersDb[uName] = u
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		baseUsername := strings.ToLower(strings.Split(googleUser.Email, "@")[0])
+		baseUsername = regexp.MustCompile(`[^a-z0-9_]`).ReplaceAllString(baseUsername, "")
+		if baseUsername == "" {
+			baseUsername = "google_user"
+		}
+		candidate := baseUsername
+		suffix := 1
+		for {
+			if _, exists := usersDb[candidate]; !exists {
+				break
+			}
+			candidate = fmt.Sprintf("%s%d", baseUsername, suffix)
+			suffix++
+		}
+		finalUsername = candidate
+		displayName := googleUser.Name
+		if displayName == "" {
+			displayName = finalUsername
+		}
+		usersDb[finalUsername] = User{
+			Username: finalUsername,
+			Password: "oauth_google_" + googleUser.ID,
+			Name:     displayName,
+			Role:     "user",
+			Email:    googleUser.Email,
+			Avatar:   googleUser.Picture,
+			GoogleID: googleUser.ID,
+		}
+	}
+	saveUsersDbUnsafe()
 	usersDbLock.Unlock()
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "user_session",
-		Value:    username,
+		Value:    finalUsername,
 		Path:     "/",
+		MaxAge:   3600 * 24 * 30, // 30 days
 		HttpOnly: true,
 	})
 
-	referer := r.Header.Get("Referer")
-	if referer == "" || strings.Contains(referer, "/login") {
-		referer = "/"
+	mergeGuestHistory(w, r, finalUsername)
+
+	if redirectTarget == "" || strings.Contains(redirectTarget, "/login") || strings.Contains(redirectTarget, "/register") {
+		redirectTarget = "/"
 	}
-	http.Redirect(w, r, referer, http.StatusSeeOther)
+
+	http.Redirect(w, r, redirectTarget, http.StatusSeeOther)
 }
 
 func handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -1825,6 +2780,7 @@ func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 		Role:     "user",
 	}
 	usersDb[username] = newUser
+	saveUsersDbUnsafe()
 	usersDbLock.Unlock()
 
 	http.SetCookie(w, &http.Cookie{
@@ -1833,6 +2789,8 @@ func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 	})
+
+	mergeGuestHistory(w, r, username)
 
 	if referer == "" || strings.Contains(referer, "/register") || strings.Contains(referer, "/login") {
 		referer = "/"
@@ -1853,6 +2811,84 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		referer = "/"
 	}
 	http.Redirect(w, r, referer, http.StatusSeeOther)
+}
+
+// Watch History API Handlers
+func handleGetHistoryAPI(w http.ResponseWriter, r *http.Request) {
+	key := getHistoryStorageKey(w, r)
+	watchHistoryDbLock.RLock()
+	items := watchHistoryDb[key]
+	watchHistoryDbLock.RUnlock()
+
+	if items == nil {
+		items = []WatchHistoryItem{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"items":  items,
+	})
+}
+
+func handleHistoryProgressAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req ProgressRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if req.Slug == "" {
+		http.Error(w, "Slug required", http.StatusBadRequest)
+		return
+	}
+
+	key := getHistoryStorageKey(w, r)
+	item := upsertWatchHistory(key, req)
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"item":   item,
+	})
+}
+
+func handleHistoryDeleteAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var payload struct {
+		Slug string `json:"slug"`
+		All  bool   `json:"all"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&payload)
+
+	key := getHistoryStorageKey(w, r)
+
+	watchHistoryDbLock.Lock()
+	if payload.All || payload.Slug == "" {
+		delete(watchHistoryDb, key)
+	} else {
+		var filtered []WatchHistoryItem
+		for _, item := range watchHistoryDb[key] {
+			if item.Slug != payload.Slug {
+				filtered = append(filtered, item)
+			}
+		}
+		watchHistoryDb[key] = filtered
+	}
+	saveWatchHistoryUnsafe()
+	watchHistoryDbLock.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 type WallpaperItem struct {

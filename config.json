@@ -1,0 +1,33 @@
+{
+  "site_name": "Nyamimo",
+  "site_tagline": "Streaming Anime Sub Indo Tercepat \u0026 Terlengkap",
+  "site_logo": "/static/logo.png",
+  "site_favicon": "/static/logo.png",
+  "primary_color": "#FFCC00",
+  "api_base_url": "https://api.animekudesu.web.id",
+  "port": "3000",
+  "google_client_id": "494465077307-bt9dlfv5ungb9gd7ectnln3auu77edlm.apps.googleusercontent.com",
+  "google_client_secret": "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",
+  "ads": {
+    "header_banner": {
+      "enabled": false,
+      "title": "Header Top Banner (728x90 / Responsive)",
+      "code": "\u003cdiv class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#FFCC00]/50 rounded-xl text-center text-xs text-[#55555B]\"\u003e🚀 Pasang Iklan Banner Header di Sini (Atur di Dashboard Admin)\u003c/div\u003e"
+    },
+    "below_player": {
+      "enabled": false,
+      "title": "Bawah Pemutar Video",
+      "code": "\u003cdiv class=\"w-full max-w-4xl mx-auto my-3 p-4 bg-[#FFCC00]/10 border border-dashed border-[#FFCC00] rounded-xl text-center text-xs font-bold text-[#17171B]\"\u003e🎬 Slot Iklan Bawah Player (Adsterra / Popunder / Banner)\u003c/div\u003e"
+    },
+    "popunder": {
+      "enabled": false,
+      "title": "Popunder / Direct Script (Head/Body Script)",
+      "code": "\u003c!-- Script Popunder atau Monetag / Adsterra / Adsense ditaruh di sini --\u003e"
+    },
+    "footer_banner": {
+      "enabled": false,
+      "title": "Footer Sticky / Bottom Banner",
+      "code": "\u003cdiv class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#E2E2DC] rounded-xl text-center text-xs text-[#55555B]\"\u003e📢 Pasang Iklan Footer di Sini\u003c/div\u003e"
+    }
+  }
+}

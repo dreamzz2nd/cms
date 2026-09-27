@@ -12,7 +12,8 @@ import (
 	"time"
 )
 
-const BaseAPIURL = "https://api.animekudesu.web.id"
+const DefaultBaseAPIURL = "https://api.animekudesu.web.id"
+var BaseAPIURL = DefaultBaseAPIURL
 
 type CacheItem struct {
 	Data      []byte
@@ -23,6 +24,7 @@ type APIClient struct {
 	httpClient *http.Client
 	cache      sync.Map
 	ttl        time.Duration
+	baseURL    string
 }
 
 func NewAPIClient(ttl time.Duration) *APIClient {
@@ -30,8 +32,26 @@ func NewAPIClient(ttl time.Duration) *APIClient {
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		ttl: ttl,
+		ttl:     ttl,
+		baseURL: BaseAPIURL,
 	}
+}
+
+func (c *APIClient) SetBaseURL(url string) {
+	url = strings.TrimSpace(url)
+	if url != "" {
+		url = strings.TrimSuffix(url, "/")
+		c.baseURL = url
+		BaseAPIURL = url
+		c.ClearCache()
+	}
+}
+
+func (c *APIClient) GetBaseURL() string {
+	if c.baseURL != "" {
+		return c.baseURL
+	}
+	return BaseAPIURL
 }
 
 func (c *APIClient) ClearCache() {
@@ -48,7 +68,7 @@ func (c *APIClient) GetJSON(endpoint string, target interface{}) error {
 		if !strings.HasPrefix(endpoint, "/") {
 			endpoint = "/" + endpoint
 		}
-		endpoint = BaseAPIURL + endpoint
+		endpoint = c.GetBaseURL() + endpoint
 	}
 
 	// Check cache
