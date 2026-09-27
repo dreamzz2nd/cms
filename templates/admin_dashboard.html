@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ activeTab: window.location.hash === '#ads' ? 'ads' : (window.location.hash === '#site' ? 'site' : 'overview') }">
+<div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ activeTab: window.location.hash === '#ads' ? 'ads' : (window.location.hash === '#site' ? 'site' : (window.location.hash === '#gdrive' ? 'gdrive' : 'overview')) }">
     
     {{if eq .SavedNotice "ads"}}
     <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-title flex items-center justify-between shadow-sm animate-fade-in">
@@ -16,6 +16,38 @@
             <span>Pengaturan website & API berhasil disimpan ke config.json!</span>
         </div>
         <button @click="$el.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    {{else if eq .SavedNotice "gdrive"}}
+    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-title flex items-center justify-between shadow-sm animate-fade-in">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
+            <span>Pengaturan Google Drive 5TB Storage & Auto-Sync berhasil disimpan ke config.json!</span>
+        </div>
+        <button @click="$el.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    {{else if eq .SavedNotice "gdrive_connected"}}
+    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-title flex items-center justify-between shadow-sm animate-fade-in">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
+            <span>🎉 Berhasil! Akun Google Drive 5TB Anda kini resmi terhubung dan bot memiliki izin unggah video.</span>
+        </div>
+        <button @click="$el.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    {{else if eq .SavedNotice "gdrive_disconnected"}}
+    <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold font-title flex items-center justify-between shadow-sm animate-fade-in">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>
+            <span>Koneksi akun Google Drive telah diputuskan.</span>
+        </div>
+        <button @click="$el.parentElement.remove()" class="text-amber-700 hover:text-amber-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    {{else if eq .SavedNotice "gdrive_error"}}
+    <div class="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold font-title flex items-center justify-between shadow-sm animate-fade-in">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>
+            <span>Gagal mengotorisasi akun Google Drive. Pastikan memilih akun dan menyetujui izin akses.</span>
+        </div>
+        <button @click="$el.parentElement.remove()" class="text-red-700 hover:text-red-900"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
     {{end}}
     
@@ -102,8 +134,16 @@
             </div>
             <div class="mt-4">
                 <div class="text-2xl sm:text-3xl font-extrabold font-title text-[#1A1A1E]">{{.TotalUsersCount}} Akun</div>
-                <div class="flex items-center gap-1.5 mt-1 text-[11px] text-[#55555B] font-bold">
-                    <span class="text-blue-600">Admin & Member aktif</span>
+                <div class="flex items-center gap-2 mt-1 text-[11px] font-bold">
+                    <span class="text-emerald-600 flex items-center gap-1.5">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        {{.OnlineUsersCount}} Online
+                    </span>
+                    <span class="text-[#A0A0A8]">•</span>
+                    <span class="text-[#71717A]">{{.OfflineUsersCount}} Offline</span>
                 </div>
             </div>
         </div>
@@ -140,9 +180,14 @@
             type="button" 
             @click="activeTab = 'users'" 
             :class="activeTab === 'users' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
-            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer relative"
         >
             <i data-lucide="users" class="w-4 h-4"></i> Manajemen Pengguna ({{.TotalUsersCount}})
+            {{if gt .OnlineUsersCount 0}}
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500 text-white shadow-sm animate-pulse">
+                {{.OnlineUsersCount}} Online
+            </span>
+            {{end}}
         </button>
 
         <button 
@@ -170,6 +215,15 @@
             class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
         >
             <i data-lucide="settings" class="w-4 h-4"></i> Konfigurasi Website & API
+        </button>
+
+        <button 
+            type="button" 
+            @click="activeTab = 'gdrive'" 
+            :class="activeTab === 'gdrive' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+        >
+            <i data-lucide="hard-drive" class="w-4 h-4 text-[#FFCC00]"></i> Google Drive 5TB & Sync
         </button>
     </div>
 
@@ -284,15 +338,110 @@
         </div>
     </div>
 
-    <!-- TAB 2: USER MANAGEMENT -->
-    <div x-show="activeTab === 'users'" style="display: none;" class="space-y-6">
+    <!-- TAB 2: USER MANAGEMENT WITH REAL-TIME ONLINE/OFFLINE STATUS & LAST SEEN -->
+    <div x-show="activeTab === 'users'" style="display: none;" class="space-y-6" x-data="{ userFilter: 'all', userSearch: '' }">
+        
+        <!-- Summary Cards for User Status -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div 
+                @click="userFilter = 'all'"
+                :class="userFilter === 'all' ? 'border-[#17171B] ring-2 ring-[#17171B]/20 bg-white' : 'border-[#E2E2DC] bg-white hover:border-[#17171B]/40'"
+                class="rounded-2xl p-4.5 border transition-all cursor-pointer shadow-sm flex items-center justify-between"
+            >
+                <div class="space-y-1">
+                    <span class="text-[11px] font-bold text-[#55555B] uppercase tracking-wider font-title">Total Terdaftar</span>
+                    <div class="text-2xl font-extrabold font-title text-[#1A1A1E]">{{.TotalUsersCount}} <span class="text-xs font-normal text-[#71717A]">Akun</span></div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-[#F6F5F0] text-[#17171B] flex items-center justify-center font-bold">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <div 
+                @click="userFilter = 'online'"
+                :class="userFilter === 'online' ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/40' : 'border-[#E2E2DC] bg-white hover:border-emerald-400'"
+                class="rounded-2xl p-4.5 border transition-all cursor-pointer shadow-sm flex items-center justify-between"
+            >
+                <div class="space-y-1">
+                    <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider font-title flex items-center gap-1.5">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Sedang Online
+                    </span>
+                    <div class="text-2xl font-extrabold font-title text-emerald-800">{{.OnlineUsersCount}} <span class="text-xs font-normal text-emerald-600">Aktif Sekarang</span></div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <i data-lucide="radio" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <div 
+                @click="userFilter = 'offline'"
+                :class="userFilter === 'offline' ? 'border-gray-500 ring-2 ring-gray-500/20 bg-gray-50' : 'border-[#E2E2DC] bg-white hover:border-gray-400'"
+                class="rounded-2xl p-4.5 border transition-all cursor-pointer shadow-sm flex items-center justify-between"
+            >
+                <div class="space-y-1">
+                    <span class="text-[11px] font-bold text-[#55555B] uppercase tracking-wider font-title flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                        Sedang Offline
+                    </span>
+                    <div class="text-2xl font-extrabold font-title text-[#1A1A1E]">{{.OfflineUsersCount}} <span class="text-xs font-normal text-[#71717A]">Tidak Aktif</span></div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-[#F6F5F0] text-[#71717A] flex items-center justify-center font-bold">
+                    <i data-lucide="moon" class="w-5 h-5"></i>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E2DC] pb-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E2E2DC] pb-5">
                 <div>
                     <h2 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2">
-                        <i data-lucide="users" class="w-5 h-5 text-[#FFCC00]"></i> Daftar Akun Pengguna Terdaftar
+                        <i data-lucide="users" class="w-5 h-5 text-[#FFCC00]"></i> Daftar Akun Pengguna & Status Aktivitas
                     </h2>
-                    <p class="text-xs text-[#55555B] mt-0.5">Kelola akun administrator dan member yang memiliki akses ke platform.</p>
+                    <p class="text-xs text-[#55555B] mt-0.5">Pantau status pengguna online, offline, dan riwayat terakhir aktif secara real-time.</p>
+                </div>
+
+                <!-- Filter Buttons and Search Bar -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="inline-flex rounded-xl bg-[#F6F5F0] p-1 border border-[#E2E2DC]">
+                        <button 
+                            type="button"
+                            @click="userFilter = 'all'"
+                            :class="userFilter === 'all' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:text-[#1A1A1E] font-medium'"
+                            class="px-3 py-1.5 rounded-lg text-xs transition-all font-title cursor-pointer"
+                        >
+                            Semua ({{.TotalUsersCount}})
+                        </button>
+                        <button 
+                            type="button"
+                            @click="userFilter = 'online'"
+                            :class="userFilter === 'online' ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'text-[#55555B] hover:text-emerald-700 font-medium'"
+                            class="px-3 py-1.5 rounded-lg text-xs transition-all font-title cursor-pointer flex items-center gap-1.5"
+                        >
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online ({{.OnlineUsersCount}})
+                        </button>
+                        <button 
+                            type="button"
+                            @click="userFilter = 'offline'"
+                            :class="userFilter === 'offline' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:text-[#1A1A1E] font-medium'"
+                            class="px-3 py-1.5 rounded-lg text-xs transition-all font-title cursor-pointer flex items-center gap-1.5"
+                        >
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Offline ({{.OfflineUsersCount}})
+                        </button>
+                    </div>
+
+                    <div class="relative min-w-[220px]">
+                        <i data-lucide="search" class="w-4 h-4 text-[#A0A0A8] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input 
+                            type="text" 
+                            x-model="userSearch"
+                            placeholder="Cari nama / username..." 
+                            class="w-full pl-9.5 pr-3 py-2 bg-[#F6F5F0] border border-[#E2E2DC] focus:border-[#FFCC00] focus:bg-white rounded-xl text-xs text-[#1A1A1E] outline-none transition-all placeholder:text-[#A0A0A8]"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -304,19 +453,28 @@
                             <th class="p-4">Pengguna</th>
                             <th class="p-4">Username</th>
                             <th class="p-4">Role Akses</th>
-                            <th class="p-4">Status</th>
+                            <th class="p-4">Status & Terakhir Online</th>
                             <th class="p-4 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#E2E2DC] font-medium text-[#1A1A1E]">
                         {{range .UsersList}}
-                        <tr class="hover:bg-[#F6F5F0]/50 transition-colors">
+                        {{$isOnline := isUserOnline .LastSeenAt}}
+                        <tr 
+                            x-show="(userFilter === 'all' || (userFilter === 'online' && {{$isOnline}}) || (userFilter === 'offline' && !{{$isOnline}})) && (userSearch === '' || '{{.Name}} {{.Username}} {{.Email}}'.toLowerCase().includes(userSearch.toLowerCase()))"
+                            class="hover:bg-[#F6F5F0]/60 transition-colors"
+                        >
                             <td class="p-4 flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl overflow-hidden bg-[#17171B] text-[#FFCC00] font-bold font-title flex items-center justify-center text-xs shrink-0 border border-[#E2E2DC] shadow-sm">
+                                <div class="w-10 h-10 rounded-xl overflow-hidden bg-[#17171B] text-[#FFCC00] font-bold font-title flex items-center justify-center text-xs shrink-0 border border-[#E2E2DC] shadow-sm relative">
                                     {{if .Avatar}}
                                     <img src="{{.Avatar}}" alt="{{.Name}}" class="w-full h-full object-cover" />
                                     {{else}}
                                     {{.Name | firstChar}}
+                                    {{end}}
+
+                                    <!-- Online Indicator Dot on Avatar -->
+                                    {{if $isOnline}}
+                                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
                                     {{end}}
                                 </div>
                                 <div>
@@ -346,9 +504,35 @@
                                 {{end}}
                             </td>
                             <td class="p-4">
-                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Aktif
-                                </span>
+                                {{if $isOnline}}
+                                <div class="space-y-1">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
+                                        <span class="relative flex h-2 w-2">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                        </span>
+                                        Sedang Online
+                                    </span>
+                                    <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                                        <i data-lucide="activity" class="w-3 h-3"></i> Aktif sekarang
+                                    </div>
+                                </div>
+                                {{else}}
+                                <div class="space-y-1">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F6F5F0] text-[#55555B] border border-[#E2E2DC]">
+                                        <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                                        Offline
+                                    </span>
+                                    <div class="text-[10px] text-[#71717A] font-medium flex items-center gap-1" title="{{formatLastSeenExact .LastSeenAt}}">
+                                        <i data-lucide="clock" class="w-3 h-3 text-[#A0A0A8]"></i>
+                                        {{if gt .LastSeenAt 0}}
+                                        <span>Terakhir: <strong class="text-[#1A1A1E] font-semibold">{{formatLastSeen .LastSeenAt}}</strong></span>
+                                        {{else}}
+                                        <span class="italic text-[#A0A0A8]">Belum pernah online</span>
+                                        {{end}}
+                                    </div>
+                                </div>
+                                {{end}}
                             </td>
                             <td class="p-4 text-right">
                                 {{if ne .Username "admin"}}
@@ -600,13 +784,153 @@
                         </div>
                     </div>
 
-                    <!-- API Base URL -->
-                    <div class="space-y-1.5 md:col-span-2">
-                        <label class="block text-xs font-bold text-[#1A1A1E] font-title">API Base URL (Anime Scraper / Resolver)</label>
-                        <input type="url" name="api_base_url" value="{{.Config.APIBaseURL}}" required
-                            class="w-full text-xs font-mono font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]" 
-                            placeholder="https://api.animekudesu.web.id" />
-                        <p class="text-[10px] text-[#55555B]">Endpoint API sumber metadata anime & streaming link. Mengganti ini akan otomatis mereset in-memory cache.</p>
+                    <!-- API Provider Selector -->
+                    <div class="space-y-2 md:col-span-2" x-data="{
+                        currentProvider: '{{if .Config.APIProvider}}{{.Config.APIProvider}}{{else}}animekudesu{{end}}',
+                        apiBaseUrl: '{{.Config.APIBaseURL}}',
+                        testLoading: false,
+                        testResult: null,
+                        selectProvider(p, defaultUrl) {
+                            this.currentProvider = p;
+                            if (p === 'animekudesu') {
+                                this.apiBaseUrl = 'https://api.animekudesu.web.id';
+                            } else if (p.startsWith('wajik_')) {
+                                if (!this.apiBaseUrl || this.apiBaseUrl.includes('animekudesu')) {
+                                    this.apiBaseUrl = 'https://wajik-anime-api.vercel.app';
+                                }
+                            }
+                            this.testResult = null;
+                        },
+                        testConnection() {
+                            this.testLoading = true;
+                            this.testResult = null;
+                            const url = '/api/admin/api/test?provider=' + encodeURIComponent(this.currentProvider) + '&url=' + encodeURIComponent(this.apiBaseUrl);
+                            fetch(url)
+                                .then(res => res.json())
+                                .then(data => {
+                                    this.testLoading = false;
+                                    this.testResult = data;
+                                })
+                                .catch(err => {
+                                    this.testLoading = false;
+                                    this.testResult = { success: false, message: err.message };
+                                });
+                        }
+                    }">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold text-[#1A1A1E] font-title">Pilih API Provider / Sumber Anime</label>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FFCC00]/20 text-[#17171B] border border-[#FFCC00]/30">Multi-API Engine Aktif</span>
+                        </div>
+                        
+                        <!-- Hidden input for form submission -->
+                        <input type="hidden" name="api_provider" :value="currentProvider" />
+
+                        <!-- Provider Cards Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+                            
+                            <!-- AnimeKuDesu -->
+                            <button type="button" @click="selectProvider('animekudesu', 'https://api.animekudesu.web.id')"
+                                class="p-3 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between"
+                                :class="currentProvider === 'animekudesu' ? 'border-[#FFCC00] bg-[#FFCC00]/10 shadow-sm ring-1 ring-[#FFCC00]' : 'border-[#E2E2DC] bg-white hover:border-[#1A1A1E]/30'">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-xs font-bold text-[#1A1A1E]">AnimeKuDesu</span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-white">Default</span>
+                                    </div>
+                                    <p class="text-[10px] text-[#55555B] leading-tight mb-2">REST API scraper lengkap, episode switch & download batch.</p>
+                                </div>
+                                <span class="text-[9px] font-mono text-[#55555B] truncate block">api.animekudesu.web.id</span>
+                            </button>
+
+                            <!-- Wajik Oploverz -->
+                            <button type="button" @click="selectProvider('wajik_oploverz', 'https://wajik-anime-api.vercel.app')"
+                                class="p-3 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between"
+                                :class="currentProvider === 'wajik_oploverz' ? 'border-[#FFCC00] bg-[#FFCC00]/10 shadow-sm ring-1 ring-[#FFCC00]' : 'border-[#E2E2DC] bg-white hover:border-[#1A1A1E]/30'">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-xs font-bold text-[#1A1A1E]">Wajik (Oploverz)</span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-600 text-white">Live HD</span>
+                                    </div>
+                                    <p class="text-[10px] text-[#55555B] leading-tight mb-2">wajik45/wajik-anime-api stream langsung embed & multi-resolusi.</p>
+                                </div>
+                                <span class="text-[9px] font-mono text-[#55555B] truncate block">/oploverz/...</span>
+                            </button>
+
+                            <!-- Wajik Otakudesu -->
+                            <button type="button" @click="selectProvider('wajik_otakudesu', 'https://wajik-anime-api.vercel.app')"
+                                class="p-3 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between"
+                                :class="currentProvider === 'wajik_otakudesu' ? 'border-[#FFCC00] bg-[#FFCC00]/10 shadow-sm ring-1 ring-[#FFCC00]' : 'border-[#E2E2DC] bg-white hover:border-[#1A1A1E]/30'">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-xs font-bold text-[#1A1A1E]">Wajik (Otakudesu)</span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-600 text-white">Scraper</span>
+                                    </div>
+                                    <p class="text-[10px] text-[#55555B] leading-tight mb-2">Sumber Otakudesu via wajik-anime-api (rekomendasi local/VPS).</p>
+                                </div>
+                                <span class="text-[9px] font-mono text-[#55555B] truncate block">/otakudesu/...</span>
+                            </button>
+
+                            <!-- Custom API -->
+                            <button type="button" @click="selectProvider('custom', '')"
+                                class="p-3 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between"
+                                :class="currentProvider === 'custom' ? 'border-[#FFCC00] bg-[#FFCC00]/10 shadow-sm ring-1 ring-[#FFCC00]' : 'border-[#E2E2DC] bg-white hover:border-[#1A1A1E]/30'">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-xs font-bold text-[#1A1A1E]">Custom / Local</span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-600 text-white">Self-Host</span>
+                                    </div>
+                                    <p class="text-[10px] text-[#55555B] leading-tight mb-2">Gunakan URL custom VPS atau localhost port sendiri.</p>
+                                </div>
+                                <span class="text-[9px] font-mono text-[#55555B] truncate block">http://localhost:3001</span>
+                            </button>
+
+                        </div>
+
+                        <!-- API Base URL & Test Connection -->
+                        <div class="pt-2">
+                            <label class="block text-xs font-bold text-[#1A1A1E] font-title mb-1.5">API Base URL Endpoint</label>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="url" name="api_base_url" x-model="apiBaseUrl" required
+                                    class="flex-1 text-xs font-mono font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]" 
+                                    placeholder="https://api.animekudesu.web.id atau https://wajik-anime-api.vercel.app" />
+                                
+                                <button type="button" @click="testConnection()" :disabled="testLoading"
+                                    class="px-4 py-3 bg-[#1A1A1E] hover:bg-black text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shrink-0 shadow-sm disabled:opacity-50">
+                                    <template x-if="!testLoading">
+                                        <span class="flex items-center gap-1.5">
+                                            <i data-lucide="zap" class="w-3.5 h-3.5 text-[#FFCC00]"></i>
+                                            <span>Test Koneksi</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="testLoading">
+                                        <span class="flex items-center gap-1.5">
+                                            <svg class="animate-spin h-3.5 w-3.5 text-[#FFCC00]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <span>Memeriksa...</span>
+                                        </span>
+                                    </template>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-[#55555B] mt-1">Mengganti sumber API akan otomatis mereset cache in-memory dan menyesuaikan adapter data secara real-time.</p>
+                        </div>
+
+                        <!-- Live Test Results -->
+                        <div x-show="testResult !== null" x-cloak class="mt-2 p-3 rounded-xl text-xs border transition-all"
+                            :class="testResult && testResult.success ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center gap-2 font-bold">
+                                    <span x-text="testResult && testResult.success ? '✅ Terhubung Berhasil!' : '❌ Gagal Terhubung'"></span>
+                                    <span x-show="testResult && testResult.latency" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/70 border border-current" x-text="testResult ? testResult.latency + ' ms' : ''"></span>
+                                </div>
+                                <span class="text-[10px] uppercase font-mono font-bold" x-text="testResult ? testResult.provider : ''"></span>
+                            </div>
+                            <div class="text-[11px] mt-1 font-medium" x-show="testResult && testResult.success">
+                                <span>Data didapat: <strong x-text="testResult.item_count + ' anime'"></strong> (Sampel: <em x-text="testResult.sample"></em>)</span>
+                            </div>
+                            <div class="text-[11px] mt-1 font-medium" x-show="testResult && !testResult.success">
+                                <span>Error: <span class="font-mono text-[10px]" x-text="testResult ? testResult.message : ''"></span></span>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
@@ -619,6 +943,364 @@
                     </div>
                     <span class="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-0.5 rounded-full">Tersinkronisasi Otomatis</span>
                 </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- TAB 6: GOOGLE DRIVE 5TB STORAGE & AUTO-SYNC -->
+    <div x-show="activeTab === 'gdrive'" class="space-y-6" x-data="{
+        folderId: '{{.Config.GDrive.FolderID}}',
+        testLoading: false,
+        testResult: null,
+        syncLoading: false,
+        syncResult: null,
+        logs: [],
+        syncProgress: 0,
+        init() {
+            this.fetchLogs();
+            setInterval(() => {
+                if (this.activeTab === 'gdrive') {
+                    this.fetchLogs();
+                }
+            }, 1500);
+        },
+        fetchLogs() {
+            fetch('/api/admin/gdrive/logs')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.logs) {
+                        this.logs = data.logs;
+                        this.syncProgress = data.progress || 0;
+                        if (data.running) {
+                            this.syncLoading = true;
+                        } else if (this.syncLoading && !data.running) {
+                            this.syncLoading = false;
+                        }
+                    }
+                })
+                .catch(() => {});
+        },
+        clearLogs() {
+            fetch('/api/admin/gdrive/clear-logs', { method: 'POST' })
+                .then(() => { this.logs = []; });
+        },
+        testGDrive() {
+            this.testLoading = true;
+            this.testResult = null;
+            fetch('/api/admin/gdrive/test?folder_id=' + encodeURIComponent(this.folderId))
+                .then(res => res.json())
+                .then(data => {
+                    this.testLoading = false;
+                    this.testResult = data;
+                })
+                .catch(err => {
+                    this.testLoading = false;
+                    this.testResult = { success: false, message: err.message };
+                });
+        },
+        triggerSync() {
+            this.syncLoading = true;
+            this.syncResult = null;
+            fetch('/api/admin/gdrive/sync', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    this.syncResult = data;
+                    this.fetchLogs();
+                })
+                .catch(err => {
+                    this.syncLoading = false;
+                    this.syncResult = { success: false, message: err.message };
+                });
+        }
+    }">
+        <!-- Top Status Banner -->
+        <div class="bg-gradient-to-r from-[#17171B] via-[#212126] to-[#17171B] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-[#FFCC00]/30">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 rounded-lg bg-[#FFCC00] text-[#17171B] font-extrabold text-[11px] uppercase tracking-wider font-title flex items-center gap-1.5 shadow">
+                            <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-[#17171B]"></i> GOOGLE DRIVE 5 TB CLOUD
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{if .Config.GDrive.Enabled}}bg-green-500/20 text-green-400 border border-green-500/30{{else}}bg-gray-500/20 text-gray-300 border border-gray-500/30{{end}}">
+                            {{if .Config.GDrive.Enabled}}● Storage Aktif{{else}}○ Belum Diaktifkan{{end}}
+                        </span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold font-title tracking-tight text-white">
+                        Integrasi Google Drive 5TB Database Video
+                    </h2>
+                    <p class="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+                        Simpan dan stream otomatis episode anime dengan resolusi <strong>720p & 1080p</strong> langsung ke akun Google Drive 5TB Anda. Kuota 5TB mampu menampung hingga <strong>~7.700+ episode (~640 anime)</strong> secara mandiri.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                    {{if .Config.GDrive.Connected}}
+                    <div class="flex items-center gap-2 bg-white/10 px-4 py-2.5 rounded-2xl border border-white/20">
+                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        <span class="text-xs font-bold text-white">{{if .Config.GDrive.AccountEmail}}{{.Config.GDrive.AccountEmail}}{{else}}Google Drive Terhubung{{end}}</span>
+                        <a href="/api/admin/gdrive/disconnect" onclick="return confirm('Putuskan koneksi akun Google Drive?');" class="text-[10px] text-red-300 hover:text-red-100 font-bold ml-2 underline">Putuskan</a>
+                    </div>
+                    {{else}}
+                    <a href="/api/admin/gdrive/auth"
+                        class="px-5 py-3 rounded-2xl bg-white hover:bg-gray-100 text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-2.5 shadow-lg cursor-pointer">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                        <span>Hubungkan Akun Google 5TB (1-Klik)</span>
+                    </a>
+                    {{end}}
+
+                    <button type="button" @click="triggerSync()" :disabled="syncLoading"
+                        class="px-5 py-3 rounded-2xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50">
+                        <template x-if="!syncLoading">
+                            <span class="flex items-center gap-2">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                <span>Sync Episode Terbaru</span>
+                            </span>
+                        </template>
+                        <template x-if="syncLoading">
+                            <span class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4 text-[#17171B]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>Menyinkronkan...</span>
+                            </span>
+                        </template>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Capacity Progress Bar Card -->
+            <div class="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Kapasitas Kuota</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-[#FFCC00] font-title mt-1">5.120 GB (5 TB)</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Kapasitas Maksimal Akun Drive</div>
+                </div>
+
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Episode Tersinkronisasi</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-white font-title mt-1">{{.Config.GDrive.TotalSyncedEpisodes}} Episode</div>
+                    <div class="text-[10px] text-green-400 mt-0.5">Format: 1080p & 720p HD</div>
+                </div>
+
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ruang Terpakai (Estimasi)</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-blue-400 font-title mt-1">{{printf "%.1f" .Config.GDrive.UsedStorageGB}} GB</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Sisa Kapasitas: ~5.112 GB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE TERMINAL LOG CONSOLE -->
+        <div class="bg-[#0E0E12] border border-[#272730] rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 text-white">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+                    </div>
+                    <div class="h-4 w-px bg-white/20"></div>
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-extrabold font-mono text-green-400 flex items-center gap-2">
+                            <i data-lucide="terminal" class="w-4 h-4 text-green-400"></i>
+                            <span>LIVE SYNC WORKER TERMINAL</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
+                        :class="syncLoading ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse' : 'bg-green-500/20 text-green-400 border border-green-500/30'">
+                        <span class="w-2 h-2 rounded-full" :class="syncLoading ? 'bg-amber-400 animate-ping' : 'bg-green-400'"></span>
+                        <span x-text="syncLoading ? 'BOT RUNNING...' : 'ENGINE READY'"></span>
+                    </span>
+
+                    <button type="button" @click="clearLogs()" title="Bersihkan terminal"
+                        class="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 text-[11px] font-mono transition flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear Log
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div x-show="syncLoading || syncProgress > 0" class="space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-mono text-gray-400">
+                    <span>Status Proses Transfer:</span>
+                    <span class="text-[#FFCC00] font-bold" x-text="syncProgress + '%'"></span>
+                </div>
+                <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                    <div class="bg-gradient-to-r from-[#FFCC00] to-green-400 h-full rounded-full transition-all duration-300" :style="'width: ' + syncProgress + '%'"></div>
+                </div>
+            </div>
+
+            <!-- Terminal Output Area -->
+            <div class="bg-[#050508] border border-white/5 rounded-2xl p-4 font-mono text-[11px] h-64 overflow-y-auto space-y-1.5 custom-scrollbar shadow-inner" id="gdrive-terminal-box">
+                <template x-if="logs.length === 0">
+                    <div class="text-gray-500 italic py-10 text-center">
+                        <div class="text-green-500 font-bold">$ nyamimo-gdrive-worker --status idle</div>
+                        <div class="text-[10px] mt-1 text-gray-600">Tekan tombol kuning "Sync Episode Terbaru" di atas untuk memantau pemindaian, download, dan upload file video ke Google Drive.</div>
+                    </div>
+                </template>
+
+                <template x-for="(log, idx) in logs" :key="idx">
+                    <div class="flex items-start gap-2.5 leading-relaxed">
+                        <span class="text-gray-500 select-none shrink-0" x-text="'[' + log.timestamp + ']'"></span>
+                        <span :class="{
+                            'text-cyan-400 font-semibold': log.level === 'info',
+                            'text-green-400 font-extrabold': log.level === 'success',
+                            'text-yellow-400 font-medium': log.level === 'progress',
+                            'text-red-400 font-bold': log.level === 'error'
+                        }" x-text="log.message"></span>
+                    </div>
+                </template>
+            </div>
+            
+            <div class="flex items-center justify-between text-[10px] font-mono text-gray-500 pt-1">
+                <span>Auto-refresh: 1.5s • Worker Go background daemon</span>
+                <span>Target: Google Drive (1-5fg58S1uu9IdGLiTMxzF1hGBPehvxOD)</span>
+            </div>
+        </div>
+
+        <!-- Form Configuration -->
+        <form action="/api/admin/gdrive/save" method="POST" class="space-y-6">
+            <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                
+                <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-4">
+                    <div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FFCC00]/20 text-[#17171B] border border-[#FFCC00]/30 uppercase tracking-wider">
+                            Konfigurasi Folder & API
+                        </span>
+                        <h3 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2 mt-1">
+                            <i data-lucide="settings" class="w-5 h-5 text-[#FFCC00]"></i> Pengaturan Google Drive Storage
+                        </h3>
+                        <p class="text-xs text-[#55555B] mt-0.5">Atur folder penyimpanan anime, kredensial service account, dan resolusi video target.</p>
+                    </div>
+
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-all flex items-center gap-2 font-title shadow cursor-pointer">
+                        <i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan Drive
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Toggle Enabled -->
+                    <div class="p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <label class="text-xs font-extrabold text-[#1A1A1E] font-title">Aktifkan Google Drive Storage</label>
+                            <p class="text-[11px] text-[#55555B]">Jika aktif, video episode akan diprioritaskan dari Google Drive Anda.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="gdrive_enabled" value="true" class="sr-only peer" {{if .Config.GDrive.Enabled}}checked{{end}}>
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                        </label>
+                    </div>
+
+                    <!-- Toggle Auto Sync -->
+                    <div class="p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <label class="text-xs font-extrabold text-[#1A1A1E] font-title">Auto-Sync Episode Baru Rilis</label>
+                            <p class="text-[11px] text-[#55555B]">Otomatis download dan upload saat ada episode anime ongoing baru.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="gdrive_auto_sync" value="true" class="sr-only peer" {{if .Config.GDrive.AutoSyncOngoing}}checked{{end}}>
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                        </label>
+                    </div>
+
+                    <!-- Target Resolutions Selection -->
+                    <div class="md:col-span-2 space-y-2 p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC]">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-extrabold text-[#1A1A1E] font-title">Target Resolusi Video yang Disimpan</label>
+                            <span class="text-[10px] text-amber-700 bg-amber-100 font-bold px-2 py-0.5 rounded">Rekomendasi 720p & 1080p</span>
+                        </div>
+                        <p class="text-[11px] text-[#55555B]">Pilih resolusi video yang akan diunduh dan disimpan ke Google Drive 5TB:</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E2E2DC] cursor-pointer hover:border-[#FFCC00] transition">
+                                <input type="checkbox" name="res_1080p" value="true" checked class="w-4 h-4 text-[#FFCC00] rounded focus:ring-[#FFCC00]">
+                                <div>
+                                    <div class="text-xs font-bold text-[#1A1A1E] flex items-center gap-1.5">
+                                        <span>1080p Full HD</span>
+                                        <span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-green-100 text-green-800">Ultra Clear</span>
+                                    </div>
+                                    <div class="text-[10px] text-[#55555B]">Ukuran rata-rata ~450 MB per episode. Tampilan paling jernih untuk desktop & TV.</div>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E2E2DC] cursor-pointer hover:border-[#FFCC00] transition">
+                                <input type="checkbox" name="res_720p" value="true" checked class="w-4 h-4 text-[#FFCC00] rounded focus:ring-[#FFCC00]">
+                                <div>
+                                    <div class="text-xs font-bold text-[#1A1A1E] flex items-center gap-1.5">
+                                        <span>720p HD</span>
+                                        <span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-blue-100 text-blue-800">Hemat Kuota</span>
+                                    </div>
+                                    <div class="text-[10px] text-[#55555B]">Ukuran rata-rata ~200 MB per episode. Pilihan terbaik untuk mobile dan streaming cepat.</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Folder ID -->
+                    <div class="space-y-1.5 md:col-span-2">
+                        <label class="block text-xs font-bold text-[#1A1A1E] font-title">Google Drive Folder ID (Induk Koleksi Anime)</label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" name="gdrive_folder_id" x-model="folderId"
+                                class="flex-1 text-xs font-mono font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]" 
+                                placeholder="Contoh: 1A2b3C4d5E6f7G8h9I0jKLMNopQrStUvW" />
+                            
+                            <button type="button" @click="testGDrive()" :disabled="testLoading"
+                                class="px-5 py-3 bg-[#1A1A1E] hover:bg-black text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shrink-0 shadow cursor-pointer disabled:opacity-50">
+                                <template x-if="!testLoading">
+                                    <span class="flex items-center gap-1.5">
+                                        <i data-lucide="zap" class="w-3.5 h-3.5 text-[#FFCC00]"></i>
+                                        <span>Test Koneksi Folder</span>
+                                    </span>
+                                </template>
+                                <template x-if="testLoading">
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="animate-spin h-3.5 w-3.5 text-[#FFCC00]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <span>Memeriksa...</span>
+                                    </span>
+                                </template>
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-[#55555B]">Salin ID folder dari URL Google Drive: <code>drive.google.com/drive/folders/<b>[FOLDER_ID]</b></code></p>
+                    </div>
+
+                    <!-- Live Folder Test Result -->
+                    <div x-show="testResult !== null" x-cloak class="md:col-span-2 p-3.5 rounded-xl text-xs border transition-all"
+                        :class="testResult && testResult.success ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'">
+                        <div class="flex items-center justify-between font-bold">
+                            <span x-text="testResult && testResult.success ? '✅ ' + testResult.message : '❌ ' + (testResult ? testResult.message : '')"></span>
+                            <span x-show="testResult && testResult.storage_gb" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/80 border border-green-300" x-text="testResult ? 'Kapasitas: ' + testResult.storage_gb + ' GB' : ''"></span>
+                        </div>
+                        <div class="text-[11px] mt-1 text-gray-700" x-show="testResult && testResult.success">
+                            <span>Folder ID valid dan siap menerima sinkronisasi episode video otomatis.</span>
+                        </div>
+                    </div>
+
+                    <!-- Service Account JSON / API Key -->
+                    <div class="space-y-1.5 md:col-span-2">
+                        <label class="block text-xs font-bold text-[#1A1A1E] font-title">Google Service Account Credentials (JSON) / API Key</label>
+                        <textarea name="gdrive_service_json" rows="4"
+                            class="w-full text-xs font-mono p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]" 
+                            placeholder='{"type": "service_account", "project_id": "...", "private_key": "...", "client_email": "..."}'>{{.Config.GDrive.ServiceAccountJSON}}</textarea>
+                        <p class="text-[10px] text-[#55555B]">Opsional: Masukkan JSON Service Account dari Google Cloud Console untuk otentikasi bot auto-sync latar belakang.</p>
+                    </div>
+
+                </div>
+
+                <!-- Multi-Source Freedom Info Notice -->
+                <div class="p-4 rounded-2xl bg-[#FFCC00]/10 border border-[#FFCC00]/40 text-xs text-[#17171B] flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-[#17171B] shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong class="font-title block mb-0.5">Kebebasan Memilih Sumber Video Kapan Saja:</strong>
+                        <p class="text-[11px] text-[#55555B] leading-relaxed">
+                            Anda tetap dapat memilih sumber video API scraper (<strong>AnimeKuDesu, Wajik Oploverz, Wajik Otakudesu, atau Custom</strong>) melalui tab <em>"Konfigurasi Website & API"</em>. Player video Nyamimo secara cerdas dapat menyajikan server dari Google Drive 5TB maupun server live API secara berdampingan tanpa saling bertabrakan!
+                        </p>
+                    </div>
+                </div>
+
             </div>
         </form>
     </div>

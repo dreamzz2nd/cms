@@ -157,48 +157,63 @@
 </header>
 
 <!-- Mobile Bottom Navigation Bar (Fixed Bottom UI for Mobile - md:hidden) -->
-<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-[#E2E2DC] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-1.5 py-1.5 flex items-center justify-around">
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-[#E2E2DC] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] px-2 pt-1.5 pb-[max(6px,env(safe-area-inset-bottom))] flex items-center justify-around">
     
     <!-- 1. Beranda -->
-    <a href="/" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all {{if eq .CurrentPage "home"}}text-[#2563EB] font-bold{{else}}text-[#71717A] hover:text-[#1A1A1E]{{end}}">
-        <i data-lucide="home" class="w-5 h-5 {{if eq .CurrentPage "home"}}stroke-[2.5px] text-[#2563EB]{{else}}stroke-[1.75px]{{end}}"></i>
-        <span class="text-[10px] tracking-tight font-title">Beranda</span>
+    <a href="/" class="flex flex-col items-center justify-center min-w-[56px] py-1 px-2.5 rounded-xl transition-all duration-200 {{if eq .CurrentPage "home"}}bg-[#FFCC00]/20 text-[#17171B] font-extrabold shadow-xs{{else}}text-[#71717A] hover:text-[#1A1A1E] hover:bg-[#F6F5F0]{{end}}">
+        <i data-lucide="home" class="w-5 h-5 transition-transform {{if eq .CurrentPage "home"}}stroke-[2.5px] text-[#17171B] scale-105{{else}}stroke-[1.75px] text-[#71717A]{{end}}"></i>
+        <span class="text-[10px] tracking-tight font-title leading-tight mt-0.5 {{if eq .CurrentPage "home"}}text-[#17171B] font-extrabold{{else}}text-[#71717A] font-medium{{end}}">Beranda</span>
+        {{if eq .CurrentPage "home"}}
+        <span class="w-1.5 h-1 rounded-full bg-[#FFCC00] mt-0.5"></span>
+        {{end}}
     </a>
 
-    <!-- 2. Anime -->
-    <a href="/popular" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all {{if eq .CurrentPage "popular"}}text-[#2563EB] font-bold{{else}}text-[#71717A] hover:text-[#1A1A1E]{{end}}">
-        <i data-lucide="tv" class="w-5 h-5 {{if eq .CurrentPage "popular"}}stroke-[2.5px] text-[#2563EB]{{else}}stroke-[1.75px]{{end}}"></i>
-        <span class="text-[10px] tracking-tight font-title">Anime</span>
+    <!-- 2. Anime Populer -->
+    <a href="/popular" class="flex flex-col items-center justify-center min-w-[56px] py-1 px-2.5 rounded-xl transition-all duration-200 {{if eq .CurrentPage "popular"}}bg-[#FFCC00]/20 text-[#17171B] font-extrabold shadow-xs{{else}}text-[#71717A] hover:text-[#1A1A1E] hover:bg-[#F6F5F0]{{end}}">
+        <i data-lucide="tv" class="w-5 h-5 transition-transform {{if eq .CurrentPage "popular"}}stroke-[2.5px] text-[#17171B] scale-105{{else}}stroke-[1.75px] text-[#71717A]{{end}}"></i>
+        <span class="text-[10px] tracking-tight font-title leading-tight mt-0.5 {{if eq .CurrentPage "popular"}}text-[#17171B] font-extrabold{{else}}text-[#71717A] font-medium{{end}}">Anime</span>
+        {{if eq .CurrentPage "popular"}}
+        <span class="w-1.5 h-1 rounded-full bg-[#FFCC00] mt-0.5"></span>
+        {{end}}
     </a>
 
-    <!-- 3. Jadwal -->
-    <a href="/schedule" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all {{if eq .CurrentPage "schedule"}}text-[#2563EB] font-bold{{else}}text-[#71717A] hover:text-[#1A1A1E]{{end}}">
-        <i data-lucide="calendar" class="w-5 h-5 {{if eq .CurrentPage "schedule"}}stroke-[2.5px] text-[#2563EB]{{else}}stroke-[1.75px]{{end}}"></i>
-        <span class="text-[10px] tracking-tight font-title">Jadwal</span>
+    <!-- 3. Jadwal Rilis -->
+    <a href="/schedule" class="flex flex-col items-center justify-center min-w-[56px] py-1 px-2.5 rounded-xl transition-all duration-200 {{if eq .CurrentPage "schedule"}}bg-[#FFCC00]/20 text-[#17171B] font-extrabold shadow-xs{{else}}text-[#71717A] hover:text-[#1A1A1E] hover:bg-[#F6F5F0]{{end}}">
+        <i data-lucide="calendar" class="w-5 h-5 transition-transform {{if eq .CurrentPage "schedule"}}stroke-[2.5px] text-[#17171B] scale-105{{else}}stroke-[1.75px] text-[#71717A]{{end}}"></i>
+        <span class="text-[10px] tracking-tight font-title leading-tight mt-0.5 {{if eq .CurrentPage "schedule"}}text-[#17171B] font-extrabold{{else}}text-[#71717A] font-medium{{end}}">Jadwal</span>
+        {{if eq .CurrentPage "schedule"}}
+        <span class="w-1.5 h-1 rounded-full bg-[#FFCC00] mt-0.5"></span>
+        {{end}}
     </a>
 
-    <!-- 4. Riwayat Tontonan (Guest & Member) -->
-    <a href="/profile" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all {{if eq .CurrentPage "profile"}}text-[#2563EB] font-bold{{else}}text-[#71717A] hover:text-[#1A1A1E]{{end}}">
-        <i data-lucide="history" class="w-5 h-5 {{if eq .CurrentPage "profile"}}stroke-[2.5px] text-[#2563EB]{{else}}stroke-[1.75px]{{end}}"></i>
-        <span class="text-[10px] tracking-tight font-title">Riwayat</span>
+    <!-- 4. Riwayat Tontonan -->
+    <a href="/profile" class="flex flex-col items-center justify-center min-w-[56px] py-1 px-2.5 rounded-xl transition-all duration-200 {{if eq .CurrentPage "profile"}}bg-[#FFCC00]/20 text-[#17171B] font-extrabold shadow-xs{{else}}text-[#71717A] hover:text-[#1A1A1E] hover:bg-[#F6F5F0]{{end}}">
+        <i data-lucide="history" class="w-5 h-5 transition-transform {{if eq .CurrentPage "profile"}}stroke-[2.5px] text-[#17171B] scale-105{{else}}stroke-[1.75px] text-[#71717A]{{end}}"></i>
+        <span class="text-[10px] tracking-tight font-title leading-tight mt-0.5 {{if eq .CurrentPage "profile"}}text-[#17171B] font-extrabold{{else}}text-[#71717A] font-medium{{end}}">Riwayat</span>
+        {{if eq .CurrentPage "profile"}}
+        <span class="w-1.5 h-1 rounded-full bg-[#FFCC00] mt-0.5"></span>
+        {{end}}
     </a>
 
-    <!-- 5. Profil / Masuk -->
+    <!-- 5. Akun / Masuk -->
     {{if .User}}
-    <a href="/profile" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all text-[#71717A] hover:text-[#1A1A1E]">
-        <div class="w-5 h-5 rounded-md overflow-hidden bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-bold text-[10px] font-title">
+    <a href="/profile" class="flex flex-col items-center justify-center min-w-[56px] py-1 px-2.5 rounded-xl transition-all duration-200 text-[#71717A] hover:text-[#1A1A1E] hover:bg-[#F6F5F0]">
+        <div class="w-5.5 h-5.5 rounded-lg overflow-hidden bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-bold text-[10px] font-title border border-[#E2E2DC] shadow-xs relative">
             {{if .User.Avatar}}
             <img src="{{.User.Avatar}}" alt="{{.User.Name}}" class="w-full h-full object-cover" />
             {{else}}
             {{.User.Name | firstChar}}
             {{end}}
+            {{if eq .User.Role "admin"}}
+            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#FFCC00] border border-[#17171B] flex items-center justify-center text-[7px]">👑</span>
+            {{end}}
         </div>
-        <span class="text-[10px] tracking-tight font-title">Akun</span>
+        <span class="text-[10px] tracking-tight font-title leading-tight mt-0.5 text-[#55555B] font-semibold truncate max-w-[50px]">{{if eq .User.Role "admin"}}Admin{{else}}Akun{{end}}</span>
     </a>
     {{else}}
-    <button type="button" @click="showLoginModal = true; loginView = 'options'" class="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl transition-all text-[#71717A] hover:text-[#1A1A1E]">
-        <i data-lucide="log-in" class="w-5 h-5 stroke-[1.75px]"></i>
-        <span class="text-[10px] tracking-tight font-title">Masuk</span>
+    <button type="button" @click="showLoginModal = true; loginView = 'options'" class="flex flex-col items-center justify-center min-w-[56px] py-1 px-2.5 rounded-xl transition-all duration-200 text-[#71717A] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] cursor-pointer">
+        <i data-lucide="log-in" class="w-5 h-5 stroke-[1.75px] text-[#71717A]"></i>
+        <span class="text-[10px] tracking-tight font-title leading-tight mt-0.5 text-[#55555B] font-semibold">Masuk</span>
     </button>
     {{end}}
 

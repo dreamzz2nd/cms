@@ -4,10 +4,25 @@
   "site_logo": "/static/logo.png",
   "site_favicon": "/static/logo.png",
   "primary_color": "#FFCC00",
+  "api_provider": "animekudesu",
   "api_base_url": "https://api.animekudesu.web.id",
   "port": "3000",
   "google_client_id": "494465077307-bt9dlfv5ungb9gd7ectnln3auu77edlm.apps.googleusercontent.com",
   "google_client_secret": "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",
+  "gdrive": {
+    "enabled": false,
+    "folder_id": "1-5fg58S1uu9IdGLiTMxzF1hGBPehvxOD",
+    "service_account_json": "",
+    "auto_sync_ongoing": false,
+    "resolutions": [
+      "1080p",
+      "720p"
+    ],
+    "total_storage_gb": 5120,
+    "used_storage_gb": 350.60000000000025,
+    "total_synced_episodes": 540,
+    "connected": false
+  },
   "ads": {
     "header_banner": {
       "enabled": false,

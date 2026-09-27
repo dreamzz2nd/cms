@@ -1,4 +1,36 @@
 {
+  "guest:g_dlphjm73702o": [
+    {
+      "slug": "digimon-beatbreak",
+      "title": "Digimon Beatbreak",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2025/10/151242.jpg",
+      "episode": "Episode 7",
+      "episodeNum": "7",
+      "episodeTitle": "Digimon Beatbreak Episode 7",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/digimon-beatbreak/?ep=7",
+      "updatedAt": 1790513984717
+    },
+    {
+      "slug": "dragon-ball-heroes",
+      "title": "Dragon Ball Heroes",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2020/04/92990.jpg",
+      "episode": "Episode 1",
+      "episodeNum": "1",
+      "episodeTitle": "",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/dragon-ball-heroes/?ep=1",
+      "updatedAt": 1790513959156
+    }
+  ],
   "guest:test_guest_123": [
     {
       "slug": "one-piece",
@@ -18,6 +50,21 @@
   ],
   "user:admin": [
     {
+      "slug": "k-on",
+      "title": "K-On!",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2024/08/76120.jpg",
+      "episode": "Episode 13",
+      "episodeNum": "13",
+      "episodeTitle": "K-ON!",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/k-on/?ep=13",
+      "updatedAt": 1790510299772
+    },
+    {
       "slug": "2-5-jigen-no-ririsa",
       "title": "2.5 jigen no Ririsa",
       "img": "https://v2.samehadaku.how/wp-content/uploads/2024/07/2.5-jigen-no-Ririsa.jpg",
@@ -30,7 +77,82 @@
       "durationFormatted": "00:00",
       "progressPercent": 0,
       "link": "/anime/2-5-jigen-no-ririsa/?ep=2",
-      "updatedAt": 1790479131513
+      "updatedAt": 1790510280572
+    },
+    {
+      "slug": "mushoku-tensei-isekai-ittara-honki-dasu-season-3",
+      "title": "Mushoku Tensei : Isekai Ittara Honki Dasu Season 3",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2026/07/158340.jpg",
+      "episode": "Episode 1",
+      "episodeNum": "1",
+      "episodeTitle": "Mushoku Tensei : Isekai Ittara Honki Dasu Season 3 Episode 1",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/mushoku-tensei-isekai-ittara-honki-dasu-season-3/?ep=1",
+      "updatedAt": 1790510238500
+    },
+    {
+      "slug": "sakamoto-days-cour-2",
+      "title": "Sakamoto Days Cour 2",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2025/07/bx184237-OJAksU2fsIPx.jpg",
+      "episode": "Episode 1",
+      "episodeNum": "1",
+      "episodeTitle": "",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/sakamoto-days-cour-2/?ep=1",
+      "updatedAt": 1790496053598
+    },
+    {
+      "slug": "dragon-ball-heroes",
+      "title": "Dragon Ball Heroes",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2020/04/92990.jpg",
+      "episode": "Episode 1",
+      "episodeNum": "1",
+      "episodeTitle": "",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/dragon-ball-heroes/?ep=1",
+      "updatedAt": 1790484720297
+    },
+    {
+      "slug": "hikaru-ga-shinda-natsu",
+      "title": "Hikaru ga Shinda Natsu",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2025/07/148614.jpg",
+      "episode": "Episode 1",
+      "episodeNum": "1",
+      "episodeTitle": "",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/hikaru-ga-shinda-natsu/?ep=1",
+      "updatedAt": 1790484699912
+    },
+    {
+      "slug": "ganbare-douki-chan",
+      "title": "Ganbare Douki-chan",
+      "img": "https://v2.samehadaku.how/wp-content/uploads/2021/09/Ganbare.jpg",
+      "episode": "Episode 1",
+      "episodeNum": "1",
+      "episodeTitle": "",
+      "time": 0,
+      "duration": 0,
+      "timeFormatted": "00:00",
+      "durationFormatted": "00:00",
+      "progressPercent": 0,
+      "link": "/anime/ganbare-douki-chan/?ep=1",
+      "updatedAt": 1790482685106
     },
     {
       "slug": "youjo-senki-ii",
@@ -46,21 +168,6 @@
       "progressPercent": 0,
       "link": "/anime/youjo-senki-ii/?ep=1",
       "updatedAt": 1790478948065
-    },
-    {
-      "slug": "sakamoto-days-cour-2",
-      "title": "Sakamoto Days Cour 2",
-      "img": "https://v2.samehadaku.how/wp-content/uploads/2025/07/bx184237-OJAksU2fsIPx.jpg",
-      "episode": "Episode 1",
-      "episodeNum": "1",
-      "episodeTitle": "",
-      "time": 0,
-      "duration": 0,
-      "timeFormatted": "00:00",
-      "durationFormatted": "00:00",
-      "progressPercent": 0,
-      "link": "/anime/sakamoto-days-cour-2/?ep=1",
-      "updatedAt": 1790478851583
     },
     {
       "slug": "fruits-basket-season-1",
@@ -108,36 +215,6 @@
       "updatedAt": 1790478032618
     },
     {
-      "slug": "k-on",
-      "title": "K-On!",
-      "img": "https://v2.samehadaku.how/wp-content/uploads/2024/08/76120.jpg",
-      "episode": "Episode 1",
-      "episodeNum": "1",
-      "episodeTitle": "K-ON!",
-      "time": 0,
-      "duration": 0,
-      "timeFormatted": "00:00",
-      "durationFormatted": "00:00",
-      "progressPercent": 0,
-      "link": "/anime/k-on/?ep=1",
-      "updatedAt": 1790477929815
-    },
-    {
-      "slug": "ganbare-douki-chan",
-      "title": "Ganbare Douki-chan",
-      "img": "https://v2.samehadaku.how/wp-content/uploads/2021/09/Ganbare.jpg",
-      "episode": "Episode 1",
-      "episodeNum": "1",
-      "episodeTitle": "",
-      "time": 0,
-      "duration": 0,
-      "timeFormatted": "00:00",
-      "durationFormatted": "00:00",
-      "progressPercent": 0,
-      "link": "/anime/ganbare-douki-chan/?ep=1",
-      "updatedAt": 1790477844124
-    },
-    {
       "slug": "bleach-sennen-kessen-hen-kashin-tan-cour-4",
       "title": "Bleach: Sennen Kessen-hen – Kashin-tan (Cour 4)",
       "img": "https://v2.samehadaku.how/wp-content/uploads/2026/07/bx185874-aU3e6tBT6wwA.jpg",
@@ -166,21 +243,6 @@
       "progressPercent": 0,
       "link": "/anime/futsutsuka-na-akujo-dewa-gozaimasu/?ep=2",
       "updatedAt": 1790477680404
-    },
-    {
-      "slug": "mushoku-tensei-isekai-ittara-honki-dasu-season-3",
-      "title": "Mushoku Tensei : Isekai Ittara Honki Dasu Season 3",
-      "img": "https://v2.samehadaku.how/wp-content/uploads/2026/07/158340.jpg",
-      "episode": "Episode 4",
-      "episodeNum": "4",
-      "episodeTitle": "Mushoku Tensei : Isekai Ittara Honki Dasu Season 3 Episode 4",
-      "time": 0,
-      "duration": 0,
-      "timeFormatted": "00:00",
-      "durationFormatted": "00:00",
-      "progressPercent": 0,
-      "link": "/anime/mushoku-tensei-isekai-ittara-honki-dasu-season-3/?ep=4",
-      "updatedAt": 1790452734323
     }
   ]
 }

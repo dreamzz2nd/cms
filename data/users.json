@@ -3,7 +3,8 @@
     "username": "admin",
     "password": "admin123",
     "name": "Administrator Nyamimo",
-    "role": "admin"
+    "role": "admin",
+    "last_seen_at": 1790512374
   },
   "ibrahimrizky696": {
     "username": "ibrahimrizky696",
@@ -12,18 +13,21 @@
     "role": "user",
     "email": "ibrahimrizky696@gmail.com",
     "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKIqO-6LYD6lpKIJcK3I0V9hgZcvb0JuTpCOklDKoJrRIJ896Cc=s96-c",
-    "google_id": "113782044341089888985"
+    "google_id": "113782044341089888985",
+    "last_seen_at": 1758974500
   },
   "nyamimofan": {
     "username": "nyamimofan",
     "password": "nyamimopass",
     "name": "OtakuMember",
-    "role": "user"
+    "role": "user",
+    "last_seen_at": 1758963000
   },
   "user": {
     "username": "user",
     "password": "user123",
     "name": "Member Nyamimo",
-    "role": "user"
+    "role": "user",
+    "last_seen_at": 1758801600
   }
 }

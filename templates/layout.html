@@ -19,6 +19,10 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="author" content="{{$cfg.SiteName}} Team">
     <meta name="theme-color" content="{{if $cfg.PrimaryColor}}{{$cfg.PrimaryColor}}{{else}}#FFCC00{{end}}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/static/manifest.json">
     <link rel="canonical" href="{{if .CanonicalURL}}{{.CanonicalURL}}{{else}}https://nyamimo.onrender.com{{end}}">
     <link rel="shortcut icon" href="{{$cfg.SiteFavicon}}" type="image/png">
     <link rel="apple-touch-icon" href="{{$cfg.SiteLogo}}">
@@ -479,7 +483,7 @@
     {{end}}
 
     <!-- Main Content -->
-    <main class="flex-grow pb-16 md:pb-0">
+    <main class="flex-grow pb-24 md:pb-0">
         {{template "content" .}}
     </main>
 
@@ -560,6 +564,32 @@
                 activeInput.focus();
                 htmx.trigger(activeInput, 'search');
             }
+        }
+
+        // Real-time Heartbeat for Logged-In User Online Status Tracking
+        {{if .User}}
+        (function() {
+            function sendUserHeartbeat() {
+                if (document.visibilityState === 'visible') {
+                    fetch('/api/user/heartbeat', { method: 'POST' }).catch(function(){});
+                }
+            }
+            sendUserHeartbeat();
+            setInterval(sendUserHeartbeat, 25000); // 25-second interval
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible') sendUserHeartbeat();
+            });
+            window.addEventListener('focus', function() {
+                sendUserHeartbeat();
+            });
+        })();
+        {{end}}
+
+        // Service Worker for Fast Mobile Offline Cache
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/sw.js').catch(function(){});
+            });
         }
     </script>
     <!-- Global Login / Register Modal Popup (Bstation Style) -->
