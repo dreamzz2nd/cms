@@ -312,12 +312,23 @@
                         {{range .UsersList}}
                         <tr class="hover:bg-[#F6F5F0]/50 transition-colors">
                             <td class="p-4 flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-[#17171B] text-[#FFCC00] font-bold font-title flex items-center justify-center text-xs shrink-0">
+                                <div class="w-9 h-9 rounded-xl overflow-hidden bg-[#17171B] text-[#FFCC00] font-bold font-title flex items-center justify-center text-xs shrink-0 border border-[#E2E2DC] shadow-sm">
+                                    {{if .Avatar}}
+                                    <img src="{{.Avatar}}" alt="{{.Name}}" class="w-full h-full object-cover" />
+                                    {{else}}
                                     {{.Name | firstChar}}
+                                    {{end}}
                                 </div>
                                 <div>
-                                    <div class="font-bold text-sm text-[#1A1A1E]">{{.Name}}</div>
-                                    <div class="text-[11px] text-[#55555B]">{{.Username}}</div>
+                                    <div class="font-bold text-sm text-[#1A1A1E] flex items-center gap-1.5">
+                                        <span>{{.Name}}</span>
+                                        {{if .GoogleID}}
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[9px] font-bold border border-blue-200 font-title" title="Akun Terhubung Google OAuth">
+                                            Google
+                                        </span>
+                                        {{end}}
+                                    </div>
+                                    <div class="text-[11px] text-[#55555B]">{{if .Email}}{{.Email}}{{else}}@{{.Username}}{{end}}</div>
                                 </div>
                             </td>
                             <td class="p-4 font-mono font-bold text-xs text-[#55555B]">
