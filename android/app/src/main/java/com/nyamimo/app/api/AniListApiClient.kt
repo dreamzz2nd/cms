@@ -417,9 +417,14 @@ object AniListApiClient {
 
             media.getAsJsonArray("rankings")?.forEach { elem ->
                 if (elem.isJsonObject) {
-                    val r = elem.asJsonObject.get("rank")?.takeIf { !it.isJsonNull }?.asInt ?: 0
-                    if (r in 1..50 && (rank == 0 || r < rank)) {
-                        rank = r
+                    val rObj = elem.asJsonObject
+                    val r = rObj.get("rank")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+                    val type = rObj.get("type")?.takeIf { !it.isJsonNull }?.asString ?: ""
+                    val allTime = rObj.get("allTime")?.takeIf { !it.isJsonNull }?.asBoolean ?: false
+                    if (allTime && type.equals("RATED", ignoreCase = true) && r in 1..50) {
+                        if (rank == 0 || r < rank) {
+                            rank = r
+                        }
                     }
                 }
             }
@@ -429,7 +434,7 @@ object AniListApiClient {
                 scoredBy = pop / 2,
                 score = scoreStr,
                 rank = rank,
-                popularity = if (pop > 0) 1 else 0
+                popularity = 0
             )
         } catch (e: Exception) {
             null

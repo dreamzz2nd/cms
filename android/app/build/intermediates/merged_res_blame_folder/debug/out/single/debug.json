@@ -68,12 +68,20 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\ic_reels_disc.xml"
     },
     {
+        "merged": "com.nyamimo.app-merged_res-43:/layout_activity_player.xml.flat",
+        "source": "com.nyamimo.app-main-45:/layout/activity_player.xml"
+    },
+    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_badge_free_tag.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\badge_free_tag.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\raw_loading_cat.gif.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\raw\\loading_cat.gif"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_item_recommended_card.xml.flat",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_recommended_card.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_episode_pill_bg.xml.flat",
@@ -250,6 +258,10 @@
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_item_history_card.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_history_card.xml"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_badge_dark_circle.xml.flat",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\badge_dark_circle.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_ic_chevron_right.xml.flat",

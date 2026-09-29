@@ -2988,6 +2988,7 @@ drawable abc_vector_test
 drawable avd_hide_password
 drawable avd_show_password
 drawable badge_cyan_anime
+drawable badge_dark_circle
 drawable badge_free_tag
 drawable badge_gold_bg
 drawable badge_trending_blue
@@ -3388,6 +3389,7 @@ id clip_horizontal
 id clip_vertical
 id clockwise
 id collapseActionView
+id columnDivider
 id compress
 id confirm_button
 id container
@@ -3556,6 +3558,7 @@ id is_pooling_container_tag
 id italic
 id item_touch_helper_previous_elevation
 id ivBanner
+id ivCardPoster
 id ivDetailBookmarkIcon
 id ivDetailLikeIcon
 id ivDetailLoadingGif
@@ -3596,6 +3599,7 @@ id layoutDownloadsEmpty
 id layoutHistoryEmpty
 id layoutNewsError
 id left
+id leftColumnLayout
 id leftToRight
 id legacy
 id line1
@@ -3604,6 +3608,7 @@ id linear
 id listMode
 id list_item
 id m3_side_sheet
+id mainContentRow
 id mainLoadingOverlay
 id marquee
 id masked
@@ -3732,6 +3737,7 @@ id playerTopControls
 id playerView
 id playerWebView
 id pooling_container_listener_holder_tag
+id portraitRecommendationsContainer
 id position
 id postLayout
 id pressed
@@ -3745,9 +3751,11 @@ id reelsContainer
 id report_drawn
 id reverseSawtooth
 id right
+id rightColumnLayout
 id rightToLeft
 id right_icon
 id right_side
+id rootAnimeDetail
 id rounded
 id rowTitleAndMore
 id row_index_key
@@ -3756,6 +3764,7 @@ id rvDetailResolutions
 id rvDownloadsFullList
 id rvDownloadsList
 id rvHistoryFullList
+id rvLandscapeRecommendations
 id rvLandscapeResolutions
 id rvMimoNewsList
 id rvPlayerResolutions
@@ -3900,9 +3909,13 @@ id tvBannerEp
 id tvBannerScore
 id tvBannerTag
 id tvBannerTitle
+id tvCardEpisode
+id tvCardScore
+id tvCardTitle
 id tvDetailBookmarkCount
 id tvDetailLikeCount
 id tvDetailScore
+id tvDetailShareText
 id tvDetailTitle
 id tvDetailTotalEps
 id tvDetailViews
@@ -3941,6 +3954,7 @@ id tvHistoryTitle
 id tvHistoryTypeTag
 id tvInfoDialogContent
 id tvInfoDialogTitle
+id tvLandscapeRecHeader
 id tvNavCari
 id tvNavHome
 id tvNavNews
@@ -4184,6 +4198,7 @@ layout item_history_header
 layout item_history_horizontal_card
 layout item_mimo_news_card
 layout item_recommended_anime
+layout item_recommended_card
 layout item_resolution_chip
 layout item_search_history_chip
 layout item_search_suggestion

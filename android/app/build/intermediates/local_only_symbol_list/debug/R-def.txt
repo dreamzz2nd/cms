@@ -22,6 +22,7 @@ color text_primary
 color text_secondary
 color white
 drawable badge_cyan_anime
+drawable badge_dark_circle
 drawable badge_free_tag
 drawable badge_gold_bg
 drawable badge_trending_blue
@@ -128,6 +129,7 @@ id chipNewsSchedule
 id chipNewsSpring2027
 id chipNewsUpcoming
 id chipNewsWinter2027
+id columnDivider
 id detailContentDivider
 id detailContentScroll
 id detailPlayerView
@@ -147,6 +149,7 @@ id headerContainer
 id headerDownloadsBar
 id headerHistoryBar
 id ivBanner
+id ivCardPoster
 id ivDetailBookmarkIcon
 id ivDetailLikeIcon
 id ivDetailLoadingGif
@@ -182,6 +185,8 @@ id layoutAuthEmail
 id layoutDownloadsEmpty
 id layoutHistoryEmpty
 id layoutNewsError
+id leftColumnLayout
+id mainContentRow
 id mainLoadingOverlay
 id menuAcara
 id menuFavoritSaya
@@ -204,14 +209,18 @@ id playerTopBar
 id playerTopControls
 id playerView
 id playerWebView
+id portraitRecommendationsContainer
 id profileContainer
 id reelsContainer
+id rightColumnLayout
+id rootAnimeDetail
 id rowTitleAndMore
 id rvDetailEpisodes
 id rvDetailResolutions
 id rvDownloadsFullList
 id rvDownloadsList
 id rvHistoryFullList
+id rvLandscapeRecommendations
 id rvLandscapeResolutions
 id rvMimoNewsList
 id rvPlayerResolutions
@@ -251,9 +260,13 @@ id tvBannerEp
 id tvBannerScore
 id tvBannerTag
 id tvBannerTitle
+id tvCardEpisode
+id tvCardScore
+id tvCardTitle
 id tvDetailBookmarkCount
 id tvDetailLikeCount
 id tvDetailScore
+id tvDetailShareText
 id tvDetailTitle
 id tvDetailTotalEps
 id tvDetailViews
@@ -292,6 +305,7 @@ id tvHistoryTitle
 id tvHistoryTypeTag
 id tvInfoDialogContent
 id tvInfoDialogTitle
+id tvLandscapeRecHeader
 id tvNavCari
 id tvNavHome
 id tvNavNews
@@ -371,6 +385,7 @@ layout item_history_header
 layout item_history_horizontal_card
 layout item_mimo_news_card
 layout item_recommended_anime
+layout item_recommended_card
 layout item_resolution_chip
 layout item_search_history_chip
 layout item_search_suggestion

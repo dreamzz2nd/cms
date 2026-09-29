@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         app:use_controller="true"
         app:show_buffering="when_playing"
-        app:resize_mode="fit" />
+        app:resize_mode="zoom" />
 
     <!-- Accelerated WebView for embedded streams (Blogger / Iframe) -->
     <WebView
@@ -33,16 +33,16 @@
     <!-- Watermark Overlay (Pojok Kanan Atas Video) -->
     <ImageView
         android:id="@+id/ivPlayerWatermark"
-        android:layout_width="84dp"
-        android:layout_height="30dp"
+        android:layout_width="170dp"
+        android:layout_height="60dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="20dp"
-        android:alpha="0.8"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="6dp"
+        android:alpha="0.95"
         android:clickable="false"
         android:focusable="false"
-        android:scaleType="fitCenter"
+        android:scaleType="fitEnd"
         android:src="@drawable/watermark_nyamimo" />
 
 
@@ -52,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_alignParentTop="true"
-        android:background="@drawable/banner_gradient_overlay"
+        android:background="@android:color/transparent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp">
@@ -61,6 +61,7 @@
             android:id="@+id/btnBackPlayer"
             android:layout_width="36dp"
             android:layout_height="36dp"
+            android:background="@drawable/badge_dark_circle"
             android:padding="6dp"
             android:src="@android:drawable/ic_menu_revert"
             app:tint="#FFFFFF" />
@@ -70,7 +71,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/tvPlayerTitle"
@@ -104,7 +106,8 @@
             android:text="Server"
             android:textColor="#FFFFFF"
             android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <!-- Speed Selector Button -->
         <TextView
@@ -118,7 +121,8 @@
             android:text="1.0x"
             android:textColor="#FFFFFF"
             android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <!-- Aspect Ratio Button -->
         <ImageView
@@ -127,7 +131,8 @@
             android:layout_height="36dp"
             android:padding="6dp"
             android:src="@android:drawable/ic_menu_crop"
-            app:tint="#FFFFFF" />
+            app:tint="#FFFFFF"
+            android:visibility="gone" />
     </LinearLayout>
 
     <!-- Top Floating Resolution & Server Bar (Positioned under top bar, NEVER overlapping bottom controls!) -->

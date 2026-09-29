@@ -27,6 +27,8 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.nyamimo.app.adapter.BstationEpisodeAdapter
@@ -49,13 +51,14 @@ class AnimeDetailActivity : AppCompatActivity() {
     private var exoPlayer: ExoPlayer? = null
     private var detailData: AnimeDetailData? = null
     private var slug: String = ""
-    private var isLandscape = false
+    private var isImmersiveFullscreen = false
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     private lateinit var bstationEpisodeAdapter: BstationEpisodeAdapter
     private lateinit var recommendedAnimeAdapter: RecommendedAnimeAdapter
+    private lateinit var landscapeRecAdapter: RecommendedAnimeAdapter
     private lateinit var resolutionAdapter: ResolutionAdapter
     private lateinit var landscapeResolutionAdapter: ResolutionAdapter
     private var currentOptions: List<PlayerOption> = emptyList()
@@ -88,9 +91,8 @@ class AnimeDetailActivity : AppCompatActivity() {
 
         loadMalStats(previewTitle)
 
-
         binding.btnBackDetail.setOnClickListener {
-            if (isLandscape || customView != null) {
+            if (isImmersiveFullscreen || customView != null) {
                 toggleFullscreen()
             } else {
                 finish()
@@ -117,7 +119,7 @@ class AnimeDetailActivity : AppCompatActivity() {
         setupRecommendations()
         initExoPlayer()
         initWebView()
-        applyFullscreenState(resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE)
+        updateLayoutMode()
         loadDetailAndPlay()
         loadRecommendations()
     }
@@ -170,13 +172,10 @@ class AnimeDetailActivity : AppCompatActivity() {
                     binding.tvDetailScore.text = "Score ${stats.score}"
                 }
 
-                // Top 50 Badge logic
+                // Top 50 Badge logic (Only show if genuinely ranked #1 to #50)
                 if (stats.rank in 1..50) {
                     binding.bannerRankRibbon.visibility = View.VISIBLE
-                    binding.tvRankTitle.text = "Umum Top ${stats.rank} • Trending Anime Nyamimo"
-                } else if (stats.popularity in 1..50) {
-                    binding.bannerRankRibbon.visibility = View.VISIBLE
-                    binding.tvRankTitle.text = "Umum Top ${stats.popularity} • Populer Anime Nyamimo"
+                    binding.tvRankTitle.text = "Umum Top ${stats.rank} • Ranking Anime Nyamimo"
                 } else {
                     binding.bannerRankRibbon.visibility = View.GONE
                 }
@@ -233,7 +232,6 @@ class AnimeDetailActivity : AppCompatActivity() {
                 binding.tvDetailBookmarkCount.setTextColor(Color.parseColor("#17171B"))
             }
         }
-
 
         binding.btnDetailDownload.setOnClickListener {
             val title = detailData?.title ?: binding.tvDetailTitle.text.toString()
@@ -339,32 +337,45 @@ class AnimeDetailActivity : AppCompatActivity() {
     }
 
     private fun setupRecommendations() {
+        // Portrait Recommendation List
         binding.rvRecommendedAnime.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        recommendedAnimeAdapter = RecommendedAnimeAdapter(emptyList()) { item ->
-            val intent = Intent(this, AnimeDetailActivity::class.java).apply {
-                putExtra("slug", item.slug)
-                putExtra("title", item.title)
-                putExtra("score", item.score)
-                putExtra("status", item.status)
-                putExtra("type", item.type)
-                putExtra("episode", item.episode)
-                putExtra("synopsis", item.synopsis)
-            }
-            startActivity(intent)
-            finish()
+        recommendedAnimeAdapter = RecommendedAnimeAdapter(emptyList(), isGrid = false) { item ->
+            navigateToDetail(item)
         }
         binding.rvRecommendedAnime.adapter = recommendedAnimeAdapter
+
+        // Landscape 3-Column Grid Recommendations (iQIYI Style)
+        binding.rvLandscapeRecommendations.layoutManager = GridLayoutManager(this, 3)
+        landscapeRecAdapter = RecommendedAnimeAdapter(emptyList(), isGrid = true) { item ->
+            navigateToDetail(item)
+        }
+        binding.rvLandscapeRecommendations.adapter = landscapeRecAdapter
+    }
+
+    private fun navigateToDetail(item: AnimeItem) {
+        val intent = Intent(this, AnimeDetailActivity::class.java).apply {
+            putExtra("slug", item.slug)
+            putExtra("title", item.title)
+            putExtra("score", item.score)
+            putExtra("status", item.status)
+            putExtra("type", item.type)
+            putExtra("episode", item.episode)
+            putExtra("synopsis", item.synopsis)
+        }
+        startActivity(intent)
+        finish()
     }
 
     private fun loadRecommendations() {
         ApiClient.getHome(object : ApiClient.Callback<HomeResponse> {
             override fun onSuccess(result: HomeResponse) {
                 val list = mutableListOf<AnimeItem>()
-                list.addAll(result.popular.take(6))
-                if (list.size < 6) {
-                    list.addAll(result.ongoing.take(6 - list.size))
+                list.addAll(result.popular.take(12))
+                if (list.size < 12) {
+                    list.addAll(result.ongoing.take(12 - list.size))
                 }
                 recommendedAnimeAdapter.updateData(list)
+                landscapeRecAdapter.updateData(list)
             }
 
             override fun onError(error: String) {
@@ -436,6 +447,7 @@ class AnimeDetailActivity : AppCompatActivity() {
                 })
             }
         binding.detailPlayerView.player = exoPlayer
+        binding.detailPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -486,8 +498,9 @@ class AnimeDetailActivity : AppCompatActivity() {
                 customViewCallback = callback
                 binding.playerContainer.addView(view, 0, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
                 binding.detailPlayerWebView.visibility = View.GONE
+                isImmersiveFullscreen = true
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                applyFullscreenState(true)
+                updateLayoutMode()
                 binding.ivVideoWatermark.bringToFront()
                 binding.ivVideoWatermark.visibility = View.VISIBLE
             }
@@ -497,15 +510,15 @@ class AnimeDetailActivity : AppCompatActivity() {
                 binding.playerContainer.removeView(customView)
                 customView = null
                 binding.detailPlayerWebView.visibility = View.VISIBLE
+                isImmersiveFullscreen = false
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                applyFullscreenState(false)
+                updateLayoutMode()
                 binding.ivVideoWatermark.bringToFront()
                 binding.ivVideoWatermark.visibility = View.VISIBLE
                 customViewCallback?.onCustomViewHidden()
             }
         }
     }
-
 
     private fun loadDetailAndPlay() {
         if (slug.isEmpty()) return
@@ -521,7 +534,6 @@ class AnimeDetailActivity : AppCompatActivity() {
                 binding.tvDetailScore.text = if (result.score.isNotEmpty()) "Score ${result.score}" else "Score 8.5"
                 binding.tvDetailTotalEps.text = "${result.episodes.size} Episode"
                 loadMalStats(cleanTitle)
-
 
                 val rawEpisodes = result.episodes
                 if (rawEpisodes.isNotEmpty()) {
@@ -637,7 +649,6 @@ class AnimeDetailActivity : AppCompatActivity() {
             binding.ivVideoWatermark.bringToFront()
             binding.ivVideoWatermark.visibility = View.VISIBLE
 
-
             val embedSrc = if (rawIframe.contains("src=\"") || rawIframe.contains("src='")) {
                 val match = Regex("""src=["'](https?://[^"']+)["']""").find(rawIframe)
                 match?.groupValues?.getOrNull(1) ?: videoUrl
@@ -656,7 +667,7 @@ class AnimeDetailActivity : AppCompatActivity() {
                         <style>
                             * { margin:0 !important; padding:0 !important; box-sizing:border-box !important; background-color:#000000 !important; }
                             body, html { width:100% !important; height:100% !important; background:#000000 !important; overflow:hidden !important; }
-                            iframe, video { width:100vw !important; height:100vh !important; border:none !important; display:block !important; }
+                            iframe, video { width:100vw !important; height:100vh !important; object-fit:cover !important; border:none !important; display:block !important; }
                             .vjs-big-play-button, .ytp-cued-thumbnail-overlay, .play-wrapper { display:none !important; }
                         </style>
                     </head>
@@ -679,9 +690,11 @@ class AnimeDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun applyFullscreenState(landscape: Boolean) {
-        isLandscape = landscape
-        if (landscape) {
+    private fun updateLayoutMode() {
+        val isOrientationLandscape = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+        if (isImmersiveFullscreen) {
+            // 100% IMMERSIVE FULLSCREEN MODE
             window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -690,40 +703,102 @@ class AnimeDetailActivity : AppCompatActivity() {
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
             )
-            binding.root.setBackgroundColor(Color.BLACK)
+            binding.rootAnimeDetail.setBackgroundColor(Color.BLACK)
+            binding.mainContentRow.orientation = LinearLayout.HORIZONTAL
+
+            binding.leftColumnLayout.layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
             binding.playerContainer.layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
+
+            binding.detailContentScroll.visibility = View.GONE
+            binding.rightColumnLayout.visibility = View.GONE
+            binding.columnDivider.visibility = View.GONE
             binding.bstationTabBar.visibility = View.GONE
             binding.detailContentDivider.visibility = View.GONE
-            binding.detailContentScroll.visibility = View.GONE
             binding.playerTopControls.visibility = View.GONE
             binding.btnLandscapeServerToggle.visibility = View.GONE
             binding.playerLandscapeServerBar.visibility = View.GONE
-        } else {
+        } else if (isOrientationLandscape) {
+            // 2-COLUMN LANDSCAPE TABLET MODE
             window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_VISIBLE
             )
-            binding.root.setBackgroundColor(Color.WHITE)
-            val heightPx = (270 * resources.displayMetrics.density).toInt()
+            binding.rootAnimeDetail.setBackgroundColor(Color.WHITE)
+            binding.mainContentRow.orientation = LinearLayout.HORIZONTAL
+
+            // Left Column (Player + Episode & Info Scroll): 62% width
+            binding.leftColumnLayout.layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                62f
+            )
+
+            // Exactly 16:9 aspect ratio of left column width (eliminates all left/right black pillarbox bars)
+            val leftColumnWidthPx = resources.displayMetrics.widthPixels * 0.62f
+            val playerHeightPx = (leftColumnWidthPx * 9f / 16f).toInt()
             binding.playerContainer.layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                heightPx
+                playerHeightPx
             )
+
+            binding.detailContentScroll.visibility = View.VISIBLE
+            binding.portraitRecommendationsContainer.visibility = View.GONE
+
+            // Right Column (3-Column Rekomendasi Grid): 38% width
+            binding.rightColumnLayout.layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                38f
+            )
+            binding.rightColumnLayout.visibility = View.VISIBLE
+            binding.columnDivider.visibility = View.VISIBLE
+
+            binding.bstationTabBar.visibility = View.GONE
+            binding.detailContentDivider.visibility = View.GONE
+            binding.playerTopControls.visibility = View.VISIBLE
+            binding.btnLandscapeServerToggle.visibility = View.GONE
+            binding.playerLandscapeServerBar.visibility = View.GONE
+        } else {
+            // PORTRAIT MODE
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_VISIBLE
+            )
+            binding.rootAnimeDetail.setBackgroundColor(Color.WHITE)
+            binding.mainContentRow.orientation = LinearLayout.VERTICAL
+
+            binding.leftColumnLayout.layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            val playerHeightPx = (270 * resources.displayMetrics.density).toInt()
+            binding.playerContainer.layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                playerHeightPx
+            )
+
+            binding.detailContentScroll.visibility = View.VISIBLE
+            binding.portraitRecommendationsContainer.visibility = View.VISIBLE
+            binding.rightColumnLayout.visibility = View.GONE
+            binding.columnDivider.visibility = View.GONE
+
             binding.bstationTabBar.visibility = View.VISIBLE
             binding.detailContentDivider.visibility = View.VISIBLE
-            binding.detailContentScroll.visibility = View.VISIBLE
             binding.playerTopControls.visibility = View.VISIBLE
             binding.btnLandscapeServerToggle.visibility = View.GONE
             binding.playerLandscapeServerBar.visibility = View.GONE
         }
+
         binding.ivVideoWatermark.bringToFront()
         binding.ivVideoWatermark.visibility = View.VISIBLE
     }
-
-
 
     private fun toggleFullscreen() {
         if (customView != null) {
@@ -731,18 +806,18 @@ class AnimeDetailActivity : AppCompatActivity() {
             return
         }
 
-        if (isLandscape) {
-            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            applyFullscreenState(false)
-        } else {
+        isImmersiveFullscreen = !isImmersiveFullscreen
+        if (isImmersiveFullscreen) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            applyFullscreenState(true)
+        } else {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
+        updateLayoutMode()
     }
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
-        applyFullscreenState(newConfig.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE)
+        updateLayoutMode()
     }
 
     override fun onBackPressed() {
@@ -750,7 +825,7 @@ class AnimeDetailActivity : AppCompatActivity() {
             (binding.detailPlayerWebView.webChromeClient as? WebChromeClient)?.onHideCustomView()
             return
         }
-        if (isLandscape) {
+        if (isImmersiveFullscreen) {
             toggleFullscreen()
         } else {
             super.onBackPressed()
