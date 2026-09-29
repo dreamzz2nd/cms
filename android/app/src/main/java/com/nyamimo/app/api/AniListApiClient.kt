@@ -354,9 +354,88 @@ object AniListApiClient {
                 }
                 tags.add(com.nyamimo.app.adapter.TrendingTag(title.lowercase(), badge, badgeColor))
             }
+
         } catch (e: Exception) { /* ignore */ }
         return tags
     }
+
+    fun getAnimeStats(
+
+        title: String,
+        onSuccess: (com.nyamimo.app.api.AnimeMalStats) -> Unit,
+        onError: () -> Unit
+    ) {
+        val escapedTitle = title.replace("\"", "\\\"")
+        val gql = """
+            {
+              Media(search: "$escapedTitle", type: ANIME) {
+                popularity
+                favourites
+                averageScore
+                rankings {
+                  rank
+                  type
+                  allTime
+                }
+              }
+            }
+        """.trimIndent()
+
+        val body = gson.toJson(mapOf("query" to gql)).toRequestBody(JSON_MEDIA_TYPE)
+        val request = Request.Builder()
+            .url(ANILIST_URL)
+            .post(body)
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                mainHandler.post { onError() }
+            }
+            override fun onResponse(call: Call, response: Response) {
+                val respBody = response.body?.string() ?: ""
+                val stats = parseAnimeStats(respBody)
+                if (stats != null) {
+                    mainHandler.post { onSuccess(stats) }
+                } else {
+                    mainHandler.post { onError() }
+                }
+            }
+        })
+    }
+
+    private fun parseAnimeStats(jsonBody: String): com.nyamimo.app.api.AnimeMalStats? {
+        return try {
+            val root = gson.fromJson(jsonBody, JsonObject::class.java)
+            val media = root?.getAsJsonObject("data")?.getAsJsonObject("Media") ?: return null
+            val pop = media.get("popularity")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+            val fav = media.get("favourites")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+            val avg = media.get("averageScore")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+            val scoreStr = if (avg > 0) String.format(Locale.US, "%.2f", avg / 10.0) else "N/A"
+            var rank = 0
+
+            media.getAsJsonArray("rankings")?.forEach { elem ->
+                if (elem.isJsonObject) {
+                    val r = elem.asJsonObject.get("rank")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+                    if (r in 1..50 && (rank == 0 || r < rank)) {
+                        rank = r
+                    }
+                }
+            }
+            com.nyamimo.app.api.AnimeMalStats(
+                members = pop,
+                favorites = fav,
+                scoredBy = pop / 2,
+                score = scoreStr,
+                rank = rank,
+                popularity = if (pop > 0) 1 else 0
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
+
 
     // ─── Internal HTTP ─────────────────────────────────────────────────────────
 

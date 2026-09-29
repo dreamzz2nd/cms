@@ -10,11 +10,21 @@ import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+data class AnimeMalStats(
+    val members: Int = 0,
+    val favorites: Int = 0,
+    val scoredBy: Int = 0,
+    val score: String = "N/A",
+    val rank: Int = 0,
+    val popularity: Int = 0
+)
+
 /**
  * Primary data source: Jikan API (https://api.jikan.moe) — official MAL REST wrapper.
  * Automatic fallback: AniListApiClient when Jikan is down / returns empty.
  */
 object JikanApiClient {
+
 
     private const val BASE_JIKAN = "https://api.jikan.moe/v4"
 
@@ -238,7 +248,9 @@ object JikanApiClient {
         })
     }
 
+
     private fun parseTrendingTagsFromJikan(jsonBody: String): List<com.nyamimo.app.adapter.TrendingTag> {
+
         val tags = mutableListOf<com.nyamimo.app.adapter.TrendingTag>()
         try {
             val json = gson.fromJson(jsonBody, JsonObject::class.java)
@@ -263,6 +275,67 @@ object JikanApiClient {
         } catch (e: Exception) { /* ignore */ }
         return tags
     }
+
+    fun getAnimeStats(
+
+        animeTitle: String,
+        onSuccess: (AnimeMalStats) -> Unit,
+        onError: () -> Unit
+    ) {
+        val cleanQuery = animeTitle
+            .replace(Regex("(?i)season\\s*\\d+"), "")
+            .replace(Regex("(?i)sub\\s*indo"), "")
+            .replace(Regex("(?i)part\\s*\\d+"), "")
+            .replace(Regex("(?i)batch"), "")
+            .trim()
+
+        val queryToUse = if (cleanQuery.isNotEmpty()) cleanQuery else animeTitle
+        val encoded = java.net.URLEncoder.encode(queryToUse, "UTF-8")
+        val url = "$BASE_JIKAN/anime?q=$encoded&limit=1"
+
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", "NyamimoApp/1.3.0")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                AniListApiClient.getAnimeStats(queryToUse, onSuccess, onError)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: ""
+                val stats = parseAnimeStatsFromJikan(body)
+                if (stats != null) {
+                    mainHandler.post { onSuccess(stats) }
+                } else {
+                    AniListApiClient.getAnimeStats(queryToUse, onSuccess, onError)
+                }
+            }
+        })
+    }
+
+    private fun parseAnimeStatsFromJikan(jsonBody: String): AnimeMalStats? {
+        return try {
+            val json = gson.fromJson(jsonBody, JsonObject::class.java)
+            if (json.has("status") && json.get("status").asInt >= 400) return null
+            val dataArray = json.getAsJsonArray("data") ?: return null
+            if (dataArray.size() == 0 || !dataArray[0].isJsonObject) return null
+
+            val obj = dataArray[0].asJsonObject
+            val members = obj.get("members")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+            val favorites = obj.get("favorites")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+            val scoredBy = obj.get("scored_by")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+            val score = optString(obj, "score", "N/A")
+            val rank = obj.get("rank")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+            val popularity = obj.get("popularity")?.takeIf { !it.isJsonNull }?.asInt ?: 0
+
+            AnimeMalStats(members, favorites, scoredBy, score, rank, popularity)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
 
     // ─── Internal ──────────────────────────────────────────────────────────────
 

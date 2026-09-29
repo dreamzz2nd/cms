@@ -31,8 +31,8 @@ class BstationEpisodeAdapter(
     inner class EpisodeViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val container: View = view.findViewById(R.id.cardEpisodeContainer)
         val tvNumber: TextView = view.findViewById(R.id.tvEpNumber)
-        val tvTag: TextView = view.findViewById(R.id.tvEpTag)
     }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EpisodeViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_bstation_episode, parent, false)

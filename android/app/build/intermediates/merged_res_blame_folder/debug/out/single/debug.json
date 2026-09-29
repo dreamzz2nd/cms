@@ -12,20 +12,24 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\banner_gradient_overlay.xml"
     },
     {
-        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_dialog_downloads_full.xml.flat",
-        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_downloads_full.xml"
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_watermark_nyamimo.png.flat",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\watermark_nyamimo.png"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\color_nav_selector.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\color\\nav_selector.xml"
     },
     {
-        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_ic_launcher.png.flat",
-        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\ic_launcher.png"
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_dialog_downloads_full.xml.flat",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_downloads_full.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_item_trending_tag.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_trending_tag.xml"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_ic_launcher.png.flat",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\ic_launcher.png"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_dialog_auth.xml.flat",
@@ -36,12 +40,12 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_search_suggestion.xml"
     },
     {
-        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_ic_reels_share.xml.flat",
-        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\ic_reels_share.xml"
-    },
-    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_ic_thumb_up.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\ic_thumb_up.xml"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_ic_reels_share.xml.flat",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\ic_reels_share.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_dialog_menu_downloads.xml.flat",
@@ -116,12 +120,12 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\fab_cyan_circle.xml"
     },
     {
-        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_progress_bar_gold.xml.flat",
-        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\progress_bar_gold.xml"
-    },
-    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_activity_player.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\activity_player.xml"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_progress_bar_gold.xml.flat",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\progress_bar_gold.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_card_dark_bg.xml.flat",
@@ -172,10 +176,6 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_history_header.xml"
     },
     {
-        "merged": "com.nyamimo.app-merged_res-43:/layout_item_mimo_news_card.xml.flat",
-        "source": "com.nyamimo.app-main-45:/layout/item_mimo_news_card.xml"
-    },
-    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\drawable_banner_profile_bg.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\drawable\\banner_profile_bg.xml"
     },
@@ -222,6 +222,10 @@
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_item_genre_chip.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_genre_chip.xml"
+    },
+    {
+        "merged": "com.nyamimo.app-merged_res-43:/layout_activity_anime_detail.xml.flat",
+        "source": "com.nyamimo.app-main-45:/layout/activity_anime_detail.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_item_episode_pill.xml.flat",
@@ -314,10 +318,6 @@
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_item_bstation_poster.xml.flat",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_bstation_poster.xml"
-    },
-    {
-        "merged": "com.nyamimo.app-merged_res-43:/layout_dialog_mimo_news_detail.xml.flat",
-        "source": "com.nyamimo.app-main-45:/layout/dialog_mimo_news_detail.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-merged_res-43:\\layout_item_recommended_anime.xml.flat",

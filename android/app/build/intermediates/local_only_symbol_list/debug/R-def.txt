@@ -64,6 +64,7 @@ drawable search_bar_bg
 drawable search_chip_bg
 drawable search_pill_bg
 drawable tag_type_bg
+drawable watermark_nyamimo
 id bannerRankRibbon
 id bottomBarBstation
 id bstationTabBar
@@ -166,6 +167,7 @@ id ivNewsLoadingGif
 id ivNewsPoster
 id ivOfflineCatGif
 id ivPlayerLoadingGif
+id ivPlayerWatermark
 id ivPoster
 id ivPoster3Col
 id ivProfileAvatar
@@ -174,6 +176,7 @@ id ivReelsMusicDisc
 id ivReelsPosterBg
 id ivSheetPoster
 id ivSuggestImg
+id ivVideoWatermark
 id layoutAuthConfirmPassword
 id layoutAuthEmail
 id layoutDownloadsEmpty
@@ -251,7 +254,6 @@ id tvBannerTitle
 id tvDetailBookmarkCount
 id tvDetailLikeCount
 id tvDetailScore
-id tvDetailStatus
 id tvDetailTitle
 id tvDetailTotalEps
 id tvDetailViews
@@ -274,7 +276,6 @@ id tvDownloadsSubtitle
 id tvEmptyDownloads
 id tvEp3Col
 id tvEpNumber
-id tvEpTag
 id tvEpisode
 id tvEpisodePill
 id tvFeedAuthor
@@ -282,7 +283,6 @@ id tvFeedDuration
 id tvFeedLikes
 id tvFeedTitle
 id tvGenreChip
-id tvGratisBadge
 id tvHistoryDate
 id tvHistoryEp
 id tvHistoryEpBadge

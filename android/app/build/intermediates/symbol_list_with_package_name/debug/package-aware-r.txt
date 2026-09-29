@@ -3215,6 +3215,7 @@ drawable tag_type_bg
 drawable test_level_drawable
 drawable tooltip_frame_dark
 drawable tooltip_frame_light
+drawable watermark_nyamimo
 font roboto_medium_numbers
 id ALT
 id BOTTOM_END
@@ -3575,6 +3576,7 @@ id ivNewsLoadingGif
 id ivNewsPoster
 id ivOfflineCatGif
 id ivPlayerLoadingGif
+id ivPlayerWatermark
 id ivPoster
 id ivPoster3Col
 id ivProfileAvatar
@@ -3583,6 +3585,7 @@ id ivReelsMusicDisc
 id ivReelsPosterBg
 id ivSheetPoster
 id ivSuggestImg
+id ivVideoWatermark
 id jumpToEnd
 id jumpToStart
 id labeled
@@ -3900,7 +3903,6 @@ id tvBannerTitle
 id tvDetailBookmarkCount
 id tvDetailLikeCount
 id tvDetailScore
-id tvDetailStatus
 id tvDetailTitle
 id tvDetailTotalEps
 id tvDetailViews
@@ -3923,7 +3925,6 @@ id tvDownloadsSubtitle
 id tvEmptyDownloads
 id tvEp3Col
 id tvEpNumber
-id tvEpTag
 id tvEpisode
 id tvEpisodePill
 id tvFeedAuthor
@@ -3931,7 +3932,6 @@ id tvFeedDuration
 id tvFeedLikes
 id tvFeedTitle
 id tvGenreChip
-id tvGratisBadge
 id tvHistoryDate
 id tvHistoryEp
 id tvHistoryEpBadge

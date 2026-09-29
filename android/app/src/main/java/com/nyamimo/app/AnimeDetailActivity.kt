@@ -33,6 +33,7 @@ import com.nyamimo.app.adapter.BstationEpisodeAdapter
 import com.nyamimo.app.adapter.RecommendedAnimeAdapter
 import com.nyamimo.app.adapter.ResolutionAdapter
 import com.nyamimo.app.api.ApiClient
+import com.nyamimo.app.api.JikanApiClient
 import com.nyamimo.app.databinding.ActivityAnimeDetailBinding
 import com.nyamimo.app.model.AnimeDetailData
 import com.nyamimo.app.model.AnimeItem
@@ -62,6 +63,9 @@ class AnimeDetailActivity : AppCompatActivity() {
 
     private var isLiked = false
     private var isBookmarked = false
+    private var baseLikeCount = 12500
+    private var baseBookmarkCount = 45000
+    private var baseViewCount = 150000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,18 +75,19 @@ class AnimeDetailActivity : AppCompatActivity() {
         slug = intent.getStringExtra("slug") ?: ""
         val previewTitle = ApiClient.cleanAnimeTitle(intent.getStringExtra("title") ?: "Nonton Anime")
         val previewScore = intent.getStringExtra("score") ?: "8.5"
-        val previewSynopsis = intent.getStringExtra("synopsis") ?: ""
-        val previewStatus = intent.getStringExtra("status") ?: "SEKARANG GRATIS"
         val previewTotalEps = intent.getStringExtra("episode") ?: ""
 
         // Set immediate preview information
         binding.tvDetailTitle.text = previewTitle
         binding.tvPlayerAnimeTitle.text = previewTitle
         binding.tvDetailScore.text = "Score $previewScore"
-        binding.tvDetailStatus.text = if (previewStatus.contains("lengkap", ignoreCase = true) || previewStatus.contains("complete", ignoreCase = true)) "TAMAT" else "SEKARANG GRATIS"
+        binding.bannerRankRibbon.visibility = View.GONE
         if (previewTotalEps.isNotEmpty()) {
             binding.tvDetailTotalEps.text = if (previewTotalEps.all { it.isDigit() }) "$previewTotalEps Episode" else previewTotalEps
         }
+
+        loadMalStats(previewTitle)
+
 
         binding.btnBackDetail.setOnClickListener {
             if (isLandscape || customView != null) {
@@ -136,26 +141,77 @@ class AnimeDetailActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadMalStats(animeTitle: String) {
+        if (animeTitle.isEmpty() || animeTitle == "Nonton Anime") return
+        JikanApiClient.getAnimeStats(
+            animeTitle = animeTitle,
+            onSuccess = { stats ->
+                if (stats.members > 0) {
+                    baseViewCount = stats.members
+                    binding.tvDetailViews.text = "${JikanApiClient.formatCount(stats.members)} Ditonton"
+                } else {
+                    binding.tvDetailViews.text = "125K Ditonton"
+                }
+
+                if (stats.favorites > 0) {
+                    baseLikeCount = stats.favorites
+                    binding.tvDetailLikeCount.text = JikanApiClient.formatCount(stats.favorites)
+                }
+
+                if (stats.scoredBy > 0) {
+                    baseBookmarkCount = stats.scoredBy
+                    binding.tvDetailBookmarkCount.text = JikanApiClient.formatCount(stats.scoredBy)
+                } else if (stats.members > 0) {
+                    baseBookmarkCount = stats.members / 2
+                    binding.tvDetailBookmarkCount.text = JikanApiClient.formatCount(baseBookmarkCount)
+                }
+
+                if (stats.score != "N/A" && stats.score.isNotEmpty()) {
+                    binding.tvDetailScore.text = "Score ${stats.score}"
+                }
+
+                // Top 50 Badge logic
+                if (stats.rank in 1..50) {
+                    binding.bannerRankRibbon.visibility = View.VISIBLE
+                    binding.tvRankTitle.text = "Umum Top ${stats.rank} • Trending Anime Nyamimo"
+                } else if (stats.popularity in 1..50) {
+                    binding.bannerRankRibbon.visibility = View.VISIBLE
+                    binding.tvRankTitle.text = "Umum Top ${stats.popularity} • Populer Anime Nyamimo"
+                } else {
+                    binding.bannerRankRibbon.visibility = View.GONE
+                }
+            },
+            onError = {
+                binding.bannerRankRibbon.visibility = View.GONE
+                if (binding.tvDetailViews.text.toString().contains("Memuat", ignoreCase = true)) {
+                    binding.tvDetailViews.text = "250K Ditonton"
+                }
+            }
+        )
+    }
+
     private fun setupActionButtons() {
         binding.btnDetailLike.setOnClickListener {
             isLiked = !isLiked
+            val count = if (isLiked) baseLikeCount + 1 else baseLikeCount
             if (isLiked) {
                 binding.ivDetailLikeIcon.setColorFilter(Color.parseColor("#EF4444"))
-                binding.tvDetailLikeCount.text = "209.5K"
+                binding.tvDetailLikeCount.text = JikanApiClient.formatCount(count)
                 binding.tvDetailLikeCount.setTextColor(Color.parseColor("#EF4444"))
                 Toast.makeText(this, "Menyukai anime ini", Toast.LENGTH_SHORT).show()
             } else {
                 binding.ivDetailLikeIcon.setColorFilter(Color.parseColor("#17171B"))
-                binding.tvDetailLikeCount.text = "209.4K"
+                binding.tvDetailLikeCount.text = JikanApiClient.formatCount(count)
                 binding.tvDetailLikeCount.setTextColor(Color.parseColor("#17171B"))
             }
         }
 
         binding.btnDetailBookmark.setOnClickListener {
             isBookmarked = !isBookmarked
+            val count = if (isBookmarked) baseBookmarkCount + 1 else baseBookmarkCount
             if (isBookmarked) {
                 binding.ivDetailBookmarkIcon.setColorFilter(Color.parseColor("#FFCC00"))
-                binding.tvDetailBookmarkCount.text = "771.3K"
+                binding.tvDetailBookmarkCount.text = JikanApiClient.formatCount(count)
                 binding.tvDetailBookmarkCount.setTextColor(Color.parseColor("#FFCC00"))
                 detailData?.let {
                     SessionManager.addWatchHistory(
@@ -173,10 +229,11 @@ class AnimeDetailActivity : AppCompatActivity() {
                 Toast.makeText(this, "Ditambahkan ke Favorit Nyamimo", Toast.LENGTH_SHORT).show()
             } else {
                 binding.ivDetailBookmarkIcon.setColorFilter(Color.parseColor("#17171B"))
-                binding.tvDetailBookmarkCount.text = "771.2K"
+                binding.tvDetailBookmarkCount.text = JikanApiClient.formatCount(count)
                 binding.tvDetailBookmarkCount.setTextColor(Color.parseColor("#17171B"))
             }
         }
+
 
         binding.btnDetailDownload.setOnClickListener {
             val title = detailData?.title ?: binding.tvDetailTitle.text.toString()
@@ -427,10 +484,12 @@ class AnimeDetailActivity : AppCompatActivity() {
                 }
                 customView = view
                 customViewCallback = callback
-                binding.playerContainer.addView(view, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+                binding.playerContainer.addView(view, 0, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
                 binding.detailPlayerWebView.visibility = View.GONE
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 applyFullscreenState(true)
+                binding.ivVideoWatermark.bringToFront()
+                binding.ivVideoWatermark.visibility = View.VISIBLE
             }
 
             override fun onHideCustomView() {
@@ -440,10 +499,13 @@ class AnimeDetailActivity : AppCompatActivity() {
                 binding.detailPlayerWebView.visibility = View.VISIBLE
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 applyFullscreenState(false)
+                binding.ivVideoWatermark.bringToFront()
+                binding.ivVideoWatermark.visibility = View.VISIBLE
                 customViewCallback?.onCustomViewHidden()
             }
         }
     }
+
 
     private fun loadDetailAndPlay() {
         if (slug.isEmpty()) return
@@ -458,6 +520,8 @@ class AnimeDetailActivity : AppCompatActivity() {
                 binding.tvPlayerAnimeTitle.text = cleanTitle
                 binding.tvDetailScore.text = if (result.score.isNotEmpty()) "Score ${result.score}" else "Score 8.5"
                 binding.tvDetailTotalEps.text = "${result.episodes.size} Episode"
+                loadMalStats(cleanTitle)
+
 
                 val rawEpisodes = result.episodes
                 if (rawEpisodes.isNotEmpty()) {
@@ -559,6 +623,8 @@ class AnimeDetailActivity : AppCompatActivity() {
         if (isDirect && videoUrl.isNotEmpty()) {
             binding.detailPlayerWebView.visibility = View.GONE
             binding.detailPlayerView.visibility = View.VISIBLE
+            binding.ivVideoWatermark.bringToFront()
+            binding.ivVideoWatermark.visibility = View.VISIBLE
 
             val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
             exoPlayer?.setMediaItem(mediaItem)
@@ -568,6 +634,9 @@ class AnimeDetailActivity : AppCompatActivity() {
             exoPlayer?.stop()
             binding.detailPlayerView.visibility = View.GONE
             binding.detailPlayerWebView.visibility = View.VISIBLE
+            binding.ivVideoWatermark.bringToFront()
+            binding.ivVideoWatermark.visibility = View.VISIBLE
+
 
             val embedSrc = if (rawIframe.contains("src=\"") || rawIframe.contains("src='")) {
                 val match = Regex("""src=["'](https?://[^"']+)["']""").find(rawIframe)
@@ -629,7 +698,9 @@ class AnimeDetailActivity : AppCompatActivity() {
             binding.bstationTabBar.visibility = View.GONE
             binding.detailContentDivider.visibility = View.GONE
             binding.detailContentScroll.visibility = View.GONE
-            binding.btnLandscapeServerToggle.visibility = View.VISIBLE
+            binding.playerTopControls.visibility = View.GONE
+            binding.btnLandscapeServerToggle.visibility = View.GONE
+            binding.playerLandscapeServerBar.visibility = View.GONE
         } else {
             window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -644,10 +715,15 @@ class AnimeDetailActivity : AppCompatActivity() {
             binding.bstationTabBar.visibility = View.VISIBLE
             binding.detailContentDivider.visibility = View.VISIBLE
             binding.detailContentScroll.visibility = View.VISIBLE
+            binding.playerTopControls.visibility = View.VISIBLE
             binding.btnLandscapeServerToggle.visibility = View.GONE
             binding.playerLandscapeServerBar.visibility = View.GONE
         }
+        binding.ivVideoWatermark.bringToFront()
+        binding.ivVideoWatermark.visibility = View.VISIBLE
     }
+
+
 
     private fun toggleFullscreen() {
         if (customView != null) {

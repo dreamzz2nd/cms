@@ -30,6 +30,22 @@
         android:layout_centerInParent="true"
         android:visibility="gone" />
 
+    <!-- Watermark Overlay (Pojok Kanan Atas Video) -->
+    <ImageView
+        android:id="@+id/ivPlayerWatermark"
+        android:layout_width="84dp"
+        android:layout_height="30dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="20dp"
+        android:alpha="0.8"
+        android:clickable="false"
+        android:focusable="false"
+        android:scaleType="fitCenter"
+        android:src="@drawable/watermark_nyamimo" />
+
+
     <!-- Top Overlay Bar -->
     <LinearLayout
         android:id="@+id/playerTopBar"

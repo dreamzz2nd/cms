@@ -42,6 +42,7 @@
             android:visibility="gone" />
 
         <!-- Top Player Overlay Controls -->
+
         <LinearLayout
             android:id="@+id/playerTopControls"
             android:layout_width="match_parent"
@@ -141,7 +142,25 @@
                 android:orientation="horizontal" />
         </LinearLayout>
 
+        <!-- Watermark Overlay (Selalu Di Atas Video / Pojok Kanan Atas) -->
+        <ImageView
+            android:id="@+id/ivVideoWatermark"
+            android:layout_width="88dp"
+            android:layout_height="32dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="14dp"
+            android:layout_marginEnd="16dp"
+            android:alpha="0.85"
+            android:elevation="100dp"
+            android:translationZ="100dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:scaleType="fitCenter"
+            android:src="@drawable/watermark_nyamimo" />
+
     </RelativeLayout>
+
 
     <!-- Bstation Sub-header Tabs: Info & Komentar & Badge -->
     <LinearLayout
@@ -185,24 +204,6 @@
             android:text="Komentar 3.1K"
             android:textColor="#8E8E93"
             android:textSize="14sp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
-        <!-- Gratis Sementara / VIP Badge -->
-        <TextView
-            android:id="@+id/tvGratisBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/badge_gold_bg"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:text="Gratis Nyamimo"
-            android:textColor="#17171B"
-            android:textSize="11sp"
-            android:textStyle="bold" />
     </LinearLayout>
 
     <View
@@ -254,7 +255,7 @@
                         android:textSize="17.5sp"
                         android:textStyle="bold" />
 
-                    <!-- Views, Score, Status -->
+                    <!-- Views & Score -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -269,7 +270,7 @@
                             android:drawableStart="@drawable/ic_play_arrow"
                             android:drawablePadding="3dp"
                             android:gravity="center_vertical"
-                            android:text="115.9M Ditonton"
+                            android:text="Memuat penonton..."
                             android:textColor="#757580"
                             android:textSize="12sp" />
 
@@ -285,21 +286,9 @@
                             android:textColor="#17171B"
                             android:textSize="10.5sp"
                             android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvDetailStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/search_chip_bg"
-                            android:paddingHorizontal="6dp"
-                            android:paddingVertical="2dp"
-                            android:text="SEKARANG GRATIS"
-                            android:textColor="#10B981"
-                            android:textSize="10.5sp"
-                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
+
 
                 <ImageView
                     android:layout_width="20dp"
