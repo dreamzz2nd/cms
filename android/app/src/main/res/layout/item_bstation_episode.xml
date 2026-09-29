@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cardEpisodeContainer"
+    android:layout_width="60dp"
+    android:layout_height="52dp"
+    android:layout_marginEnd="10dp"
+    android:background="@drawable/chip_genre_bg"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Top Left Free Tag Badge -->
+    <TextView
+        android:id="@+id/tvEpTag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:background="@drawable/badge_free_tag"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="1dp"
+        android:text="Free"
+        android:textColor="#FFFFFF"
+        android:textSize="8sp"
+        android:textStyle="bold" />
+
+    <!-- Episode Number in Center -->
+    <TextView
+        android:id="@+id/tvEpNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="1"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+</RelativeLayout>

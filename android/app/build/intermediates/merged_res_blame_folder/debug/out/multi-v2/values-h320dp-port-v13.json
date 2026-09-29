@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.nyamimo.app-mergeDebugResources-35:/values-h320dp-port-v13/values-h320dp-port-v13.xml",
+            "outputFile": "com.nyamimo.app-mergeDebugResources-41:/values-h320dp-port-v13/values-h320dp-port-v13.xml",
             "map": [
                 {
                     "source": "C:\\Users\\user\\.gradle\\caches\\transforms-3\\84114cdc67145947aeae5617e585aba8\\transformed\\material-1.11.0\\res\\values-h320dp-port-v13\\values-h320dp-port-v13.xml",

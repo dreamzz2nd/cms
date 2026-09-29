@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:background="?attr/selectableItemBackground"
+    android:paddingVertical="4dp">
+
+    <!-- Poster Card -->
+    <RelativeLayout
+        android:layout_width="120dp"
+        android:layout_height="72dp">
+
+        <ImageView
+            android:id="@+id/ivRecPoster"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#232328"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/tvRecEpTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="4dp"
+            android:background="#99000000"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="1dp"
+            android:text="Tamat"
+            android:textColor="#FFFFFF"
+            android:textSize="9sp" />
+    </RelativeLayout>
+
+    <!-- Info Column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvRecTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="Judul Anime Rekomendasi"
+            android:textColor="#17171B"
+            android:textSize="13.5sp"
+            android:textStyle="bold" />
+
+        <!-- Tags row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvRecGenre1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/search_chip_bg"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:text="Adaptasi komik"
+                android:textColor="#757580"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tvRecGenre2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/search_chip_bg"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:text="Berjuang"
+                android:textColor="#757580"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvRecViews"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="18.5M Ditonton"
+            android:textColor="#8E8E93"
+            android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>

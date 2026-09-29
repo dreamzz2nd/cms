@@ -823,6 +823,15 @@ func main() {
 	mux.HandleFunc("/logout", handleLogout)
 	mux.HandleFunc("/api/user/heartbeat", handleUserHeartbeat)
 
+	// Native Android App REST API V1 (Bilibili Style Architecture)
+	mux.HandleFunc("/api/v1/home", handleAPIV1Home)
+	mux.HandleFunc("/api/v1/anime/", handleAPIV1AnimeDetail)
+	mux.HandleFunc("/api/v1/episode", handleAPIV1Episode)
+	mux.HandleFunc("/api/v1/search", handleAPIV1Search)
+	mux.HandleFunc("/api/v1/history", handleGetHistoryAPI)
+	mux.HandleFunc("/api/v1/history/progress", handleHistoryProgressAPI)
+	mux.HandleFunc("/api/v1/history/delete", handleHistoryDeleteAPI)
+
 	// Watch History API Endpoints (Bilibili Anonymous Device/Session + User Sync Model)
 	mux.HandleFunc("/api/history", handleGetHistoryAPI)
 	mux.HandleFunc("/api/history/progress", handleHistoryProgressAPI)
@@ -3506,6 +3515,176 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		referer = "/"
 	}
 	http.Redirect(w, r, referer, http.StatusSeeOther)
+}
+
+// ─── Native Android App REST API V1 ──────────────────────────────────────────
+
+func handleAPIV1Home(w http.ResponseWriter, r *http.Request) {
+	var ongoingResp client.AnimeListResponse
+	_ = api.GetJSON("/ongoing-anime", &ongoingResp)
+
+	var completedResp client.AnimeListResponse
+	_ = api.GetJSON("/completed-anime", &completedResp)
+
+	var genresResp client.GenreListResponse
+	_ = api.GetJSON("/genres", &genresResp)
+
+	heroAnime := customHeroCarousel
+	if len(heroAnime) == 0 {
+		heroAnime = defaultHDHeroAnime
+	}
+
+	for i := range ongoingResp.Data {
+		ongoingResp.Data[i].Slug = client.GetAnimeSlug(ongoingResp.Data[i])
+		ongoingResp.Data[i].Score = client.FormatScore(ongoingResp.Data[i].Score)
+		ongoingResp.Data[i].Img = client.GetCleanHDImage(ongoingResp.Data[i].Img)
+	}
+
+	for i := range completedResp.Data {
+		completedResp.Data[i].Slug = client.GetAnimeSlug(completedResp.Data[i])
+		completedResp.Data[i].Score = client.FormatScore(completedResp.Data[i].Score)
+		completedResp.Data[i].Img = client.GetCleanHDImage(completedResp.Data[i].Img)
+	}
+
+	var heroList []client.AnimeItem
+	for _, item := range heroAnime {
+		item.Img = client.GetCleanHDImage(item.Img)
+		item.Score = client.FormatScore(item.Score)
+		if item.Slug == "" {
+			item.Slug = client.GetAnimeSlug(item)
+		}
+		heroList = append(heroList, item)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":    "ok",
+		"banners":   heroList,
+		"ongoing":   ongoingResp.Data,
+		"completed": completedResp.Data,
+		"genres":    genresResp.Data,
+	})
+}
+
+func handleAPIV1AnimeDetail(w http.ResponseWriter, r *http.Request) {
+	slug := strings.TrimPrefix(r.URL.Path, "/api/v1/anime/")
+	slug = strings.Trim(slug, "/")
+	if slug == "" {
+		slug = r.URL.Query().Get("slug")
+	}
+	if slug == "" {
+		http.Error(w, `{"status":"error","message":"Missing slug"}`, http.StatusBadRequest)
+		return
+	}
+
+	var detail client.AnimeDetailData
+	err := api.GetJSON("/detail-anime/"+slug, &detail)
+	if err != nil || detail.Title == "" {
+		var detailWrapper client.AnimeDetailResponse
+		_ = api.GetJSON("/detail-anime/"+slug, &detailWrapper)
+		detail = detailWrapper.Data
+	}
+
+	if detail.Title == "" {
+		http.Error(w, `{"status":"error","message":"Anime not found"}`, http.StatusNotFound)
+		return
+	}
+
+	if detail.Synopsis == "" && len(detail.Descriptions) > 0 {
+		detail.Synopsis = strings.Join(detail.Descriptions, "\n\n")
+	}
+	if detail.Rating != "" {
+		detail.Score = detail.Rating
+	} else {
+		detail.Score = client.FormatScore(detail.Score)
+	}
+	detail.Img = client.GetCleanHDImage(detail.Img)
+
+	for i := range detail.Genres {
+		if detail.Genres[i].Title == "" && detail.Genres[i].Tag != "" {
+			detail.Genres[i].Title = detail.Genres[i].Tag
+		}
+		if detail.Genres[i].ID == "" && detail.Genres[i].Link != "" {
+			parts := strings.Split(strings.Trim(detail.Genres[i].Link, "/"), "/")
+			if len(parts) > 0 {
+				detail.Genres[i].ID = parts[len(parts)-1]
+			}
+		}
+	}
+
+	for i := range detail.Episodes {
+		detail.Episodes[i].Number = client.FormatEpisodeNum(detail.Episodes[i].Episode)
+	}
+
+	for i := range detail.Recommendations {
+		detail.Recommendations[i].Slug = client.GetAnimeSlug(detail.Recommendations[i])
+		detail.Recommendations[i].Score = client.FormatScore(detail.Recommendations[i].Score)
+		detail.Recommendations[i].Img = client.GetCleanHDImage(detail.Recommendations[i].Img)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"data":   detail,
+	})
+}
+
+func handleAPIV1Episode(w http.ResponseWriter, r *http.Request) {
+	detailEps := r.URL.Query().Get("detail_eps")
+	if detailEps == "" {
+		detailEps = r.URL.Query().Get("slug")
+	}
+	title := r.URL.Query().Get("title")
+	ep := r.URL.Query().Get("ep")
+
+	var epsDetail client.EpisodeDetailResponse
+	_ = api.GetJSON(detailEps, &epsDetail)
+
+	autoSwitch := getAutoSwitchServerSetting(r, getLoggedInUser(r))
+	data := buildModalPlayerData(epsDetail, ep, title, autoSwitch)
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":            "ok",
+		"episodeNum":        data.EpisodeNum,
+		"title":             data.Title,
+		"videoURL":          data.VideoURL,
+		"rawIframe":         string(data.RawIframe),
+		"isDirectVideo":     data.IsDirectVideo,
+		"videos":            data.Videos,
+		"groupedVideos":     data.GroupedVideos,
+		"resolutions":       data.Resolutions,
+		"activeServerTitle": data.ActiveServerTitle,
+	})
+}
+
+func handleAPIV1Search(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if q == "" {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "ok",
+			"query":   "",
+			"results": []client.AnimeItem{},
+		})
+		return
+	}
+
+	var searchResp client.SearchResponse
+	_ = api.GetJSON("/search/"+url.PathEscape(q), &searchResp)
+
+	for i := range searchResp.Data {
+		searchResp.Data[i].Slug = client.GetAnimeSlug(searchResp.Data[i])
+		searchResp.Data[i].Score = client.FormatScore(searchResp.Data[i].Score)
+		searchResp.Data[i].Img = client.GetCleanHDImage(searchResp.Data[i].Img)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "ok",
+		"query":   q,
+		"results": searchResp.Data,
+	})
 }
 
 // Watch History API Handlers

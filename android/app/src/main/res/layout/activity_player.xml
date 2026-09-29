@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:keepScreenOn="true">
+
+    <!-- Google Media3 / ExoPlayer View -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:use_controller="true"
+        app:show_buffering="when_playing"
+        app:resize_mode="fit" />
+
+    <!-- Accelerated WebView for embedded streams (Blogger / Iframe) -->
+    <WebView
+        android:id="@+id/playerWebView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- Cute Nyamimo Cat GIF Loading Animation -->
+    <ImageView
+        android:id="@+id/ivPlayerLoadingGif"
+        android:layout_width="85dp"
+        android:layout_height="85dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+    <!-- Top Overlay Bar -->
+    <LinearLayout
+        android:id="@+id/playerTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/banner_gradient_overlay"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <ImageView
+            android:id="@+id/btnBackPlayer"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="#FFFFFF" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPlayerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Judul Anime"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPlayerEpisode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Episode 1"
+                android:textColor="#FFCC00"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Server Selector Toggle Button -->
+        <TextView
+            android:id="@+id/btnServerToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/chip_genre_bg"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:text="Server"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Speed Selector Button -->
+        <TextView
+            android:id="@+id/btnSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/chip_genre_bg"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:text="1.0x"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Aspect Ratio Button -->
+        <ImageView
+            android:id="@+id/btnAspect"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@android:drawable/ic_menu_crop"
+            app:tint="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- Top Floating Resolution & Server Bar (Positioned under top bar, NEVER overlapping bottom controls!) -->
+    <LinearLayout
+        android:id="@+id/playerBottomOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/playerTopBar"
+        android:background="#D9000000"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pilih Server:"
+                android:textColor="#FFCC00"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- Horizontal Quality Selector Chips -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvPlayerResolutions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:clipToPadding="false"
+                android:orientation="horizontal" />
+        </LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>

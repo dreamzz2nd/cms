@@ -4,17 +4,19 @@ package com.nyamimo.app.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.widget.FrameLayout;
+import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
-import com.google.android.material.button.MaterialButton;
 import com.nyamimo.app.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -22,50 +24,310 @@ import java.lang.String;
 
 public final class ActivityMainBinding implements ViewBinding {
   @NonNull
-  private final FrameLayout rootView;
+  private final RelativeLayout rootView;
 
   @NonNull
-  public final MaterialButton btnRetry;
+  public final LinearLayout bottomBarBstation;
 
   @NonNull
-  public final FrameLayout customViewContainer;
+  public final ImageView btnClearSearch;
 
   @NonNull
-  public final LinearLayout offlineView;
+  public final TextView btnClearSearchHistory;
 
   @NonNull
-  public final ProgressBar progressBar;
+  public final LinearLayout btnNavCari;
 
   @NonNull
-  public final SwipeRefreshLayout swipeRefreshLayout;
+  public final LinearLayout btnNavFab;
 
   @NonNull
-  public final TextView tvErrorDesc;
+  public final LinearLayout btnNavHome;
 
   @NonNull
-  public final TextView tvErrorTitle;
+  public final LinearLayout btnNavRiwayat;
 
   @NonNull
-  public final WebView webView;
+  public final LinearLayout btnNavSaya;
 
-  private ActivityMainBinding(@NonNull FrameLayout rootView, @NonNull MaterialButton btnRetry,
-      @NonNull FrameLayout customViewContainer, @NonNull LinearLayout offlineView,
-      @NonNull ProgressBar progressBar, @NonNull SwipeRefreshLayout swipeRefreshLayout,
-      @NonNull TextView tvErrorDesc, @NonNull TextView tvErrorTitle, @NonNull WebView webView) {
+  @NonNull
+  public final LinearLayout btnOfflineOpenDownloads;
+
+  @NonNull
+  public final TextView btnOfflineRetry;
+
+  @NonNull
+  public final ImageView btnReelsBookmark;
+
+  @NonNull
+  public final ImageView btnReelsComment;
+
+  @NonNull
+  public final ImageView btnReelsLike;
+
+  @NonNull
+  public final ImageView btnReelsShare;
+
+  @NonNull
+  public final ImageView btnRefreshTrending;
+
+  @NonNull
+  public final TextView btnViewAllHistory;
+
+  @NonNull
+  public final EditText etTopSearch;
+
+  @NonNull
+  public final NestedScrollView exploreContainer;
+
+  @NonNull
+  public final LinearLayout headerContainer;
+
+  @NonNull
+  public final ImageView ivMainLoadingGif;
+
+  @NonNull
+  public final ImageView ivNavCari;
+
+  @NonNull
+  public final ImageView ivNavFabIcon;
+
+  @NonNull
+  public final ImageView ivNavHome;
+
+  @NonNull
+  public final ImageView ivNavRiwayat;
+
+  @NonNull
+  public final ImageView ivNavSaya;
+
+  @NonNull
+  public final ImageView ivOfflineCatGif;
+
+  @NonNull
+  public final ImageView ivProfileAvatar;
+
+  @NonNull
+  public final ImageView ivReelsMusicDisc;
+
+  @NonNull
+  public final ImageView ivReelsPosterBg;
+
+  @NonNull
+  public final LinearLayout mainLoadingOverlay;
+
+  @NonNull
+  public final LinearLayout menuAcara;
+
+  @NonNull
+  public final LinearLayout menuFavoritSaya;
+
+  @NonNull
+  public final LinearLayout menuFeedback;
+
+  @NonNull
+  public final LinearLayout menuPengaturan;
+
+  @NonNull
+  public final LinearLayout menuPusatBantuan;
+
+  @NonNull
+  public final LinearLayout menuUnduhanSaya;
+
+  @NonNull
+  public final LinearLayout offlineContainer;
+
+  @NonNull
+  public final NestedScrollView profileContainer;
+
+  @NonNull
+  public final RelativeLayout reelsContainer;
+
+  @NonNull
+  public final RecyclerView rvPosterGrid;
+
+  @NonNull
+  public final RecyclerView rvProfileHistory;
+
+  @NonNull
+  public final RecyclerView rvSearchHistory;
+
+  @NonNull
+  public final RecyclerView rvSearchResultsList;
+
+  @NonNull
+  public final RecyclerView rvTrendingTags;
+
+  @NonNull
+  public final LinearLayout searchHistorySection;
+
+  @NonNull
+  public final LinearLayout searchPillBar;
+
+  @NonNull
+  public final SwipeRefreshLayout swipeRefresh;
+
+  @NonNull
+  public final TextView tabAction;
+
+  @NonNull
+  public final TextView tabAnime;
+
+  @NonNull
+  public final TextView tabFantasy;
+
+  @NonNull
+  public final TextView tabPopuler;
+
+  @NonNull
+  public final HorizontalScrollView tabScrollView;
+
+  @NonNull
+  public final TextView tabTamat;
+
+  @NonNull
+  public final TextView tabUntukAnda;
+
+  @NonNull
+  public final LinearLayout tabsContainer;
+
+  @NonNull
+  public final LinearLayout trendingSection;
+
+  @NonNull
+  public final TextView tvNavCari;
+
+  @NonNull
+  public final TextView tvNavHome;
+
+  @NonNull
+  public final TextView tvNavRiwayat;
+
+  @NonNull
+  public final TextView tvNavSaya;
+
+  @NonNull
+  public final TextView tvProfileName;
+
+  @NonNull
+  public final TextView tvReelsAuthor;
+
+  @NonNull
+  public final TextView tvReelsCommentCount;
+
+  @NonNull
+  public final TextView tvReelsLikeCount;
+
+  @NonNull
+  public final TextView tvReelsMusic;
+
+  @NonNull
+  public final TextView tvReelsTitle;
+
+  private ActivityMainBinding(@NonNull RelativeLayout rootView,
+      @NonNull LinearLayout bottomBarBstation, @NonNull ImageView btnClearSearch,
+      @NonNull TextView btnClearSearchHistory, @NonNull LinearLayout btnNavCari,
+      @NonNull LinearLayout btnNavFab, @NonNull LinearLayout btnNavHome,
+      @NonNull LinearLayout btnNavRiwayat, @NonNull LinearLayout btnNavSaya,
+      @NonNull LinearLayout btnOfflineOpenDownloads, @NonNull TextView btnOfflineRetry,
+      @NonNull ImageView btnReelsBookmark, @NonNull ImageView btnReelsComment,
+      @NonNull ImageView btnReelsLike, @NonNull ImageView btnReelsShare,
+      @NonNull ImageView btnRefreshTrending, @NonNull TextView btnViewAllHistory,
+      @NonNull EditText etTopSearch, @NonNull NestedScrollView exploreContainer,
+      @NonNull LinearLayout headerContainer, @NonNull ImageView ivMainLoadingGif,
+      @NonNull ImageView ivNavCari, @NonNull ImageView ivNavFabIcon, @NonNull ImageView ivNavHome,
+      @NonNull ImageView ivNavRiwayat, @NonNull ImageView ivNavSaya,
+      @NonNull ImageView ivOfflineCatGif, @NonNull ImageView ivProfileAvatar,
+      @NonNull ImageView ivReelsMusicDisc, @NonNull ImageView ivReelsPosterBg,
+      @NonNull LinearLayout mainLoadingOverlay, @NonNull LinearLayout menuAcara,
+      @NonNull LinearLayout menuFavoritSaya, @NonNull LinearLayout menuFeedback,
+      @NonNull LinearLayout menuPengaturan, @NonNull LinearLayout menuPusatBantuan,
+      @NonNull LinearLayout menuUnduhanSaya, @NonNull LinearLayout offlineContainer,
+      @NonNull NestedScrollView profileContainer, @NonNull RelativeLayout reelsContainer,
+      @NonNull RecyclerView rvPosterGrid, @NonNull RecyclerView rvProfileHistory,
+      @NonNull RecyclerView rvSearchHistory, @NonNull RecyclerView rvSearchResultsList,
+      @NonNull RecyclerView rvTrendingTags, @NonNull LinearLayout searchHistorySection,
+      @NonNull LinearLayout searchPillBar, @NonNull SwipeRefreshLayout swipeRefresh,
+      @NonNull TextView tabAction, @NonNull TextView tabAnime, @NonNull TextView tabFantasy,
+      @NonNull TextView tabPopuler, @NonNull HorizontalScrollView tabScrollView,
+      @NonNull TextView tabTamat, @NonNull TextView tabUntukAnda,
+      @NonNull LinearLayout tabsContainer, @NonNull LinearLayout trendingSection,
+      @NonNull TextView tvNavCari, @NonNull TextView tvNavHome, @NonNull TextView tvNavRiwayat,
+      @NonNull TextView tvNavSaya, @NonNull TextView tvProfileName, @NonNull TextView tvReelsAuthor,
+      @NonNull TextView tvReelsCommentCount, @NonNull TextView tvReelsLikeCount,
+      @NonNull TextView tvReelsMusic, @NonNull TextView tvReelsTitle) {
     this.rootView = rootView;
-    this.btnRetry = btnRetry;
-    this.customViewContainer = customViewContainer;
-    this.offlineView = offlineView;
-    this.progressBar = progressBar;
-    this.swipeRefreshLayout = swipeRefreshLayout;
-    this.tvErrorDesc = tvErrorDesc;
-    this.tvErrorTitle = tvErrorTitle;
-    this.webView = webView;
+    this.bottomBarBstation = bottomBarBstation;
+    this.btnClearSearch = btnClearSearch;
+    this.btnClearSearchHistory = btnClearSearchHistory;
+    this.btnNavCari = btnNavCari;
+    this.btnNavFab = btnNavFab;
+    this.btnNavHome = btnNavHome;
+    this.btnNavRiwayat = btnNavRiwayat;
+    this.btnNavSaya = btnNavSaya;
+    this.btnOfflineOpenDownloads = btnOfflineOpenDownloads;
+    this.btnOfflineRetry = btnOfflineRetry;
+    this.btnReelsBookmark = btnReelsBookmark;
+    this.btnReelsComment = btnReelsComment;
+    this.btnReelsLike = btnReelsLike;
+    this.btnReelsShare = btnReelsShare;
+    this.btnRefreshTrending = btnRefreshTrending;
+    this.btnViewAllHistory = btnViewAllHistory;
+    this.etTopSearch = etTopSearch;
+    this.exploreContainer = exploreContainer;
+    this.headerContainer = headerContainer;
+    this.ivMainLoadingGif = ivMainLoadingGif;
+    this.ivNavCari = ivNavCari;
+    this.ivNavFabIcon = ivNavFabIcon;
+    this.ivNavHome = ivNavHome;
+    this.ivNavRiwayat = ivNavRiwayat;
+    this.ivNavSaya = ivNavSaya;
+    this.ivOfflineCatGif = ivOfflineCatGif;
+    this.ivProfileAvatar = ivProfileAvatar;
+    this.ivReelsMusicDisc = ivReelsMusicDisc;
+    this.ivReelsPosterBg = ivReelsPosterBg;
+    this.mainLoadingOverlay = mainLoadingOverlay;
+    this.menuAcara = menuAcara;
+    this.menuFavoritSaya = menuFavoritSaya;
+    this.menuFeedback = menuFeedback;
+    this.menuPengaturan = menuPengaturan;
+    this.menuPusatBantuan = menuPusatBantuan;
+    this.menuUnduhanSaya = menuUnduhanSaya;
+    this.offlineContainer = offlineContainer;
+    this.profileContainer = profileContainer;
+    this.reelsContainer = reelsContainer;
+    this.rvPosterGrid = rvPosterGrid;
+    this.rvProfileHistory = rvProfileHistory;
+    this.rvSearchHistory = rvSearchHistory;
+    this.rvSearchResultsList = rvSearchResultsList;
+    this.rvTrendingTags = rvTrendingTags;
+    this.searchHistorySection = searchHistorySection;
+    this.searchPillBar = searchPillBar;
+    this.swipeRefresh = swipeRefresh;
+    this.tabAction = tabAction;
+    this.tabAnime = tabAnime;
+    this.tabFantasy = tabFantasy;
+    this.tabPopuler = tabPopuler;
+    this.tabScrollView = tabScrollView;
+    this.tabTamat = tabTamat;
+    this.tabUntukAnda = tabUntukAnda;
+    this.tabsContainer = tabsContainer;
+    this.trendingSection = trendingSection;
+    this.tvNavCari = tvNavCari;
+    this.tvNavHome = tvNavHome;
+    this.tvNavRiwayat = tvNavRiwayat;
+    this.tvNavSaya = tvNavSaya;
+    this.tvProfileName = tvProfileName;
+    this.tvReelsAuthor = tvReelsAuthor;
+    this.tvReelsCommentCount = tvReelsCommentCount;
+    this.tvReelsLikeCount = tvReelsLikeCount;
+    this.tvReelsMusic = tvReelsMusic;
+    this.tvReelsTitle = tvReelsTitle;
   }
 
   @Override
   @NonNull
-  public FrameLayout getRoot() {
+  public RelativeLayout getRoot() {
     return rootView;
   }
 
@@ -90,56 +352,415 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.btnRetry;
-      MaterialButton btnRetry = ViewBindings.findChildViewById(rootView, id);
-      if (btnRetry == null) {
+      id = R.id.bottomBarBstation;
+      LinearLayout bottomBarBstation = ViewBindings.findChildViewById(rootView, id);
+      if (bottomBarBstation == null) {
         break missingId;
       }
 
-      id = R.id.customViewContainer;
-      FrameLayout customViewContainer = ViewBindings.findChildViewById(rootView, id);
-      if (customViewContainer == null) {
+      id = R.id.btnClearSearch;
+      ImageView btnClearSearch = ViewBindings.findChildViewById(rootView, id);
+      if (btnClearSearch == null) {
         break missingId;
       }
 
-      id = R.id.offlineView;
-      LinearLayout offlineView = ViewBindings.findChildViewById(rootView, id);
-      if (offlineView == null) {
+      id = R.id.btnClearSearchHistory;
+      TextView btnClearSearchHistory = ViewBindings.findChildViewById(rootView, id);
+      if (btnClearSearchHistory == null) {
         break missingId;
       }
 
-      id = R.id.progressBar;
-      ProgressBar progressBar = ViewBindings.findChildViewById(rootView, id);
-      if (progressBar == null) {
+      id = R.id.btnNavCari;
+      LinearLayout btnNavCari = ViewBindings.findChildViewById(rootView, id);
+      if (btnNavCari == null) {
         break missingId;
       }
 
-      id = R.id.swipeRefreshLayout;
-      SwipeRefreshLayout swipeRefreshLayout = ViewBindings.findChildViewById(rootView, id);
-      if (swipeRefreshLayout == null) {
+      id = R.id.btnNavFab;
+      LinearLayout btnNavFab = ViewBindings.findChildViewById(rootView, id);
+      if (btnNavFab == null) {
         break missingId;
       }
 
-      id = R.id.tvErrorDesc;
-      TextView tvErrorDesc = ViewBindings.findChildViewById(rootView, id);
-      if (tvErrorDesc == null) {
+      id = R.id.btnNavHome;
+      LinearLayout btnNavHome = ViewBindings.findChildViewById(rootView, id);
+      if (btnNavHome == null) {
         break missingId;
       }
 
-      id = R.id.tvErrorTitle;
-      TextView tvErrorTitle = ViewBindings.findChildViewById(rootView, id);
-      if (tvErrorTitle == null) {
+      id = R.id.btnNavRiwayat;
+      LinearLayout btnNavRiwayat = ViewBindings.findChildViewById(rootView, id);
+      if (btnNavRiwayat == null) {
         break missingId;
       }
 
-      id = R.id.webView;
-      WebView webView = ViewBindings.findChildViewById(rootView, id);
-      if (webView == null) {
+      id = R.id.btnNavSaya;
+      LinearLayout btnNavSaya = ViewBindings.findChildViewById(rootView, id);
+      if (btnNavSaya == null) {
         break missingId;
       }
 
-      return new ActivityMainBinding((FrameLayout) rootView, btnRetry, customViewContainer,
-          offlineView, progressBar, swipeRefreshLayout, tvErrorDesc, tvErrorTitle, webView);
+      id = R.id.btnOfflineOpenDownloads;
+      LinearLayout btnOfflineOpenDownloads = ViewBindings.findChildViewById(rootView, id);
+      if (btnOfflineOpenDownloads == null) {
+        break missingId;
+      }
+
+      id = R.id.btnOfflineRetry;
+      TextView btnOfflineRetry = ViewBindings.findChildViewById(rootView, id);
+      if (btnOfflineRetry == null) {
+        break missingId;
+      }
+
+      id = R.id.btnReelsBookmark;
+      ImageView btnReelsBookmark = ViewBindings.findChildViewById(rootView, id);
+      if (btnReelsBookmark == null) {
+        break missingId;
+      }
+
+      id = R.id.btnReelsComment;
+      ImageView btnReelsComment = ViewBindings.findChildViewById(rootView, id);
+      if (btnReelsComment == null) {
+        break missingId;
+      }
+
+      id = R.id.btnReelsLike;
+      ImageView btnReelsLike = ViewBindings.findChildViewById(rootView, id);
+      if (btnReelsLike == null) {
+        break missingId;
+      }
+
+      id = R.id.btnReelsShare;
+      ImageView btnReelsShare = ViewBindings.findChildViewById(rootView, id);
+      if (btnReelsShare == null) {
+        break missingId;
+      }
+
+      id = R.id.btnRefreshTrending;
+      ImageView btnRefreshTrending = ViewBindings.findChildViewById(rootView, id);
+      if (btnRefreshTrending == null) {
+        break missingId;
+      }
+
+      id = R.id.btnViewAllHistory;
+      TextView btnViewAllHistory = ViewBindings.findChildViewById(rootView, id);
+      if (btnViewAllHistory == null) {
+        break missingId;
+      }
+
+      id = R.id.etTopSearch;
+      EditText etTopSearch = ViewBindings.findChildViewById(rootView, id);
+      if (etTopSearch == null) {
+        break missingId;
+      }
+
+      id = R.id.exploreContainer;
+      NestedScrollView exploreContainer = ViewBindings.findChildViewById(rootView, id);
+      if (exploreContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.headerContainer;
+      LinearLayout headerContainer = ViewBindings.findChildViewById(rootView, id);
+      if (headerContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.ivMainLoadingGif;
+      ImageView ivMainLoadingGif = ViewBindings.findChildViewById(rootView, id);
+      if (ivMainLoadingGif == null) {
+        break missingId;
+      }
+
+      id = R.id.ivNavCari;
+      ImageView ivNavCari = ViewBindings.findChildViewById(rootView, id);
+      if (ivNavCari == null) {
+        break missingId;
+      }
+
+      id = R.id.ivNavFabIcon;
+      ImageView ivNavFabIcon = ViewBindings.findChildViewById(rootView, id);
+      if (ivNavFabIcon == null) {
+        break missingId;
+      }
+
+      id = R.id.ivNavHome;
+      ImageView ivNavHome = ViewBindings.findChildViewById(rootView, id);
+      if (ivNavHome == null) {
+        break missingId;
+      }
+
+      id = R.id.ivNavRiwayat;
+      ImageView ivNavRiwayat = ViewBindings.findChildViewById(rootView, id);
+      if (ivNavRiwayat == null) {
+        break missingId;
+      }
+
+      id = R.id.ivNavSaya;
+      ImageView ivNavSaya = ViewBindings.findChildViewById(rootView, id);
+      if (ivNavSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.ivOfflineCatGif;
+      ImageView ivOfflineCatGif = ViewBindings.findChildViewById(rootView, id);
+      if (ivOfflineCatGif == null) {
+        break missingId;
+      }
+
+      id = R.id.ivProfileAvatar;
+      ImageView ivProfileAvatar = ViewBindings.findChildViewById(rootView, id);
+      if (ivProfileAvatar == null) {
+        break missingId;
+      }
+
+      id = R.id.ivReelsMusicDisc;
+      ImageView ivReelsMusicDisc = ViewBindings.findChildViewById(rootView, id);
+      if (ivReelsMusicDisc == null) {
+        break missingId;
+      }
+
+      id = R.id.ivReelsPosterBg;
+      ImageView ivReelsPosterBg = ViewBindings.findChildViewById(rootView, id);
+      if (ivReelsPosterBg == null) {
+        break missingId;
+      }
+
+      id = R.id.mainLoadingOverlay;
+      LinearLayout mainLoadingOverlay = ViewBindings.findChildViewById(rootView, id);
+      if (mainLoadingOverlay == null) {
+        break missingId;
+      }
+
+      id = R.id.menuAcara;
+      LinearLayout menuAcara = ViewBindings.findChildViewById(rootView, id);
+      if (menuAcara == null) {
+        break missingId;
+      }
+
+      id = R.id.menuFavoritSaya;
+      LinearLayout menuFavoritSaya = ViewBindings.findChildViewById(rootView, id);
+      if (menuFavoritSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.menuFeedback;
+      LinearLayout menuFeedback = ViewBindings.findChildViewById(rootView, id);
+      if (menuFeedback == null) {
+        break missingId;
+      }
+
+      id = R.id.menuPengaturan;
+      LinearLayout menuPengaturan = ViewBindings.findChildViewById(rootView, id);
+      if (menuPengaturan == null) {
+        break missingId;
+      }
+
+      id = R.id.menuPusatBantuan;
+      LinearLayout menuPusatBantuan = ViewBindings.findChildViewById(rootView, id);
+      if (menuPusatBantuan == null) {
+        break missingId;
+      }
+
+      id = R.id.menuUnduhanSaya;
+      LinearLayout menuUnduhanSaya = ViewBindings.findChildViewById(rootView, id);
+      if (menuUnduhanSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.offlineContainer;
+      LinearLayout offlineContainer = ViewBindings.findChildViewById(rootView, id);
+      if (offlineContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.profileContainer;
+      NestedScrollView profileContainer = ViewBindings.findChildViewById(rootView, id);
+      if (profileContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.reelsContainer;
+      RelativeLayout reelsContainer = ViewBindings.findChildViewById(rootView, id);
+      if (reelsContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.rvPosterGrid;
+      RecyclerView rvPosterGrid = ViewBindings.findChildViewById(rootView, id);
+      if (rvPosterGrid == null) {
+        break missingId;
+      }
+
+      id = R.id.rvProfileHistory;
+      RecyclerView rvProfileHistory = ViewBindings.findChildViewById(rootView, id);
+      if (rvProfileHistory == null) {
+        break missingId;
+      }
+
+      id = R.id.rvSearchHistory;
+      RecyclerView rvSearchHistory = ViewBindings.findChildViewById(rootView, id);
+      if (rvSearchHistory == null) {
+        break missingId;
+      }
+
+      id = R.id.rvSearchResultsList;
+      RecyclerView rvSearchResultsList = ViewBindings.findChildViewById(rootView, id);
+      if (rvSearchResultsList == null) {
+        break missingId;
+      }
+
+      id = R.id.rvTrendingTags;
+      RecyclerView rvTrendingTags = ViewBindings.findChildViewById(rootView, id);
+      if (rvTrendingTags == null) {
+        break missingId;
+      }
+
+      id = R.id.searchHistorySection;
+      LinearLayout searchHistorySection = ViewBindings.findChildViewById(rootView, id);
+      if (searchHistorySection == null) {
+        break missingId;
+      }
+
+      id = R.id.searchPillBar;
+      LinearLayout searchPillBar = ViewBindings.findChildViewById(rootView, id);
+      if (searchPillBar == null) {
+        break missingId;
+      }
+
+      id = R.id.swipeRefresh;
+      SwipeRefreshLayout swipeRefresh = ViewBindings.findChildViewById(rootView, id);
+      if (swipeRefresh == null) {
+        break missingId;
+      }
+
+      id = R.id.tabAction;
+      TextView tabAction = ViewBindings.findChildViewById(rootView, id);
+      if (tabAction == null) {
+        break missingId;
+      }
+
+      id = R.id.tabAnime;
+      TextView tabAnime = ViewBindings.findChildViewById(rootView, id);
+      if (tabAnime == null) {
+        break missingId;
+      }
+
+      id = R.id.tabFantasy;
+      TextView tabFantasy = ViewBindings.findChildViewById(rootView, id);
+      if (tabFantasy == null) {
+        break missingId;
+      }
+
+      id = R.id.tabPopuler;
+      TextView tabPopuler = ViewBindings.findChildViewById(rootView, id);
+      if (tabPopuler == null) {
+        break missingId;
+      }
+
+      id = R.id.tabScrollView;
+      HorizontalScrollView tabScrollView = ViewBindings.findChildViewById(rootView, id);
+      if (tabScrollView == null) {
+        break missingId;
+      }
+
+      id = R.id.tabTamat;
+      TextView tabTamat = ViewBindings.findChildViewById(rootView, id);
+      if (tabTamat == null) {
+        break missingId;
+      }
+
+      id = R.id.tabUntukAnda;
+      TextView tabUntukAnda = ViewBindings.findChildViewById(rootView, id);
+      if (tabUntukAnda == null) {
+        break missingId;
+      }
+
+      id = R.id.tabsContainer;
+      LinearLayout tabsContainer = ViewBindings.findChildViewById(rootView, id);
+      if (tabsContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.trendingSection;
+      LinearLayout trendingSection = ViewBindings.findChildViewById(rootView, id);
+      if (trendingSection == null) {
+        break missingId;
+      }
+
+      id = R.id.tvNavCari;
+      TextView tvNavCari = ViewBindings.findChildViewById(rootView, id);
+      if (tvNavCari == null) {
+        break missingId;
+      }
+
+      id = R.id.tvNavHome;
+      TextView tvNavHome = ViewBindings.findChildViewById(rootView, id);
+      if (tvNavHome == null) {
+        break missingId;
+      }
+
+      id = R.id.tvNavRiwayat;
+      TextView tvNavRiwayat = ViewBindings.findChildViewById(rootView, id);
+      if (tvNavRiwayat == null) {
+        break missingId;
+      }
+
+      id = R.id.tvNavSaya;
+      TextView tvNavSaya = ViewBindings.findChildViewById(rootView, id);
+      if (tvNavSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.tvProfileName;
+      TextView tvProfileName = ViewBindings.findChildViewById(rootView, id);
+      if (tvProfileName == null) {
+        break missingId;
+      }
+
+      id = R.id.tvReelsAuthor;
+      TextView tvReelsAuthor = ViewBindings.findChildViewById(rootView, id);
+      if (tvReelsAuthor == null) {
+        break missingId;
+      }
+
+      id = R.id.tvReelsCommentCount;
+      TextView tvReelsCommentCount = ViewBindings.findChildViewById(rootView, id);
+      if (tvReelsCommentCount == null) {
+        break missingId;
+      }
+
+      id = R.id.tvReelsLikeCount;
+      TextView tvReelsLikeCount = ViewBindings.findChildViewById(rootView, id);
+      if (tvReelsLikeCount == null) {
+        break missingId;
+      }
+
+      id = R.id.tvReelsMusic;
+      TextView tvReelsMusic = ViewBindings.findChildViewById(rootView, id);
+      if (tvReelsMusic == null) {
+        break missingId;
+      }
+
+      id = R.id.tvReelsTitle;
+      TextView tvReelsTitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvReelsTitle == null) {
+        break missingId;
+      }
+
+      return new ActivityMainBinding((RelativeLayout) rootView, bottomBarBstation, btnClearSearch,
+          btnClearSearchHistory, btnNavCari, btnNavFab, btnNavHome, btnNavRiwayat, btnNavSaya,
+          btnOfflineOpenDownloads, btnOfflineRetry, btnReelsBookmark, btnReelsComment, btnReelsLike,
+          btnReelsShare, btnRefreshTrending, btnViewAllHistory, etTopSearch, exploreContainer,
+          headerContainer, ivMainLoadingGif, ivNavCari, ivNavFabIcon, ivNavHome, ivNavRiwayat,
+          ivNavSaya, ivOfflineCatGif, ivProfileAvatar, ivReelsMusicDisc, ivReelsPosterBg,
+          mainLoadingOverlay, menuAcara, menuFavoritSaya, menuFeedback, menuPengaturan,
+          menuPusatBantuan, menuUnduhanSaya, offlineContainer, profileContainer, reelsContainer,
+          rvPosterGrid, rvProfileHistory, rvSearchHistory, rvSearchResultsList, rvTrendingTags,
+          searchHistorySection, searchPillBar, swipeRefresh, tabAction, tabAnime, tabFantasy,
+          tabPopuler, tabScrollView, tabTamat, tabUntukAnda, tabsContainer, trendingSection,
+          tvNavCari, tvNavHome, tvNavRiwayat, tvNavSaya, tvProfileName, tvReelsAuthor,
+          tvReelsCommentCount, tvReelsLikeCount, tvReelsMusic, tvReelsTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

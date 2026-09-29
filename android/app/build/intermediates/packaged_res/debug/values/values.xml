@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:ns1="http://schemas.android.com/tools">
-    <color name="accent_gold">#E6B800</color>
-    <color name="bg_dark">#17171B</color>
-    <color name="bg_light">#F6F5F0</color>
+    <color name="accent_gold">#FFAA00</color>
+    <color name="badge_blue">#007AFF</color>
+    <color name="badge_orange">#FF9500</color>
+    <color name="badge_red">#FF3B30</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="bg_dark">#FFFFFF</color>
+    <color name="bg_light">#FFFFFF</color>
+    <color name="bg_surface">#F6F5F0</color>
     <color name="black">#FF000000</color>
+    <color name="brand_black">#17171B</color>
+    <color name="brand_gold">#FFCC00</color>
+    <color name="bstation_cyan">#E6B800</color>
+    <color name="bstation_dark_card">#FFFFFF</color>
+    <color name="bstation_tab_unselected">#757580</color>
     <color name="primary_dark">#17171B</color>
     <color name="primary_gold">#FFCC00</color>
-    <color name="statusBarColor">#17171B</color>
-    <color name="text_primary">#1A1A1E</color>
+    <color name="statusBarColor">#FFFFFF</color>
+    <color name="text_primary">#17171B</color>
+    <color name="text_secondary">#757580</color>
     <color name="white">#FFFFFFFF</color>
     <string name="app_name">Nyamimo</string>
     <string name="btn_retry">Coba Lagi</string>
@@ -15,18 +26,21 @@
     <string name="error_offline_title">Koneksi Terputus</string>
     <string name="exit_prompt">Tekan sekali lagi untuk keluar dari Nyamimo</string>
     <string name="web_url">https://nyamimo.onrender.com</string>
-    <style name="Theme.Nyamimo" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.Nyamimo" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/primary_gold</item>
         <item name="colorPrimaryVariant">@color/accent_gold</item>
         <item name="colorOnPrimary">@color/primary_dark</item>
-        <item name="android:statusBarColor">@color/primary_dark</item>
-        <item name="android:windowLightStatusBar" ns1:targetApi="m">false</item>
-        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar" ns1:targetApi="m">true</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
         <item name="android:windowLightNavigationBar" ns1:targetApi="o_mr1">true</item>
+        <item name="android:windowBackground">#F6F5F0</item>
     </style>
-    <style name="Theme.Nyamimo.Fullscreen" parent="Theme.Nyamimo">
+    <style name="Theme.Nyamimo.Fullscreen" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
-        <item name="android:windowBackground">@color/primary_dark</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
     </style>
 </resources>

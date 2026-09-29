@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.nyamimo.app-mergeDebugResources-35:/values-large-v4/values-large-v4.xml",
+            "outputFile": "com.nyamimo.app-mergeDebugResources-41:/values-large-v4/values-large-v4.xml",
             "map": [
                 {
                     "source": "C:\\Users\\user\\.gradle\\caches\\transforms-3\\42349fcab7a5a6a21b6eefeb34a9888a\\transformed\\appcompat-1.6.1\\res\\values-large-v4\\values-large-v4.xml",

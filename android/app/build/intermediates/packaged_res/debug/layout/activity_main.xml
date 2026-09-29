@@ -1,97 +1,1183 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_light"
-    tools:context=".MainActivity">
+    android:background="#F6F5F0">
 
-    <!-- Swipe-to-Refresh Layout for WebView -->
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefreshLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <WebView
-            android:id="@+id/webView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:overScrollMode="never" />
-
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-    <!-- Top Loading Progress Bar -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:layout_gravity="top"
-        android:indeterminate="false"
-        android:max="100"
-        android:progressBackgroundTint="@android:color/transparent"
-        android:progressTint="@color/primary_gold"
-        android:visibility="gone" />
-
-    <!-- Fullscreen Video Container (for HTML5 / iframe player landscape fullscreen) -->
-    <FrameLayout
-        android:id="@+id/customViewContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/black"
-        android:visibility="gone" />
-
-    <!-- Offline / Network Error View -->
+    <!-- Top White Header Container with Logo & Search -->
     <LinearLayout
-        android:id="@+id/offlineView"
+        android:id="@+id/headerContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/bg_light"
-        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="#FFFFFF"
         android:orientation="vertical"
-        android:padding="32dp"
-        android:visibility="gone">
+        android:paddingTop="6dp"
+        android:elevation="3dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Top Row with Official Nyamimo Logo & Search Pill -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp">
+
+            <!-- Official Nyamimo Logo Image -->
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/logo_nyamimo" />
+
+            <!-- Search Pill (White & Gold Theme) -->
+            <LinearLayout
+                android:id="@+id/searchPillBar"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/search_pill_bg"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@android:drawable/ic_menu_search"
+                    app:tint="#757580" />
+
+                <EditText
+                    android:id="@+id/etTopSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:hint="Cari anime: one piece, naruto..."
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:textColor="#17171B"
+                    android:textColorHint="#8E8E93"
+                    android:textSize="13sp" />
+
+                <ImageView
+                    android:id="@+id/btnClearSearch"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    android:visibility="gone"
+                    app:tint="#757580" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Horizontal Category Tabs (White & Yellow Nyamimo Theme) -->
+        <HorizontalScrollView
+            android:id="@+id/tabScrollView"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📡"
-            android:textSize="56sp" />
+            android:layout_marginTop="4dp"
+            android:scrollbars="none">
 
-        <TextView
-            android:id="@+id/tvErrorTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:fontFamily="sans-serif-black"
-            android:text="@string/error_offline_title"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp" />
+            <LinearLayout
+                android:id="@+id/tabsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp">
 
-        <TextView
-            android:id="@+id/tvErrorDesc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:text="@string/error_offline_desc"
-            android:textColor="#71717A"
-            android:textSize="13sp" />
+                <!-- Tab: Untuk Anda -->
+                <TextView
+                    android:id="@+id/tabUntukAnda"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Untuk Anda"
+                    android:textColor="#17171B"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRetry"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="@color/primary_gold"
-            android:fontFamily="sans-serif-bold"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:text="@string/btn_retry"
-            android:textColor="@color/primary_dark"
-            app:cornerRadius="12dp" />
+                <!-- Tab: Populer -->
+                <TextView
+                    android:id="@+id/tabPopuler"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Populer"
+                    android:textColor="#757580"
+                    android:textSize="14sp" />
 
+                <!-- Tab: Anime (Ongoing) -->
+                <TextView
+                    android:id="@+id/tabAnime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Anime"
+                    android:textColor="#757580"
+                    android:textSize="14sp" />
+
+                <!-- Tab: Tamat (Completed) -->
+                <TextView
+                    android:id="@+id/tabTamat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Anime Tamat"
+                    android:textColor="#757580"
+                    android:textSize="14sp" />
+
+                <!-- Tab: Action -->
+                <TextView
+                    android:id="@+id/tabAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Action"
+                    android:textColor="#757580"
+                    android:textSize="14sp" />
+
+                <!-- Tab: Isekai / Fantasy -->
+                <TextView
+                    android:id="@+id/tabFantasy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="Fantasy"
+                    android:textColor="#757580"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E5E4DE" />
     </LinearLayout>
 
-</FrameLayout>
+    <!-- Main Content Swapper -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottomBarBstation"
+        android:layout_below="@id/headerContainer">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Main Poster Grid & Search Container (Homepage Poster Cards View) -->
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/exploreContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="24dp">
+
+                    <!-- Search History Section (Website Concept) -->
+                    <LinearLayout
+                        android:id="@+id/searchHistorySection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="14dp"
+                        android:paddingTop="12dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Riwayat Pencarian"
+                                android:textColor="#17171B"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/btnClearSearchHistory"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="4dp"
+                                android:text="Hapus"
+                                android:textColor="#757580"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Horizontal Search History Chips -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvSearchHistory"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:background="#E5E4DE" />
+                    </LinearLayout>
+
+                    <!-- Trending Nyamimo Header & Tags (Screenshot 1 & 3) -->
+                    <LinearLayout
+                        android:id="@+id/trendingSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="14dp"
+                        android:paddingTop="12dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Trending Nyamimo"
+                                android:textColor="#17171B"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:id="@+id/btnRefreshTrending"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@android:drawable/ic_popup_sync"
+                                app:tint="#757580" />
+                        </LinearLayout>
+
+                        <!-- 2-Column Trending Tags Grid -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvTrendingTags"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:nestedScrollingEnabled="false" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="12dp"
+                            android:background="#E5E4DE" />
+                    </LinearLayout>
+
+                    <!-- Search Result Single List View (Website concept) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvSearchResultsList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:nestedScrollingEnabled="false"
+                        android:visibility="gone" />
+
+                    <!-- 3-Column Anime Poster Grid (Screenshot 1) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvPosterGrid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:clipToPadding="false"
+                        android:nestedScrollingEnabled="false"
+                        android:paddingHorizontal="10dp" />
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- VIEW 3: Profile ("Saya" - Screenshot 2) -->
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/profileContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="30dp">
+
+                    <!-- Profile Header Banner (Golden Yellow Gradient) -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="190dp"
+                        android:background="@drawable/banner_profile_bg">
+
+                        <ImageView
+                            android:layout_width="110dp"
+                            android:layout_height="110dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_margin="16dp"
+                            android:alpha="0.3"
+                            android:src="@drawable/logo_nyamimo" />
+
+                        <!-- User Info -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentBottom="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvProfileName"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Nyamimo Otaku"
+                                    android:textColor="#17171B"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="1 Pengikut   •   17 Mengikuti"
+                                    android:textColor="#55555B"
+                                    android:textSize="12sp" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:background="#17171B"
+                                        android:paddingHorizontal="8dp"
+                                        android:paddingVertical="3dp"
+                                        android:text="VIP Member"
+                                        android:textColor="#FFCC00"
+                                        android:textSize="10sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:background="#33000000"
+                                        android:paddingHorizontal="6dp"
+                                        android:paddingVertical="3dp"
+                                        android:text="Indonesia"
+                                        android:textColor="#17171B"
+                                        android:textSize="10sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </LinearLayout>
+
+                            <!-- Avatar Circle with Official Nyamimo Logo -->
+                            <ImageView
+                                android:id="@+id/ivProfileAvatar"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:background="#FFFFFF"
+                                android:padding="6dp"
+                                android:src="@drawable/logo_nyamimo" />
+                        </LinearLayout>
+                    </RelativeLayout>
+
+                    <!-- VIP Card (White & Yellow Theme) -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="14dp"
+                        android:layout_marginTop="14dp"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="2dp"
+                        app:cardBackgroundColor="#FFFFFF">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="14dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Server VIP Nyamimo Aktif"
+                                    android:textColor="#17171B"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Streaming HD tanpa buffer 1080p &amp; 4K"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/badge_gold_bg"
+                                android:paddingHorizontal="14dp"
+                                android:paddingVertical="6dp"
+                                android:text="GO"
+                                android:textColor="#17171B"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Riwayat Section (Screenshot 2) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="14dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Riwayat Tontonan"
+                                android:textColor="#17171B"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/btnViewAllHistory"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Menonton semua ›"
+                                android:textColor="#D99B00"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Horizontal Riwayat Scroll -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvProfileHistory"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:clipToPadding="false"
+                            android:orientation="horizontal" />
+                    </LinearLayout>
+
+                    <!-- Menu List Section (Clean White Cards: Unduhan Saya, Favorit Saya, Acara, Pengaturan, Pusat Bantuan, Feedback) -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="14dp"
+                        android:layout_marginTop="18dp"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:paddingVertical="4dp">
+
+                            <!-- 1. Unduhan Saya -->
+                            <LinearLayout
+                                android:id="@+id/menuUnduhanSaya"
+                                android:layout_width="match_parent"
+                                android:layout_height="52dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="16dp">
+
+                                <ImageView
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:src="@drawable/ic_menu_unduhan"
+                                    app:tint="#F5A623" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="14dp"
+                                    android:layout_weight="1"
+                                    android:text="Unduhan Saya"
+                                    android:textColor="#17171B"
+                                    android:textSize="14.5sp"
+                                    android:textStyle="bold" />
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    app:tint="#C7C7CC" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginStart="52dp"
+                                android:background="#F0F0F0" />
+
+                            <!-- 2. Favorit Saya -->
+                            <LinearLayout
+                                android:id="@+id/menuFavoritSaya"
+                                android:layout_width="match_parent"
+                                android:layout_height="52dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="16dp">
+
+                                <ImageView
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:src="@drawable/ic_menu_favorit"
+                                    app:tint="#F5A623" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="14dp"
+                                    android:layout_weight="1"
+                                    android:text="Favorit Saya"
+                                    android:textColor="#17171B"
+                                    android:textSize="14.5sp"
+                                    android:textStyle="bold" />
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    app:tint="#C7C7CC" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginStart="52dp"
+                                android:background="#F0F0F0" />
+
+                            <!-- 3. Acara -->
+                            <LinearLayout
+                                android:id="@+id/menuAcara"
+                                android:layout_width="match_parent"
+                                android:layout_height="52dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="16dp">
+
+                                <ImageView
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:src="@drawable/ic_menu_acara"
+                                    app:tint="#F5A623" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="14dp"
+                                    android:layout_weight="1"
+                                    android:text="Acara"
+                                    android:textColor="#17171B"
+                                    android:textSize="14.5sp"
+                                    android:textStyle="bold" />
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    app:tint="#C7C7CC" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginStart="52dp"
+                                android:background="#F0F0F0" />
+
+                            <!-- 4. Pengaturan -->
+                            <LinearLayout
+                                android:id="@+id/menuPengaturan"
+                                android:layout_width="match_parent"
+                                android:layout_height="52dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="16dp">
+
+                                <ImageView
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:src="@drawable/ic_menu_pengaturan"
+                                    app:tint="#F5A623" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="14dp"
+                                    android:layout_weight="1"
+                                    android:text="Pengaturan"
+                                    android:textColor="#17171B"
+                                    android:textSize="14.5sp"
+                                    android:textStyle="bold" />
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    app:tint="#C7C7CC" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginStart="52dp"
+                                android:background="#F0F0F0" />
+
+                            <!-- 5. Pusat Bantuan -->
+                            <LinearLayout
+                                android:id="@+id/menuPusatBantuan"
+                                android:layout_width="match_parent"
+                                android:layout_height="52dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="16dp">
+
+                                <ImageView
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:src="@drawable/ic_menu_bantuan"
+                                    app:tint="#F5A623" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="14dp"
+                                    android:layout_weight="1"
+                                    android:text="Pusat Bantuan"
+                                    android:textColor="#17171B"
+                                    android:textSize="14.5sp"
+                                    android:textStyle="bold" />
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    app:tint="#C7C7CC" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginStart="52dp"
+                                android:background="#F0F0F0" />
+
+                            <!-- 6. Feedback -->
+                            <LinearLayout
+                                android:id="@+id/menuFeedback"
+                                android:layout_width="match_parent"
+                                android:layout_height="52dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="16dp">
+
+                                <ImageView
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:src="@drawable/ic_menu_feedback"
+                                    app:tint="#F5A623" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="14dp"
+                                    android:layout_weight="1"
+                                    android:text="Feedback"
+                                    android:textColor="#17171B"
+                                    android:textSize="14.5sp"
+                                    android:textStyle="bold" />
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    app:tint="#C7C7CC" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- TikTok / Instagram Reels Short Video Feed Container -->
+            <RelativeLayout
+                android:id="@+id/reelsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#000000"
+                android:visibility="gone">
+
+                <!-- Video Background / Anime Clip Preview -->
+                <ImageView
+                    android:id="@+id/ivReelsPosterBg"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="#17171B" />
+
+                <!-- Dark Gradient Overlays for Reels -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:layout_alignParentBottom="true"
+                    android:background="@drawable/banner_gradient_overlay" />
+
+                <!-- Top Reels Tag -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/chip_genre_bg"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nyamimo Shorts"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Right Vertical Action Bar (Like, Comment, Favorite, Share, Music Vinyl) -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="24dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <!-- Like Button -->
+                    <ImageView
+                        android:id="@+id/btnReelsLike"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_reels_like"
+                        app:tint="#FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tvReelsLikeCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="24.8K"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <!-- Comment Button -->
+                    <ImageView
+                        android:id="@+id/btnReelsComment"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_marginTop="16dp"
+                        android:src="@drawable/ic_reels_comment"
+                        app:tint="#FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tvReelsCommentCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="1.2K"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <!-- Bookmark Button -->
+                    <ImageView
+                        android:id="@+id/btnReelsBookmark"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_marginTop="16dp"
+                        android:src="@drawable/ic_reels_bookmark"
+                        app:tint="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Simpan"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <!-- Share Button -->
+                    <ImageView
+                        android:id="@+id/btnReelsShare"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_marginTop="16dp"
+                        android:src="@drawable/ic_reels_share"
+                        app:tint="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Bagikan"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <!-- Rotating Vinyl Music Disc -->
+                    <ImageView
+                        android:id="@+id/ivReelsMusicDisc"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginTop="18dp"
+                        android:src="@drawable/ic_reels_disc" />
+                </LinearLayout>
+
+                <!-- Bottom Left Overlay: Title, Description & Audio -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginEnd="80dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="24dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvReelsAuthor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@NyamimoAnimeClips"
+                        android:textColor="#FFCC00"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvReelsTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Momen pertarungan paling epic musim ini! Siap nonton episode selengkapnya?"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvReelsMusic"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Audio Asli - Opening Anime Nyamimo 2026"
+                        android:textColor="#E5E7EB"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <!-- Cute Nyamimo Cat GIF Loading Mascot (0927.gif) -->
+            <LinearLayout
+                android:id="@+id/mainLoadingOverlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/ivMainLoadingGif"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Memuat Nyamimo..."
+                    android:textColor="#17171B"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Offline / No Internet Screen (Dizzy Cat GIF & Download Feature Button) -->
+            <LinearLayout
+                android:id="@+id/offlineContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#FAF9F5"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:visibility="gone">
+
+                <!-- Cute Dizzy Cat No Internet GIF -->
+                <ImageView
+                    android:id="@+id/ivOfflineCatGif"
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"
+                    android:scaleType="fitCenter" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Tidak Ada Koneksi Internet"
+                    android:textColor="#17171B"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="Tenang, kamu masih bisa menonton anime favorit yang telah diunduh offline."
+                    android:textColor="#757580"
+                    android:textSize="13sp" />
+
+                <!-- Button to Unduhan Saya (Navigates to Download Feature) -->
+                <LinearLayout
+                    android:id="@+id/btnOfflineOpenDownloads"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/badge_gold_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="12dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_menu_unduhan"
+                        app:tint="#17171B" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Buka Unduhan Saya"
+                        android:textColor="#17171B"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Retry Button -->
+                <TextView
+                    android:id="@+id/btnOfflineRetry"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:padding="8dp"
+                    android:text="Coba Muat Ulang"
+                    android:textColor="#757580"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </FrameLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Bottom Navigation Bar (White & Gold Theme) -->
+    <LinearLayout
+        android:id="@+id/bottomBarBstation"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:background="#FFFFFF"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:elevation="8dp">
+
+        <!-- 1. Homepage -->
+        <LinearLayout
+            android:id="@+id/btnNavHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:id="@+id/ivNavHome"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_today"
+                app:tint="#FFCC00" />
+
+            <TextView
+                android:id="@+id/tvNavHome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Homepage"
+                android:textColor="#17171B"
+                android:textStyle="bold"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- 2. Cari -->
+        <LinearLayout
+            android:id="@+id/btnNavCari"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:id="@+id/ivNavCari"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="#8E8E93" />
+
+            <TextView
+                android:id="@+id/tvNavCari"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Cari"
+                android:textColor="#8E8E93"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- 3. Center Reels / TikTok Feed Button (FAB) -->
+        <LinearLayout
+            android:id="@+id/btnNavFab"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/fab_cyan_circle"
+                android:elevation="4dp"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/ivNavFabIcon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_nav_reels"
+                    app:tint="#17171B" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <!-- 4. Riwayat (Clean without badge/star) -->
+        <LinearLayout
+            android:id="@+id/btnNavRiwayat"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:id="@+id/ivNavRiwayat"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_history"
+                app:tint="#8E8E93" />
+
+            <TextView
+                android:id="@+id/tvNavRiwayat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Riwayat"
+                android:textColor="#8E8E93"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- 5. Saya (Profile) -->
+        <LinearLayout
+            android:id="@+id/btnNavSaya"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:id="@+id/ivNavSaya"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@android:drawable/ic_menu_myplaces"
+                app:tint="#8E8E93" />
+
+            <TextView
+                android:id="@+id/tvNavSaya"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Saya"
+                android:textColor="#8E8E93"
+                android:textSize="10sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>

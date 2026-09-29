@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="340dp"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="10dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="22dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/ic_menu_feedback"
+                app:tint="#F5A623" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="Kirim Feedback"
+                android:textColor="#17171B"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Bantu kami meningkatkan kualitas Nyamimo dengan memberikan saran atau laporan."
+            android:textColor="#757580"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etFeedbackName"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/search_pill_bg"
+            android:hint="Nama / Kontak (Opsional)"
+            android:inputType="text"
+            android:paddingHorizontal="12dp"
+            android:textColor="#17171B"
+            android:textColorHint="#8E8E93"
+            android:textSize="13sp" />
+
+        <EditText
+            android:id="@+id/etFeedbackContent"
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/search_pill_bg"
+            android:gravity="top|start"
+            android:hint="Tulis saran fitur, request anime, atau kendala..."
+            android:inputType="textMultiLine"
+            android:padding="12dp"
+            android:textColor="#17171B"
+            android:textColorHint="#8E8E93"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnSubmitFeedback"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#FFCC00"
+            android:text="Kirim Masukan"
+            android:textColor="#17171B"
+            android:textSize="13.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnCancelFeedback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:padding="6dp"
+            android:text="Batal"
+            android:textColor="#757580"
+            android:textSize="12sp" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.Nyamimo" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <!-- Base application theme (White & Yellow Nyamimo Theme). -->
+    <style name="Theme.Nyamimo" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/primary_gold</item>
         <item name="colorPrimaryVariant">@color/accent_gold</item>
         <item name="colorOnPrimary">@color/primary_dark</item>
-        <item name="android:statusBarColor">@color/primary_dark</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
-        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowBackground">#F6F5F0</item>
     </style>
 
-    <style name="Theme.Nyamimo.Fullscreen" parent="Theme.Nyamimo">
+    <style name="Theme.Nyamimo.Fullscreen" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
-        <item name="android:windowBackground">@color/primary_dark</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
     </style>
 </resources>
