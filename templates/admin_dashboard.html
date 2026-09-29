@@ -707,6 +707,61 @@
                         </div>
                     </div>
 
+                    <!-- Slot 5: Pre-roll Video Ad (Gaya YouTube) -->
+                    <div class="bg-gradient-to-br from-[#17171B] to-[#25252B] border border-[#FFCC00]/30 rounded-2xl p-5 space-y-4 md:col-span-2 text-white shadow-md">
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-[#FFCC00] text-[#17171B] flex items-center justify-center font-bold shadow-lg">
+                                    <i data-lucide="video" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-extrabold font-title text-sm text-white">5. Video Pre-roll Ads (Gaya YouTube)</h3>
+                                        <span class="px-2 py-0.5 rounded bg-[#FFCC00] text-[#17171B] font-extrabold text-[9px] uppercase tracking-wider">High eCPM ⭐</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400">Iklan video otomatis sebelum anime diputar, lengkap dengan hitungan mundur & tombol Lewati Iklan (Skip Ad).</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="video_preroll_enabled" value="true" class="sr-only peer" {{if .Config.Ads.VideoPreroll.Enabled}}checked{{end}}>
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-200 mb-1 flex items-center gap-1.5">
+                                    <i data-lucide="film" class="w-3.5 h-3.5 text-[#FFCC00]"></i> URL Video Iklan (.mp4 / Direct Stream):
+                                </label>
+                                <input type="url" name="video_preroll_video_url" value="{{.Config.Ads.VideoPreroll.VideoURL}}" placeholder="https://domain.com/iklan.mp4 atau direct link video Monetag" class="w-full text-xs font-mono p-3 rounded-xl border border-white/20 bg-[#17171B] text-white focus:outline-none focus:border-[#FFCC00]">
+                                <p class="text-[10px] text-gray-400 mt-1">Gunakan link file MP4 langsung (misal: promo sponsor, Saweria, atau CDN video).</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-200 mb-1 flex items-center gap-1.5">
+                                    <i data-lucide="link" class="w-3.5 h-3.5 text-[#FFCC00]"></i> URL Tujuan Saat Iklan Diklik (Target Link):
+                                </label>
+                                <input type="url" name="video_preroll_target_link" value="{{.Config.Ads.VideoPreroll.TargetLink}}" placeholder="https://saweria.co/nyamimo atau https://monetag.com" class="w-full text-xs font-mono p-3 rounded-xl border border-white/20 bg-[#17171B] text-white focus:outline-none focus:border-[#FFCC00]">
+                                <p class="text-[10px] text-gray-400 mt-1">Halaman web atau penawaran yang akan dibuka di tab baru saat penonton mengklik video iklan.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-200 mb-1 flex items-center gap-1.5">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5 text-[#FFCC00]"></i> Estimasi Durasi Iklan (Detik):
+                                </label>
+                                <input type="number" min="5" max="120" name="video_preroll_duration" value="{{if .Config.Ads.VideoPreroll.DurationSeconds}}{{.Config.Ads.VideoPreroll.DurationSeconds}}{{else}}15{{end}}" class="w-full text-xs font-mono p-2.5 rounded-xl border border-white/20 bg-[#17171B] text-white focus:outline-none focus:border-[#FFCC00]">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-200 mb-1 flex items-center gap-1.5">
+                                    <i data-lucide="skip-forward" class="w-3.5 h-3.5 text-[#FFCC00]"></i> Tombol Skip Aktif Setelah (Detik):
+                                </label>
+                                <input type="number" min="1" max="60" name="video_preroll_skip" value="{{if .Config.Ads.VideoPreroll.SkipAfterSeconds}}{{.Config.Ads.VideoPreroll.SkipAfterSeconds}}{{else}}5{{end}}" class="w-full text-xs font-mono p-2.5 rounded-xl border border-white/20 bg-[#17171B] text-white focus:outline-none focus:border-[#FFCC00]">
+                                <p class="text-[10px] text-gray-400 mt-1">Contoh: 5 detik (seperti YouTube, tombol "Lewati Iklan" bisa diklik setelah 5 detik).</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Tips & Ad Network Recommendation Banner -->

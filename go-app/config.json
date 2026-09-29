@@ -41,7 +41,15 @@
     "footer_banner": {
       "enabled": false,
       "title": "Footer Sticky / Bottom Banner",
-      "code": "\u003cdiv class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#E2E2DC] rounded-xl text-center text-xs text-[#55555B]\">📢 Pasang Iklan Footer di Sini\u003c/div\u003e"
+      "code": "<div class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#E2E2DC] rounded-xl text-center text-xs text-[#55555B]\">📢 Pasang Iklan Footer di Sini</div>"
+    },
+    "video_preroll": {
+      "enabled": false,
+      "title": "Video Pre-roll Ad (Gaya YouTube)",
+      "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "target_link": "https://monetag.com",
+      "duration_seconds": 15,
+      "skip_after_seconds": 5
     }
   }
 }

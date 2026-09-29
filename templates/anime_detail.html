@@ -779,7 +779,122 @@
         if (window.lucide) lucide.createIcons();
     }
 
+    // Pre-roll Video Ad Config (YouTube Style)
+    window.NYAMIMO_VIDEO_AD = {
+        enabled: {{if (siteConfig).Ads.VideoPreroll.Enabled}}true{{else}}false{{end}},
+        videoUrl: "{{(siteConfig).Ads.VideoPreroll.VideoURL}}",
+        targetLink: "{{(siteConfig).Ads.VideoPreroll.TargetLink}}",
+        duration: {{if (siteConfig).Ads.VideoPreroll.DurationSeconds}}{{(siteConfig).Ads.VideoPreroll.DurationSeconds}}{{else}}15{{end}},
+        skipAfter: {{if (siteConfig).Ads.VideoPreroll.SkipAfterSeconds}}{{(siteConfig).Ads.VideoPreroll.SkipAfterSeconds}}{{else}}5{{end}}
+    };
+
+    function renderPrerollAdOverlay(container, onComplete) {
+        if (!window.NYAMIMO_VIDEO_AD || !window.NYAMIMO_VIDEO_AD.enabled || !window.NYAMIMO_VIDEO_AD.videoUrl || window._prerollAdShown) {
+            onComplete();
+            return;
+        }
+
+        window._prerollAdShown = true;
+        var adConfig = window.NYAMIMO_VIDEO_AD;
+        var skipWait = parseInt(adConfig.skipAfter) || 5;
+
+        container.innerHTML = '<div id="nyamimo-preroll-box" class="relative w-full h-full bg-black flex items-center justify-center overflow-hidden select-none">' +
+            '<video id="nyamimo-ad-video" src="' + adConfig.videoUrl + '" autoplay playsinline class="w-full h-full object-contain cursor-pointer"></video>' +
+            '<div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-30">' +
+                '<div class="flex items-center gap-2 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 pointer-events-auto">' +
+                    '<span class="w-2 h-2 rounded-full bg-[#FFCC00] animate-pulse"></span>' +
+                    '<span class="text-[11px] font-extrabold text-[#FFCC00] tracking-wider uppercase font-title">IKLAN</span>' +
+                    '<span class="text-[11px] text-gray-300 font-medium">• 1 dari 1</span>' +
+                '</div>' +
+                (adConfig.targetLink ? '<a href="' + adConfig.targetLink + '" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs px-3 py-1.5 rounded-full shadow-lg transition-transform hover:scale-105 pointer-events-auto font-title"><span>Kunjungi Pengiklan</span><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>' : '') +
+            '</div>' +
+            '<div class="absolute bottom-4 right-4 z-30 flex items-center gap-2">' +
+                '<button id="nyamimo-skip-btn" disabled class="px-4 py-2 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-gray-300 font-extrabold text-xs flex items-center gap-2 font-title transition-all duration-300 cursor-not-allowed">' +
+                    '<span id="nyamimo-skip-txt">Lewati Iklan dalam ' + skipWait + 's</span>' +
+                '</button>' +
+            '</div>' +
+            '<div class="absolute bottom-4 left-4 z-30 flex items-center gap-2">' +
+                '<button id="nyamimo-sound-toggle" class="p-2 rounded-full bg-black/75 backdrop-blur-md text-white border border-white/20 text-xs hover:bg-[#FFCC00] hover:text-[#17171B] transition-colors">' +
+                    '🔊' +
+                '</button>' +
+            '</div>' +
+        '</div>';
+
+        var adVideo = document.getElementById('nyamimo-ad-video');
+        var skipBtn = document.getElementById('nyamimo-skip-btn');
+        var skipTxt = document.getElementById('nyamimo-skip-txt');
+        var soundToggle = document.getElementById('nyamimo-sound-toggle');
+        var isDone = false;
+
+        function finishAd() {
+            if (isDone) return;
+            isDone = true;
+            if (adVideo) {
+                adVideo.pause();
+                adVideo.src = '';
+            }
+            onComplete();
+        }
+
+        if (adVideo && adConfig.targetLink) {
+            adVideo.onclick = function() {
+                window.open(adConfig.targetLink, '_blank');
+            };
+        }
+
+        if (soundToggle && adVideo) {
+            soundToggle.onclick = function() {
+                adVideo.muted = !adVideo.muted;
+                soundToggle.innerText = adVideo.muted ? '🔇' : '🔊';
+            };
+        }
+
+        var timeLeft = skipWait;
+        var timer = setInterval(function() {
+            if (isDone) {
+                clearInterval(timer);
+                return;
+            }
+            if (adVideo && !adVideo.paused) {
+                timeLeft--;
+            }
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                if (skipBtn) {
+                    skipBtn.disabled = false;
+                    skipBtn.className = "px-4 py-2 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs flex items-center gap-1.5 font-title shadow-xl cursor-pointer hover:scale-105 transition-all";
+                    skipBtn.innerHTML = '<span>Lewati Iklan</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>';
+                    skipBtn.onclick = finishAd;
+                }
+            } else if (skipTxt) {
+                skipTxt.innerText = 'Lewati Iklan dalam ' + timeLeft + 's';
+            }
+        }, 1000);
+
+        if (adVideo) {
+            adVideo.onended = finishAd;
+            adVideo.onerror = finishAd;
+            adVideo.play().catch(function() {
+                adVideo.muted = true;
+                if (soundToggle) soundToggle.innerText = '🔇';
+                adVideo.play().catch(finishAd);
+            });
+        } else {
+            finishAd();
+        }
+    }
+
     function initHybridPlayer(videoUrl, rawHtml) {
+        var container = document.getElementById('player-iframe-container');
+        if (!container) return;
+
+        // Run Pre-roll Ad first if enabled
+        renderPrerollAdOverlay(container, function() {
+            startActualPlayer(videoUrl, rawHtml);
+        });
+    }
+
+    function startActualPlayer(videoUrl, rawHtml) {
         var container = document.getElementById('player-iframe-container');
         if (!container) return;
 

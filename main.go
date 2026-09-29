@@ -178,11 +178,21 @@ type AdSlot struct {
 	Code    string `json:"code"`
 }
 
+type VideoPrerollAd struct {
+	Enabled          bool   `json:"enabled"`
+	Title            string `json:"title"`
+	VideoURL         string `json:"video_url"`
+	TargetLink       string `json:"target_link"`
+	DurationSeconds  int    `json:"duration_seconds"`
+	SkipAfterSeconds int    `json:"skip_after_seconds"`
+}
+
 type AdSettings struct {
-	HeaderBanner AdSlot `json:"header_banner"`
-	BelowPlayer  AdSlot `json:"below_player"`
-	Popunder     AdSlot `json:"popunder"`
-	FooterBanner AdSlot `json:"footer_banner"`
+	HeaderBanner AdSlot         `json:"header_banner"`
+	BelowPlayer  AdSlot         `json:"below_player"`
+	Popunder     AdSlot         `json:"popunder"`
+	FooterBanner AdSlot         `json:"footer_banner"`
+	VideoPreroll VideoPrerollAd `json:"video_preroll"`
 }
 
 type GDriveSettings struct {
@@ -662,6 +672,14 @@ func getDefaultConfig() AppConfig {
 				Enabled: false,
 				Title:   "Footer Sticky / Bottom Banner",
 				Code:    "<div class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#E2E2DC] rounded-xl text-center text-xs text-[#55555B]\">📢 Pasang Iklan Footer di Sini</div>",
+			},
+			VideoPreroll: VideoPrerollAd{
+				Enabled:          false,
+				Title:            "Video Pre-roll Ad (Gaya YouTube)",
+				VideoURL:         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+				TargetLink:       "https://monetag.com",
+				DurationSeconds:  15,
+				SkipAfterSeconds: 5,
 			},
 		},
 	}
@@ -2442,6 +2460,22 @@ func handleAdminAdsSave(w http.ResponseWriter, r *http.Request) {
 	appConfig.Ads.FooterBanner.Enabled = r.FormValue("footer_banner_enabled") == "on" || r.FormValue("footer_banner_enabled") == "true"
 	appConfig.Ads.FooterBanner.Code = r.FormValue("footer_banner_code")
 
+	appConfig.Ads.VideoPreroll.Enabled = r.FormValue("video_preroll_enabled") == "on" || r.FormValue("video_preroll_enabled") == "true"
+	appConfig.Ads.VideoPreroll.VideoURL = strings.TrimSpace(r.FormValue("video_preroll_video_url"))
+	appConfig.Ads.VideoPreroll.TargetLink = strings.TrimSpace(r.FormValue("video_preroll_target_link"))
+
+	dur, _ := strconv.Atoi(r.FormValue("video_preroll_duration"))
+	if dur <= 0 {
+		dur = 15
+	}
+	appConfig.Ads.VideoPreroll.DurationSeconds = dur
+
+	skip, _ := strconv.Atoi(r.FormValue("video_preroll_skip"))
+	if skip <= 0 {
+		skip = 5
+	}
+	appConfig.Ads.VideoPreroll.SkipAfterSeconds = skip
+
 	_ = saveAppConfigUnsafe()
 	appConfigLock.Unlock()
 
@@ -3670,7 +3704,7 @@ func handleAPIV1Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var searchResp client.SearchResponse
+	var searchResp client.AnimeListResponse
 	_ = api.GetJSON("/search/"+url.PathEscape(q), &searchResp)
 
 	for i := range searchResp.Data {
