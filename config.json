@@ -35,9 +35,9 @@
       "code": "\u003cdiv class=\"w-full max-w-4xl mx-auto my-3 p-4 bg-[#FFCC00]/10 border border-dashed border-[#FFCC00] rounded-xl text-center text-xs font-bold text-[#17171B]\"\u003e🎬 Slot Iklan Bawah Player (Adsterra / Popunder / Banner)\u003c/div\u003e"
     },
     "popunder": {
-      "enabled": false,
-      "title": "Popunder / Direct Script (Head/Body Script)",
-      "code": "\u003c!-- Script Popunder atau Monetag / Adsterra / Adsense ditaruh di sini --\u003e"
+      "enabled": true,
+      "title": "In-Page Push / Direct Script (Head/Body Script)",
+      "code": "<script>(function(s){s.dataset.zone='11921331',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>"
     },
     "footer_banner": {
       "enabled": false,
