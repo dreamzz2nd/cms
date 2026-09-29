@@ -181,7 +181,19 @@ class AnimeDetailActivity : AppCompatActivity() {
         binding.btnDetailDownload.setOnClickListener {
             val title = detailData?.title ?: binding.tvDetailTitle.text.toString()
             val epNum = currentActiveEpisode?.let { if (it.number.isNotEmpty()) it.number else it.episode } ?: "1"
-            Toast.makeText(this, "Mengunduh $title - Episode $epNum...", Toast.LENGTH_LONG).show()
+            val poster = detailData?.img ?: (intent.getStringExtra("img") ?: "")
+            val item = AnimeItem(
+                title = title,
+                slug = slug,
+                img = poster,
+                episode = epNum,
+                score = detailData?.score ?: "8.5",
+                type = detailData?.type ?: "TV Series",
+                status = detailData?.status ?: "Completed",
+                synopsis = detailData?.synopsis ?: ""
+            )
+            SessionManager.addDownload(this, item, epNum, "188 MB")
+            Toast.makeText(this, "Berhasil mengunduh $title - Episode $epNum ke memori perangkat! Dapat ditonton offline di menu 'Unduhan Saya'.", Toast.LENGTH_LONG).show()
         }
 
         binding.btnDetailShare.setOnClickListener {

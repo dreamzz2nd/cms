@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="8dp">
+
+    <!-- 16:9 Thumbnail with Anime Tag, Episode Tag & Watch Progress Bar -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="140dp"
+        android:layout_height="80dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="#F6F5F0">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/ivHistoryPoster"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop" />
+
+            <!-- Dark gradient overlay for bottom text contrast -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="28dp"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/banner_gradient_overlay" />
+
+            <!-- Top Right "Anime" Cyan Badge -->
+            <TextView
+                android:id="@+id/tvHistoryTypeTag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:layout_margin="5dp"
+                android:background="@drawable/badge_cyan_anime"
+                android:paddingHorizontal="5dp"
+                android:paddingVertical="1.5dp"
+                android:text="Anime"
+                android:textColor="#FFFFFF"
+                android:textSize="9.5sp"
+                android:textStyle="bold" />
+
+            <!-- Bottom Right Episode / Duration Tag -->
+            <TextView
+                android:id="@+id/tvHistoryEpBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="6dp"
+                android:background="#99000000"
+                android:paddingHorizontal="4.5dp"
+                android:paddingVertical="1dp"
+                android:text="E 170"
+                android:textColor="#FFFFFF"
+                android:textSize="9.5sp"
+                android:textStyle="bold" />
+
+            <!-- Watch Progress Bar at Bottom of Thumbnail (Gold Bar) -->
+            <ProgressBar
+                android:id="@+id/pbHistoryWatchProgress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3.5dp"
+                android:layout_alignParentBottom="true"
+                android:max="100"
+                android:progress="75"
+                android:progressDrawable="@drawable/progress_bar_gold" />
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Info Section: Title & Date -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvHistoryTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="Black Clover"
+            android:textColor="#17171B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvHistoryDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="28/09/2026"
+            android:textColor="#757580"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- 3-Dots Action Button -->
+    <ImageView
+        android:id="@+id/btnHistoryMore"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:padding="6dp"
+        android:src="@drawable/ic_more_vert"
+        app:tint="#757580"
+        android:background="?attr/selectableItemBackgroundBorderless" />
+
+</LinearLayout>

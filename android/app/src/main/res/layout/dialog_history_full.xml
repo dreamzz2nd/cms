@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <!-- Top Header Bar -->
+    <LinearLayout
+        android:id="@+id/headerHistoryBar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_alignParentTop="true"
+        android:background="#FFFFFF"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp">
+
+        <ImageView
+            android:id="@+id/btnHistoryBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="#17171B"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Sejarah"
+            android:textColor="#17171B"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnClearAllHistory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="6dp"
+            android:text="Hapus"
+            android:textColor="#757580"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+    <!-- Category Tabs: Semua, Anime, Video, Acara TV -->
+    <HorizontalScrollView
+        android:id="@+id/scrollHistoryTabs"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_below="@id/headerHistoryBar"
+        android:background="#FFFFFF"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <TextView
+                android:id="@+id/tabHistoryAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Semua"
+                android:textColor="#17171B"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tabHistoryAnime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Anime"
+                android:textColor="#757580"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tabHistoryVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Video"
+                android:textColor="#757580"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tabHistoryShow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Acara TV"
+                android:textColor="#757580"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <View
+        android:id="@+id/dividerHistoryTabs"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/scrollHistoryTabs"
+        android:background="#F0F0F0" />
+
+    <!-- Content: RecyclerView of History Items -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHistoryFullList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/dividerHistoryTabs"
+        android:clipToPadding="false"
+        android:paddingTop="6dp"
+        android:paddingBottom="24dp" />
+
+    <!-- Empty State -->
+    <LinearLayout
+        android:id="@+id/layoutHistoryEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_nav_history"
+            app:tint="#B0B0B8" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Belum ada riwayat tontonan"
+            android:textColor="#17171B"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Tonton anime favoritmu sekarang!"
+            android:textColor="#757580"
+            android:textSize="12.5sp" />
+    </LinearLayout>
+
+</RelativeLayout>

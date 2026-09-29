@@ -1,15 +1,23 @@
 [
     {
-        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\dialog_auth.xml",
-        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_auth.xml"
-    },
-    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_search_suggestion.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_search_suggestion.xml"
     },
     {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\dialog_auth.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_auth.xml"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\dialog_mimo_news_detail.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_mimo_news_detail.xml"
+    },
+    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_recommended_anime.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_recommended_anime.xml"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_history_horizontal_card.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_history_horizontal_card.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_bstation_poster.xml",
@@ -20,8 +28,8 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_anime_card.xml"
     },
     {
-        "merged": "com.nyamimo.app-mergeDebugResources-42:/layout/activity_anime_detail.xml",
-        "source": "com.nyamimo.app-main-45:/layout/activity_anime_detail.xml"
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_mimo_news_card.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_mimo_news_card.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\activity_main.xml",
@@ -36,6 +44,10 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_search_history_chip.xml"
     },
     {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_history_header.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_history_header.xml"
+    },
+    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_download_anime.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_download_anime.xml"
     },
@@ -44,12 +56,24 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_resolution_chip.xml"
     },
     {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_download_full_card.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_download_full_card.xml"
+    },
+    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_banner.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_banner.xml"
     },
     {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\dialog_history_full.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_history_full.xml"
+    },
+    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\dialog_menu_info.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_menu_info.xml"
+    },
+    {
+        "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\dialog_downloads_full.xml",
+        "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_downloads_full.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_trending_tag.xml",
@@ -84,6 +108,10 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_episode_pill.xml"
     },
     {
+        "merged": "com.nyamimo.app-mergeDebugResources-42:/layout/item_mimo_news_card.xml",
+        "source": "com.nyamimo.app-main-45:/layout/item_mimo_news_card.xml"
+    },
+    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\activity_anime_detail.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\activity_anime_detail.xml"
     },
@@ -94,5 +122,9 @@
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\dialog_menu_settings.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\dialog_menu_settings.xml"
+    },
+    {
+        "merged": "com.nyamimo.app-mergeDebugResources-42:/layout/dialog_mimo_news_detail.xml",
+        "source": "com.nyamimo.app-main-45:/layout/dialog_mimo_news_detail.xml"
     }
 ]

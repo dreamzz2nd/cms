@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <!-- Top Header Bar -->
+    <LinearLayout
+        android:id="@+id/headerDownloadsBar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_alignParentTop="true"
+        android:background="#FFFFFF"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp">
+
+        <ImageView
+            android:id="@+id/btnDownloadsBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="#17171B"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Unduhan Saya"
+            android:textColor="#17171B"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnClearAllDownloads"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="6dp"
+            android:text="Hapus"
+            android:textColor="#757580"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+    <!-- Storage Card Info -->
+    <LinearLayout
+        android:id="@+id/cardStorageInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/headerDownloadsBar"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/card_dark_bg"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_menu_unduhan"
+                app:tint="#E6B800" />
+
+            <TextView
+                android:id="@+id/tvStorageTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="Penyimpanan Perangkat Lokal"
+                android:textColor="#17171B"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvStorageUsageText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1.2 GB Digunakan"
+                android:textColor="#E6B800"
+                android:textSize="11.5sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/pbStorageProgress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="8dp"
+            android:max="100"
+            android:progress="25"
+            android:progressDrawable="@drawable/progress_bar_gold" />
+    </LinearLayout>
+
+    <!-- Filter Tabs -->
+    <LinearLayout
+        android:id="@+id/downloadsTabsBar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_below="@id/cardStorageInfo"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            android:id="@+id/tabDownloadsAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="Semua Unduhan"
+            android:textColor="#17171B"
+            android:textSize="13.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tabDownloadsCompleted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="Selesai"
+            android:textColor="#757580"
+            android:textSize="13.5sp" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/dividerDownloadsTabs"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/downloadsTabsBar"
+        android:background="#F0F0F0" />
+
+    <!-- RecyclerView for Downloads -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDownloadsFullList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/dividerDownloadsTabs"
+        android:clipToPadding="false"
+        android:paddingTop="6dp"
+        android:paddingBottom="24dp" />
+
+    <!-- Empty State -->
+    <LinearLayout
+        android:id="@+id/layoutDownloadsEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_menu_unduhan"
+            app:tint="#B0B0B8" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Belum ada anime yang diunduh"
+            android:textColor="#17171B"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Unduh episode favoritmu untuk menonton secara offline!"
+            android:textColor="#757580"
+            android:textSize="12.5sp" />
+    </LinearLayout>
+
+</RelativeLayout>

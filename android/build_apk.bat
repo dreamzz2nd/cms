@@ -8,7 +8,7 @@ echo   Building Nyamimo Android App APK (Release/Debug)
 echo ===================================================
 
 cd /d "%~dp0"
-call "gradle_dist\gradle-8.5\bin\gradle.bat" assembleDebug --stacktrace
+call "gradle_dist\gradle-8.5\bin\gradle.bat" assembleDebug --no-daemon --stacktrace
 
 if %ERRORLEVEL% EQU 0 (
     echo.

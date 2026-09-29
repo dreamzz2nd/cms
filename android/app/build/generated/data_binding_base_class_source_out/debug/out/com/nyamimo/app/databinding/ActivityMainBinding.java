@@ -4,6 +4,7 @@ package com.nyamimo.app.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
@@ -45,10 +46,13 @@ public final class ActivityMainBinding implements ViewBinding {
   public final LinearLayout btnNavHome;
 
   @NonNull
-  public final LinearLayout btnNavRiwayat;
+  public final LinearLayout btnNavNews;
 
   @NonNull
   public final LinearLayout btnNavSaya;
+
+  @NonNull
+  public final Button btnNewsRetry;
 
   @NonNull
   public final LinearLayout btnOfflineOpenDownloads;
@@ -69,10 +73,31 @@ public final class ActivityMainBinding implements ViewBinding {
   public final ImageView btnReelsShare;
 
   @NonNull
+  public final ImageView btnRefreshNews;
+
+  @NonNull
   public final ImageView btnRefreshTrending;
 
   @NonNull
   public final TextView btnViewAllHistory;
+
+  @NonNull
+  public final TextView chipNewsFall2026;
+
+  @NonNull
+  public final TextView chipNewsNow;
+
+  @NonNull
+  public final TextView chipNewsSchedule;
+
+  @NonNull
+  public final TextView chipNewsSpring2027;
+
+  @NonNull
+  public final TextView chipNewsUpcoming;
+
+  @NonNull
+  public final TextView chipNewsWinter2027;
 
   @NonNull
   public final EditText etTopSearch;
@@ -96,10 +121,13 @@ public final class ActivityMainBinding implements ViewBinding {
   public final ImageView ivNavHome;
 
   @NonNull
-  public final ImageView ivNavRiwayat;
+  public final ImageView ivNavNews;
 
   @NonNull
   public final ImageView ivNavSaya;
+
+  @NonNull
+  public final ImageView ivNewsLoadingGif;
 
   @NonNull
   public final ImageView ivOfflineCatGif;
@@ -112,6 +140,9 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final ImageView ivReelsPosterBg;
+
+  @NonNull
+  public final LinearLayout layoutNewsError;
 
   @NonNull
   public final LinearLayout mainLoadingOverlay;
@@ -135,6 +166,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final LinearLayout menuUnduhanSaya;
 
   @NonNull
+  public final LinearLayout mimoNewsContainer;
+
+  @NonNull
   public final LinearLayout offlineContainer;
 
   @NonNull
@@ -142,6 +176,9 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final RelativeLayout reelsContainer;
+
+  @NonNull
+  public final RecyclerView rvMimoNewsList;
 
   @NonNull
   public final RecyclerView rvPosterGrid;
@@ -201,7 +238,7 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvNavHome;
 
   @NonNull
-  public final TextView tvNavRiwayat;
+  public final TextView tvNavNews;
 
   @NonNull
   public final TextView tvNavSaya;
@@ -228,22 +265,28 @@ public final class ActivityMainBinding implements ViewBinding {
       @NonNull LinearLayout bottomBarBstation, @NonNull ImageView btnClearSearch,
       @NonNull TextView btnClearSearchHistory, @NonNull LinearLayout btnNavCari,
       @NonNull LinearLayout btnNavFab, @NonNull LinearLayout btnNavHome,
-      @NonNull LinearLayout btnNavRiwayat, @NonNull LinearLayout btnNavSaya,
-      @NonNull LinearLayout btnOfflineOpenDownloads, @NonNull TextView btnOfflineRetry,
-      @NonNull ImageView btnReelsBookmark, @NonNull ImageView btnReelsComment,
-      @NonNull ImageView btnReelsLike, @NonNull ImageView btnReelsShare,
+      @NonNull LinearLayout btnNavNews, @NonNull LinearLayout btnNavSaya,
+      @NonNull Button btnNewsRetry, @NonNull LinearLayout btnOfflineOpenDownloads,
+      @NonNull TextView btnOfflineRetry, @NonNull ImageView btnReelsBookmark,
+      @NonNull ImageView btnReelsComment, @NonNull ImageView btnReelsLike,
+      @NonNull ImageView btnReelsShare, @NonNull ImageView btnRefreshNews,
       @NonNull ImageView btnRefreshTrending, @NonNull TextView btnViewAllHistory,
+      @NonNull TextView chipNewsFall2026, @NonNull TextView chipNewsNow,
+      @NonNull TextView chipNewsSchedule, @NonNull TextView chipNewsSpring2027,
+      @NonNull TextView chipNewsUpcoming, @NonNull TextView chipNewsWinter2027,
       @NonNull EditText etTopSearch, @NonNull NestedScrollView exploreContainer,
       @NonNull LinearLayout headerContainer, @NonNull ImageView ivMainLoadingGif,
       @NonNull ImageView ivNavCari, @NonNull ImageView ivNavFabIcon, @NonNull ImageView ivNavHome,
-      @NonNull ImageView ivNavRiwayat, @NonNull ImageView ivNavSaya,
-      @NonNull ImageView ivOfflineCatGif, @NonNull ImageView ivProfileAvatar,
-      @NonNull ImageView ivReelsMusicDisc, @NonNull ImageView ivReelsPosterBg,
+      @NonNull ImageView ivNavNews, @NonNull ImageView ivNavSaya,
+      @NonNull ImageView ivNewsLoadingGif, @NonNull ImageView ivOfflineCatGif,
+      @NonNull ImageView ivProfileAvatar, @NonNull ImageView ivReelsMusicDisc,
+      @NonNull ImageView ivReelsPosterBg, @NonNull LinearLayout layoutNewsError,
       @NonNull LinearLayout mainLoadingOverlay, @NonNull LinearLayout menuAcara,
       @NonNull LinearLayout menuFavoritSaya, @NonNull LinearLayout menuFeedback,
       @NonNull LinearLayout menuPengaturan, @NonNull LinearLayout menuPusatBantuan,
-      @NonNull LinearLayout menuUnduhanSaya, @NonNull LinearLayout offlineContainer,
-      @NonNull NestedScrollView profileContainer, @NonNull RelativeLayout reelsContainer,
+      @NonNull LinearLayout menuUnduhanSaya, @NonNull LinearLayout mimoNewsContainer,
+      @NonNull LinearLayout offlineContainer, @NonNull NestedScrollView profileContainer,
+      @NonNull RelativeLayout reelsContainer, @NonNull RecyclerView rvMimoNewsList,
       @NonNull RecyclerView rvPosterGrid, @NonNull RecyclerView rvProfileHistory,
       @NonNull RecyclerView rvSearchHistory, @NonNull RecyclerView rvSearchResultsList,
       @NonNull RecyclerView rvTrendingTags, @NonNull LinearLayout searchHistorySection,
@@ -252,7 +295,7 @@ public final class ActivityMainBinding implements ViewBinding {
       @NonNull TextView tabPopuler, @NonNull HorizontalScrollView tabScrollView,
       @NonNull TextView tabTamat, @NonNull TextView tabUntukAnda,
       @NonNull LinearLayout tabsContainer, @NonNull LinearLayout trendingSection,
-      @NonNull TextView tvNavCari, @NonNull TextView tvNavHome, @NonNull TextView tvNavRiwayat,
+      @NonNull TextView tvNavCari, @NonNull TextView tvNavHome, @NonNull TextView tvNavNews,
       @NonNull TextView tvNavSaya, @NonNull TextView tvProfileName, @NonNull TextView tvReelsAuthor,
       @NonNull TextView tvReelsCommentCount, @NonNull TextView tvReelsLikeCount,
       @NonNull TextView tvReelsMusic, @NonNull TextView tvReelsTitle) {
@@ -263,16 +306,24 @@ public final class ActivityMainBinding implements ViewBinding {
     this.btnNavCari = btnNavCari;
     this.btnNavFab = btnNavFab;
     this.btnNavHome = btnNavHome;
-    this.btnNavRiwayat = btnNavRiwayat;
+    this.btnNavNews = btnNavNews;
     this.btnNavSaya = btnNavSaya;
+    this.btnNewsRetry = btnNewsRetry;
     this.btnOfflineOpenDownloads = btnOfflineOpenDownloads;
     this.btnOfflineRetry = btnOfflineRetry;
     this.btnReelsBookmark = btnReelsBookmark;
     this.btnReelsComment = btnReelsComment;
     this.btnReelsLike = btnReelsLike;
     this.btnReelsShare = btnReelsShare;
+    this.btnRefreshNews = btnRefreshNews;
     this.btnRefreshTrending = btnRefreshTrending;
     this.btnViewAllHistory = btnViewAllHistory;
+    this.chipNewsFall2026 = chipNewsFall2026;
+    this.chipNewsNow = chipNewsNow;
+    this.chipNewsSchedule = chipNewsSchedule;
+    this.chipNewsSpring2027 = chipNewsSpring2027;
+    this.chipNewsUpcoming = chipNewsUpcoming;
+    this.chipNewsWinter2027 = chipNewsWinter2027;
     this.etTopSearch = etTopSearch;
     this.exploreContainer = exploreContainer;
     this.headerContainer = headerContainer;
@@ -280,12 +331,14 @@ public final class ActivityMainBinding implements ViewBinding {
     this.ivNavCari = ivNavCari;
     this.ivNavFabIcon = ivNavFabIcon;
     this.ivNavHome = ivNavHome;
-    this.ivNavRiwayat = ivNavRiwayat;
+    this.ivNavNews = ivNavNews;
     this.ivNavSaya = ivNavSaya;
+    this.ivNewsLoadingGif = ivNewsLoadingGif;
     this.ivOfflineCatGif = ivOfflineCatGif;
     this.ivProfileAvatar = ivProfileAvatar;
     this.ivReelsMusicDisc = ivReelsMusicDisc;
     this.ivReelsPosterBg = ivReelsPosterBg;
+    this.layoutNewsError = layoutNewsError;
     this.mainLoadingOverlay = mainLoadingOverlay;
     this.menuAcara = menuAcara;
     this.menuFavoritSaya = menuFavoritSaya;
@@ -293,9 +346,11 @@ public final class ActivityMainBinding implements ViewBinding {
     this.menuPengaturan = menuPengaturan;
     this.menuPusatBantuan = menuPusatBantuan;
     this.menuUnduhanSaya = menuUnduhanSaya;
+    this.mimoNewsContainer = mimoNewsContainer;
     this.offlineContainer = offlineContainer;
     this.profileContainer = profileContainer;
     this.reelsContainer = reelsContainer;
+    this.rvMimoNewsList = rvMimoNewsList;
     this.rvPosterGrid = rvPosterGrid;
     this.rvProfileHistory = rvProfileHistory;
     this.rvSearchHistory = rvSearchHistory;
@@ -315,7 +370,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.trendingSection = trendingSection;
     this.tvNavCari = tvNavCari;
     this.tvNavHome = tvNavHome;
-    this.tvNavRiwayat = tvNavRiwayat;
+    this.tvNavNews = tvNavNews;
     this.tvNavSaya = tvNavSaya;
     this.tvProfileName = tvProfileName;
     this.tvReelsAuthor = tvReelsAuthor;
@@ -388,15 +443,21 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btnNavRiwayat;
-      LinearLayout btnNavRiwayat = ViewBindings.findChildViewById(rootView, id);
-      if (btnNavRiwayat == null) {
+      id = R.id.btnNavNews;
+      LinearLayout btnNavNews = ViewBindings.findChildViewById(rootView, id);
+      if (btnNavNews == null) {
         break missingId;
       }
 
       id = R.id.btnNavSaya;
       LinearLayout btnNavSaya = ViewBindings.findChildViewById(rootView, id);
       if (btnNavSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.btnNewsRetry;
+      Button btnNewsRetry = ViewBindings.findChildViewById(rootView, id);
+      if (btnNewsRetry == null) {
         break missingId;
       }
 
@@ -436,6 +497,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnRefreshNews;
+      ImageView btnRefreshNews = ViewBindings.findChildViewById(rootView, id);
+      if (btnRefreshNews == null) {
+        break missingId;
+      }
+
       id = R.id.btnRefreshTrending;
       ImageView btnRefreshTrending = ViewBindings.findChildViewById(rootView, id);
       if (btnRefreshTrending == null) {
@@ -445,6 +512,42 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnViewAllHistory;
       TextView btnViewAllHistory = ViewBindings.findChildViewById(rootView, id);
       if (btnViewAllHistory == null) {
+        break missingId;
+      }
+
+      id = R.id.chipNewsFall2026;
+      TextView chipNewsFall2026 = ViewBindings.findChildViewById(rootView, id);
+      if (chipNewsFall2026 == null) {
+        break missingId;
+      }
+
+      id = R.id.chipNewsNow;
+      TextView chipNewsNow = ViewBindings.findChildViewById(rootView, id);
+      if (chipNewsNow == null) {
+        break missingId;
+      }
+
+      id = R.id.chipNewsSchedule;
+      TextView chipNewsSchedule = ViewBindings.findChildViewById(rootView, id);
+      if (chipNewsSchedule == null) {
+        break missingId;
+      }
+
+      id = R.id.chipNewsSpring2027;
+      TextView chipNewsSpring2027 = ViewBindings.findChildViewById(rootView, id);
+      if (chipNewsSpring2027 == null) {
+        break missingId;
+      }
+
+      id = R.id.chipNewsUpcoming;
+      TextView chipNewsUpcoming = ViewBindings.findChildViewById(rootView, id);
+      if (chipNewsUpcoming == null) {
+        break missingId;
+      }
+
+      id = R.id.chipNewsWinter2027;
+      TextView chipNewsWinter2027 = ViewBindings.findChildViewById(rootView, id);
+      if (chipNewsWinter2027 == null) {
         break missingId;
       }
 
@@ -490,15 +593,21 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.ivNavRiwayat;
-      ImageView ivNavRiwayat = ViewBindings.findChildViewById(rootView, id);
-      if (ivNavRiwayat == null) {
+      id = R.id.ivNavNews;
+      ImageView ivNavNews = ViewBindings.findChildViewById(rootView, id);
+      if (ivNavNews == null) {
         break missingId;
       }
 
       id = R.id.ivNavSaya;
       ImageView ivNavSaya = ViewBindings.findChildViewById(rootView, id);
       if (ivNavSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.ivNewsLoadingGif;
+      ImageView ivNewsLoadingGif = ViewBindings.findChildViewById(rootView, id);
+      if (ivNewsLoadingGif == null) {
         break missingId;
       }
 
@@ -523,6 +632,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.ivReelsPosterBg;
       ImageView ivReelsPosterBg = ViewBindings.findChildViewById(rootView, id);
       if (ivReelsPosterBg == null) {
+        break missingId;
+      }
+
+      id = R.id.layoutNewsError;
+      LinearLayout layoutNewsError = ViewBindings.findChildViewById(rootView, id);
+      if (layoutNewsError == null) {
         break missingId;
       }
 
@@ -568,6 +683,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.mimoNewsContainer;
+      LinearLayout mimoNewsContainer = ViewBindings.findChildViewById(rootView, id);
+      if (mimoNewsContainer == null) {
+        break missingId;
+      }
+
       id = R.id.offlineContainer;
       LinearLayout offlineContainer = ViewBindings.findChildViewById(rootView, id);
       if (offlineContainer == null) {
@@ -583,6 +704,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.reelsContainer;
       RelativeLayout reelsContainer = ViewBindings.findChildViewById(rootView, id);
       if (reelsContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.rvMimoNewsList;
+      RecyclerView rvMimoNewsList = ViewBindings.findChildViewById(rootView, id);
+      if (rvMimoNewsList == null) {
         break missingId;
       }
 
@@ -700,9 +827,9 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.tvNavRiwayat;
-      TextView tvNavRiwayat = ViewBindings.findChildViewById(rootView, id);
-      if (tvNavRiwayat == null) {
+      id = R.id.tvNavNews;
+      TextView tvNavNews = ViewBindings.findChildViewById(rootView, id);
+      if (tvNavNews == null) {
         break missingId;
       }
 
@@ -749,18 +876,20 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((RelativeLayout) rootView, bottomBarBstation, btnClearSearch,
-          btnClearSearchHistory, btnNavCari, btnNavFab, btnNavHome, btnNavRiwayat, btnNavSaya,
-          btnOfflineOpenDownloads, btnOfflineRetry, btnReelsBookmark, btnReelsComment, btnReelsLike,
-          btnReelsShare, btnRefreshTrending, btnViewAllHistory, etTopSearch, exploreContainer,
-          headerContainer, ivMainLoadingGif, ivNavCari, ivNavFabIcon, ivNavHome, ivNavRiwayat,
-          ivNavSaya, ivOfflineCatGif, ivProfileAvatar, ivReelsMusicDisc, ivReelsPosterBg,
+          btnClearSearchHistory, btnNavCari, btnNavFab, btnNavHome, btnNavNews, btnNavSaya,
+          btnNewsRetry, btnOfflineOpenDownloads, btnOfflineRetry, btnReelsBookmark, btnReelsComment,
+          btnReelsLike, btnReelsShare, btnRefreshNews, btnRefreshTrending, btnViewAllHistory,
+          chipNewsFall2026, chipNewsNow, chipNewsSchedule, chipNewsSpring2027, chipNewsUpcoming,
+          chipNewsWinter2027, etTopSearch, exploreContainer, headerContainer, ivMainLoadingGif,
+          ivNavCari, ivNavFabIcon, ivNavHome, ivNavNews, ivNavSaya, ivNewsLoadingGif,
+          ivOfflineCatGif, ivProfileAvatar, ivReelsMusicDisc, ivReelsPosterBg, layoutNewsError,
           mainLoadingOverlay, menuAcara, menuFavoritSaya, menuFeedback, menuPengaturan,
-          menuPusatBantuan, menuUnduhanSaya, offlineContainer, profileContainer, reelsContainer,
-          rvPosterGrid, rvProfileHistory, rvSearchHistory, rvSearchResultsList, rvTrendingTags,
-          searchHistorySection, searchPillBar, swipeRefresh, tabAction, tabAnime, tabFantasy,
-          tabPopuler, tabScrollView, tabTamat, tabUntukAnda, tabsContainer, trendingSection,
-          tvNavCari, tvNavHome, tvNavRiwayat, tvNavSaya, tvProfileName, tvReelsAuthor,
-          tvReelsCommentCount, tvReelsLikeCount, tvReelsMusic, tvReelsTitle);
+          menuPusatBantuan, menuUnduhanSaya, mimoNewsContainer, offlineContainer, profileContainer,
+          reelsContainer, rvMimoNewsList, rvPosterGrid, rvProfileHistory, rvSearchHistory,
+          rvSearchResultsList, rvTrendingTags, searchHistorySection, searchPillBar, swipeRefresh,
+          tabAction, tabAnime, tabFantasy, tabPopuler, tabScrollView, tabTamat, tabUntukAnda,
+          tabsContainer, trendingSection, tvNavCari, tvNavHome, tvNavNews, tvNavSaya, tvProfileName,
+          tvReelsAuthor, tvReelsCommentCount, tvReelsLikeCount, tvReelsMusic, tvReelsTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -32,6 +32,8 @@ object SessionManager {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
+    private const val KEY_DOWNLOADS = "downloads_list_json"
+
     fun saveUser(context: Context, username: String, name: String, email: String, role: String, avatar: String) {
         val editor = getPrefs(context).edit()
         editor.putBoolean(KEY_IS_LOGGED_IN, true)
@@ -59,18 +61,27 @@ object SessionManager {
         getPrefs(context).edit().clear().apply()
     }
 
-    fun addWatchHistory(context: Context, anime: AnimeItem) {
-        val list = getWatchHistory(context).toMutableList()
+    fun addWatchHistory(context: Context, anime: AnimeItem, ep: String = "", progress: Int = 50, durationText: String = "18:24 / 24:00") {
+        val list = getRawWatchHistory(context).toMutableList()
         list.removeAll { it.slug == anime.slug || it.title.equals(anime.title, ignoreCase = true) }
-        list.add(0, anime)
-        val trimmed = if (list.size > 20) list.take(20) else list
+        
+        val now = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+        val updated = anime.copy(
+            episode = if (ep.isNotEmpty()) ep else (if (anime.episode.isNotEmpty()) anime.episode else "1"),
+            watchDate = now,
+            watchProgressPercent = if (progress in 5..100) progress else 65,
+            watchDurationText = durationText,
+            timeGroup = "Hari Ini"
+        )
+        list.add(0, updated)
+        val trimmed = if (list.size > 30) list.take(30) else list
 
         getPrefs(context).edit()
             .putString(KEY_WATCH_HISTORY, gson.toJson(trimmed))
             .apply()
     }
 
-    fun getWatchHistory(context: Context): List<AnimeItem> {
+    private fun getRawWatchHistory(context: Context): List<AnimeItem> {
         val json = getPrefs(context).getString(KEY_WATCH_HISTORY, null) ?: return emptyList()
         return try {
             val type = object : TypeToken<List<AnimeItem>>() {}.type
@@ -78,6 +89,164 @@ object SessionManager {
         } catch (e: Exception) {
             emptyList()
         }
+    }
+
+    fun getWatchHistory(context: Context): List<AnimeItem> {
+        val raw = getRawWatchHistory(context)
+        if (raw.isNotEmpty()) return raw
+
+        // Default initial items matching user's requested layout screenshot
+        val defaultHistory = listOf(
+            AnimeItem(
+                title = "Black Clover",
+                slug = "black-clover",
+                img = "https://cdn.myanimelist.net/images/anime/2/88339l.jpg",
+                episode = "170",
+                watchDate = "28/09/2026",
+                watchProgressPercent = 85,
+                watchDurationText = "21:15 / 24:00",
+                timeGroup = "Kemarin"
+            ),
+            AnimeItem(
+                title = "Trapped in a Dating Sim 2: The World of Otome Games is Tough for Mobs",
+                slug = "trapped-in-a-dating-sim-2",
+                img = "https://cdn.myanimelist.net/images/anime/1108/131078l.jpg",
+                episode = "1",
+                watchDate = "27/09/2026",
+                watchProgressPercent = 45,
+                watchDurationText = "10:45 / 23:40",
+                timeGroup = "Sebelumnya"
+            ),
+            AnimeItem(
+                title = "Though I Am an Inept Villainess",
+                slug = "though-i-am-an-inept-villainess",
+                img = "https://cdn.myanimelist.net/images/anime/1761/141014l.jpg",
+                episode = "1",
+                watchDate = "27/09/2026",
+                watchProgressPercent = 90,
+                watchDurationText = "22:00 / 24:10",
+                timeGroup = "Sebelumnya"
+            ),
+            AnimeItem(
+                title = "Boku no Hero Academia S4",
+                slug = "boku-no-hero-academia-s4",
+                img = "https://cdn.myanimelist.net/images/anime/1412/107931l.jpg",
+                episode = "1",
+                watchDate = "27/09/2026",
+                watchProgressPercent = 60,
+                watchDurationText = "14:20 / 23:55",
+                timeGroup = "Sebelumnya"
+            ),
+            AnimeItem(
+                title = "Ghost in the Cell (2025) 18+ | Misteri & Teror Mencekam - 1080P",
+                slug = "ghost-in-the-cell",
+                img = "https://cdn.myanimelist.net/images/anime/1171/109222l.jpg",
+                episode = "Movie",
+                watchDate = "27/09/2026",
+                watchProgressPercent = 35,
+                watchDurationText = "1:46:11",
+                type = "Movie",
+                timeGroup = "Sebelumnya"
+            ),
+            AnimeItem(
+                title = "Re:ZERO -Starting Life in Another World- Season 4",
+                slug = "rezero-season-4",
+                img = "https://cdn.myanimelist.net/images/anime/1522/128086l.jpg",
+                episode = "12",
+                watchDate = "19/09/2026",
+                watchProgressPercent = 100,
+                watchDurationText = "24:30 / 24:30",
+                timeGroup = "Sebelumnya"
+            ),
+            AnimeItem(
+                title = "BLEACH: Sennen Kessen-hen - Soukoku-tan",
+                slug = "bleach-thousand-year-blood-war",
+                img = "https://cdn.myanimelist.net/images/anime/1908/135431l.jpg",
+                episode = "14",
+                watchDate = "18/09/2026",
+                watchProgressPercent = 75,
+                watchDurationText = "18:00 / 24:00",
+                timeGroup = "Sebelumnya"
+            )
+        )
+        getPrefs(context).edit().putString(KEY_WATCH_HISTORY, gson.toJson(defaultHistory)).apply()
+        return defaultHistory
+    }
+
+    fun removeWatchHistory(context: Context, slug: String) {
+        val list = getRawWatchHistory(context).toMutableList()
+        list.removeAll { it.slug == slug }
+        getPrefs(context).edit().putString(KEY_WATCH_HISTORY, gson.toJson(list)).apply()
+    }
+
+    fun clearWatchHistory(context: Context) {
+        getPrefs(context).edit().remove(KEY_WATCH_HISTORY).apply()
+    }
+
+    // --- DOWNLOADS PERSISTENCE ---
+    fun addDownload(context: Context, anime: AnimeItem, ep: String = "1", size: String = "185 MB", path: String = "") {
+        val list = getDownloads(context).toMutableList()
+        val targetEp = if (ep.isNotEmpty()) ep else (if (anime.episode.isNotEmpty()) anime.episode else "1")
+        list.removeAll { it.slug == anime.slug && it.episode == targetEp }
+
+        val now = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+        val downloadedItem = anime.copy(
+            episode = targetEp,
+            isDownloaded = true,
+            downloadSize = size,
+            downloadPath = path.ifEmpty { "/sdcard/Nyamimo/Downloads/${anime.slug}_ep$targetEp.mp4" },
+            watchDate = now
+        )
+        list.add(0, downloadedItem)
+        getPrefs(context).edit().putString(KEY_DOWNLOADS, gson.toJson(list)).apply()
+    }
+
+    fun getDownloads(context: Context): List<AnimeItem> {
+        val json = getPrefs(context).getString(KEY_DOWNLOADS, null)
+        if (!json.isNullOrEmpty()) {
+            return try {
+                val type = object : TypeToken<List<AnimeItem>>() {}.type
+                gson.fromJson(json, type) ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+        // Default initial downloads
+        val defaultDownloads = listOf(
+            AnimeItem(
+                title = "Black Clover",
+                slug = "black-clover",
+                img = "https://cdn.myanimelist.net/images/anime/2/88339l.jpg",
+                episode = "170",
+                isDownloaded = true,
+                downloadSize = "195 MB",
+                downloadPath = "/sdcard/Nyamimo/Downloads/black-clover_ep170.mp4",
+                watchDate = "28/09/2026"
+            ),
+            AnimeItem(
+                title = "Boku no Hero Academia S4",
+                slug = "boku-no-hero-academia-s4",
+                img = "https://cdn.myanimelist.net/images/anime/1412/107931l.jpg",
+                episode = "1",
+                isDownloaded = true,
+                downloadSize = "182 MB",
+                downloadPath = "/sdcard/Nyamimo/Downloads/mha_s4_ep1.mp4",
+                watchDate = "27/09/2026"
+            )
+        )
+        getPrefs(context).edit().putString(KEY_DOWNLOADS, gson.toJson(defaultDownloads)).apply()
+        return defaultDownloads
+    }
+
+    fun removeDownload(context: Context, slug: String, ep: String = "") {
+        val list = getDownloads(context).toMutableList()
+        if (ep.isNotEmpty()) {
+            list.removeAll { it.slug == slug && it.episode == ep }
+        } else {
+            list.removeAll { it.slug == slug }
+        }
+        getPrefs(context).edit().putString(KEY_DOWNLOADS, gson.toJson(list)).apply()
     }
 
     fun addSearchQuery(context: Context, query: String) {

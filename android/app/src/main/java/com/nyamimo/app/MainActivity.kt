@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -20,6 +21,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -28,16 +30,21 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.nyamimo.app.adapter.BstationPosterAdapter
+import com.nyamimo.app.adapter.DownloadFullAdapter
 import com.nyamimo.app.adapter.DownloadItemAdapter
 import com.nyamimo.app.adapter.HistoryAdapter
+import com.nyamimo.app.adapter.HistoryFullAdapter
+import com.nyamimo.app.adapter.MimoNewsAdapter
 import com.nyamimo.app.adapter.SearchHistoryAdapter
 import com.nyamimo.app.adapter.SearchSuggestionAdapter
 import com.nyamimo.app.adapter.TrendingTag
 import com.nyamimo.app.adapter.TrendingTagAdapter
 import com.nyamimo.app.api.ApiClient
+import com.nyamimo.app.api.JikanApiClient
 import com.nyamimo.app.databinding.ActivityMainBinding
 import com.nyamimo.app.model.AnimeItem
 import com.nyamimo.app.model.HomeResponse
+import com.nyamimo.app.model.MimoNewsItem
 import com.nyamimo.app.util.SessionManager
 
 class MainActivity : AppCompatActivity() {
@@ -46,12 +53,14 @@ class MainActivity : AppCompatActivity() {
     private var homeData: HomeResponse? = null
     private var currentTab: String = "untuk_anda"
     private var currentNav: String = "home"
+    private var currentNewsFilter: String = "now"
 
     private lateinit var posterAdapter: BstationPosterAdapter
     private lateinit var searchSuggestionAdapter: SearchSuggestionAdapter
     private lateinit var historyAdapter: HistoryAdapter
     private lateinit var searchHistoryAdapter: SearchHistoryAdapter
     private lateinit var trendingTagAdapter: TrendingTagAdapter
+    private lateinit var mimoNewsAdapter: MimoNewsAdapter
 
     private val searchHandler = Handler(Looper.getMainLooper())
     private var searchRunnable: Runnable? = null
@@ -64,6 +73,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupAdapters()
+        setupMimoNewsUI()
         setupSearchInput()
         setupListeners()
         setupTrendingTags()
@@ -124,20 +134,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupTrendingTags() {
-        val tags = listOf(
-            TrendingTag("one piece", "TOP", "red"),
-            TrendingTag("naruto shippuden", "", ""),
-            TrendingTag("tensei shitara slime", "PANAS", "orange"),
-            TrendingTag("bleach sennen kessen", "TOP", "red"),
-            TrendingTag("mushoku tensei", "", ""),
-            TrendingTag("shingeki no kyojin", "BARU", "blue"),
-            TrendingTag("jujutsu kaisen", "PANAS", "orange"),
-            TrendingTag("solo leveling", "TOP", "red"),
-            TrendingTag("demon slayer kimetsu", "PANAS", "orange"),
-            TrendingTag("princess connect", "", "")
+        JikanApiClient.getTrendingTags(
+            onSuccess = { tags ->
+                trendingTagAdapter.updateData(tags)
+            },
+            onError = {
+                if (trendingTagAdapter.itemCount == 0) {
+                    val fallbackTags = listOf(
+                        TrendingTag("one piece", "TOP", "red"),
+                        TrendingTag("jujutsu kaisen", "PANAS", "orange"),
+                        TrendingTag("solo leveling", "TOP", "red"),
+                        TrendingTag("demon slayer", "PANAS", "orange"),
+                        TrendingTag("bleach", "BARU", "blue"),
+                        TrendingTag("chainsaw man", "", "")
+                    )
+                    trendingTagAdapter.updateData(fallbackTags)
+                }
+            }
         )
-        trendingTagAdapter.updateData(tags)
     }
+
 
     private fun setupSearchInput() {
         binding.etTopSearch.addTextChangedListener(object : TextWatcher {
@@ -255,11 +271,11 @@ class MainActivity : AppCompatActivity() {
         binding.btnNavHome.setOnClickListener { selectBottomNav("home") }
         binding.btnNavCari.setOnClickListener { selectBottomNav("cari") }
         binding.btnNavFab.setOnClickListener { selectBottomNav("reels") }
-        binding.btnNavRiwayat.setOnClickListener { selectBottomNav("riwayat") }
+        binding.btnNavNews.setOnClickListener { selectBottomNav("news") }
         binding.btnNavSaya.setOnClickListener { selectBottomNav("saya") }
 
         binding.btnViewAllHistory.setOnClickListener {
-            selectBottomNav("riwayat")
+            openHistoryScreen()
         }
 
         // Profile Avatar Login Click
@@ -305,32 +321,170 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openDownloadsScreen() {
-        val history = SessionManager.getWatchHistory(this)
-        val dialog = Dialog(this)
+    private fun openHistoryScreen() {
+        val dialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_menu_downloads)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.setContentView(R.layout.dialog_history_full)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
 
-        val rvDownloads = dialog.findViewById<RecyclerView>(R.id.rvDownloadsList)
-        val tvEmpty = dialog.findViewById<TextView>(R.id.tvEmptyDownloads)
-        val btnClose = dialog.findViewById<Button>(R.id.btnCloseDownloads)
+        val btnBack = dialog.findViewById<ImageView>(R.id.btnHistoryBack)
+        val btnClearAll = dialog.findViewById<TextView>(R.id.btnClearAllHistory)
+        val rvHistory = dialog.findViewById<RecyclerView>(R.id.rvHistoryFullList)
+        val layoutEmpty = dialog.findViewById<LinearLayout>(R.id.layoutHistoryEmpty)
 
-        if (history.isNotEmpty()) {
-            tvEmpty.visibility = View.GONE
-            rvDownloads.visibility = View.VISIBLE
-            rvDownloads.layoutManager = LinearLayoutManager(this)
-            val adapter = DownloadItemAdapter(history) { anime ->
-                dialog.dismiss()
-                playAnimeDirectly(anime)
+        val tabAll = dialog.findViewById<TextView>(R.id.tabHistoryAll)
+        val tabAnime = dialog.findViewById<TextView>(R.id.tabHistoryAnime)
+        val tabVideo = dialog.findViewById<TextView>(R.id.tabHistoryVideo)
+        val tabShow = dialog.findViewById<TextView>(R.id.tabHistoryShow)
+
+        rvHistory.layoutManager = LinearLayoutManager(this)
+
+        var allHistory = SessionManager.getWatchHistory(this)
+        var currentFilter = "all"
+
+        lateinit var adapter: HistoryFullAdapter
+
+        fun refreshList() {
+            allHistory = SessionManager.getWatchHistory(this)
+            val filtered = when (currentFilter) {
+                "anime" -> allHistory.filter { !it.type.equals("movie", ignoreCase = true) }
+                "video" -> allHistory.filter { it.type.equals("movie", ignoreCase = true) || it.episode.equals("movie", ignoreCase = true) }
+                "show" -> allHistory.filter { (it.episode.toIntOrNull() ?: 0) > 10 }
+                else -> allHistory
             }
-            rvDownloads.adapter = adapter
-        } else {
-            rvDownloads.visibility = View.GONE
-            tvEmpty.visibility = View.VISIBLE
+
+            if (filtered.isNotEmpty()) {
+                layoutEmpty.visibility = View.GONE
+                rvHistory.visibility = View.VISIBLE
+                adapter.updateData(filtered)
+            } else {
+                rvHistory.visibility = View.GONE
+                layoutEmpty.visibility = View.VISIBLE
+            }
+            updateProfileUI()
         }
 
-        btnClose.setOnClickListener { dialog.dismiss() }
+        adapter = HistoryFullAdapter(
+            allHistory,
+            onItemClick = { anime ->
+                dialog.dismiss()
+                playAnimeDirectly(anime)
+            },
+            onDeleteClick = { anime ->
+                SessionManager.removeWatchHistory(this, anime.slug)
+                Toast.makeText(this, "${anime.title} dihapus dari riwayat", Toast.LENGTH_SHORT).show()
+                refreshList()
+            },
+            onDownloadClick = { anime ->
+                SessionManager.addDownload(this, anime, anime.episode, "188 MB")
+                Toast.makeText(this, "${anime.title} disimpan ke Unduhan Saya", Toast.LENGTH_SHORT).show()
+            }
+        )
+        rvHistory.adapter = adapter
+
+        fun selectFilterTab(filter: String, selectedTv: TextView) {
+            currentFilter = filter
+            listOf(tabAll, tabAnime, tabVideo, tabShow).forEach {
+                it.setTextColor(Color.parseColor("#757580"))
+                it.paint.isFakeBoldText = false
+            }
+            selectedTv.setTextColor(Color.parseColor("#17171B"))
+            selectedTv.paint.isFakeBoldText = true
+            refreshList()
+        }
+
+        tabAll.setOnClickListener { selectFilterTab("all", tabAll) }
+        tabAnime.setOnClickListener { selectFilterTab("anime", tabAnime) }
+        tabVideo.setOnClickListener { selectFilterTab("video", tabVideo) }
+        tabShow.setOnClickListener { selectFilterTab("show", tabShow) }
+
+        btnBack.setOnClickListener { dialog.dismiss() }
+        btnClearAll.setOnClickListener {
+            SessionManager.clearWatchHistory(this)
+            Toast.makeText(this, "Semua riwayat tontonan berhasil dibersihkan", Toast.LENGTH_SHORT).show()
+            refreshList()
+        }
+
+        refreshList()
+        dialog.show()
+    }
+
+    private fun openDownloadsScreen() {
+        val dialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_downloads_full)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+
+        val btnBack = dialog.findViewById<ImageView>(R.id.btnDownloadsBack)
+        val btnClearAll = dialog.findViewById<TextView>(R.id.btnClearAllDownloads)
+        val rvDownloads = dialog.findViewById<RecyclerView>(R.id.rvDownloadsFullList)
+        val layoutEmpty = dialog.findViewById<LinearLayout>(R.id.layoutDownloadsEmpty)
+        val tvStorageUsage = dialog.findViewById<TextView>(R.id.tvStorageUsageText)
+        val pbStorage = dialog.findViewById<ProgressBar>(R.id.pbStorageProgress)
+
+        val tabAll = dialog.findViewById<TextView>(R.id.tabDownloadsAll)
+        val tabCompleted = dialog.findViewById<TextView>(R.id.tabDownloadsCompleted)
+
+        rvDownloads.layoutManager = LinearLayoutManager(this)
+
+        var allDownloads = SessionManager.getDownloads(this)
+        lateinit var adapter: DownloadFullAdapter
+
+        fun refreshList() {
+            allDownloads = SessionManager.getDownloads(this)
+            val usedMb = allDownloads.size * 188
+            val usedStr = if (usedMb >= 1024) String.format(java.util.Locale.US, "%.1f GB", usedMb / 1024.0) else "$usedMb MB"
+            tvStorageUsage.text = "$usedStr Digunakan (Tersimpan Lokal)"
+            pbStorage.progress = (allDownloads.size * 15).coerceIn(10, 90)
+
+            if (allDownloads.isNotEmpty()) {
+                layoutEmpty.visibility = View.GONE
+                rvDownloads.visibility = View.VISIBLE
+                adapter.updateData(allDownloads)
+            } else {
+                rvDownloads.visibility = View.GONE
+                layoutEmpty.visibility = View.VISIBLE
+            }
+        }
+
+        adapter = DownloadFullAdapter(
+            allDownloads,
+            onItemClick = { anime ->
+                dialog.dismiss()
+                playAnimeDirectly(anime)
+            },
+            onDeleteClick = { anime ->
+                SessionManager.removeDownload(this, anime.slug, anime.episode)
+                Toast.makeText(this, "${anime.title} berhasil dihapus dari perangkat", Toast.LENGTH_SHORT).show()
+                refreshList()
+            }
+        )
+        rvDownloads.adapter = adapter
+
+        tabAll.setOnClickListener {
+            tabAll.setTextColor(Color.parseColor("#17171B"))
+            tabAll.paint.isFakeBoldText = true
+            tabCompleted.setTextColor(Color.parseColor("#757580"))
+            tabCompleted.paint.isFakeBoldText = false
+            refreshList()
+        }
+
+        tabCompleted.setOnClickListener {
+            tabCompleted.setTextColor(Color.parseColor("#17171B"))
+            tabCompleted.paint.isFakeBoldText = true
+            tabAll.setTextColor(Color.parseColor("#757580"))
+            tabAll.paint.isFakeBoldText = false
+            refreshList()
+        }
+
+        btnBack.setOnClickListener { dialog.dismiss() }
+        btnClearAll.setOnClickListener {
+            allDownloads.forEach { SessionManager.removeDownload(this, it.slug, it.episode) }
+            Toast.makeText(this, "Semua unduhan lokal berhasil dihapus", Toast.LENGTH_SHORT).show()
+            refreshList()
+        }
+
+        refreshList()
         dialog.show()
     }
 
@@ -453,6 +607,7 @@ class MainActivity : AppCompatActivity() {
             binding.exploreContainer.visibility = View.GONE
             binding.profileContainer.visibility = View.GONE
             binding.reelsContainer.visibility = View.GONE
+            binding.mimoNewsContainer.visibility = View.GONE
             Glide.with(this).asGif().load(R.raw.no_internet_cat).into(binding.ivOfflineCatGif)
         } else {
             binding.offlineContainer.visibility = View.GONE
@@ -460,14 +615,22 @@ class MainActivity : AppCompatActivity() {
                 binding.profileContainer.visibility = View.VISIBLE
                 binding.exploreContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
             } else if (currentNav == "reels") {
                 binding.reelsContainer.visibility = View.VISIBLE
                 binding.exploreContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
+            } else if (currentNav == "news") {
+                binding.mimoNewsContainer.visibility = View.VISIBLE
+                binding.exploreContainer.visibility = View.GONE
+                binding.profileContainer.visibility = View.GONE
+                binding.reelsContainer.visibility = View.GONE
             } else {
                 binding.exploreContainer.visibility = View.VISIBLE
                 binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
             }
         }
     }
@@ -628,9 +791,13 @@ class MainActivity : AppCompatActivity() {
             override fun onSuccess(result: HomeResponse) {
                 binding.swipeRefresh.isRefreshing = false
                 showMainLoading(false)
-                showOfflineScreen(false)
                 homeData = result
-                selectTab(currentTab)
+                // showOfflineScreen already restores the correct container per currentNav
+                showOfflineScreen(false)
+                // Only re-apply tab selection when user is on explore/search screens
+                if (currentNav == "home" || currentNav == "cari") {
+                    selectTab(currentTab)
+                }
             }
 
             override fun onError(error: String) {
@@ -642,7 +809,9 @@ class MainActivity : AppCompatActivity() {
                     val fallback = ApiClient.getFallbackHome()
                     homeData = fallback
                     showOfflineScreen(false)
-                    selectTab(currentTab)
+                    if (currentNav == "home" || currentNav == "cari") {
+                        selectTab(currentTab)
+                    }
                 }
             }
         })
@@ -677,6 +846,7 @@ class MainActivity : AppCompatActivity() {
         binding.exploreContainer.visibility = View.VISIBLE
         binding.profileContainer.visibility = View.GONE
         binding.reelsContainer.visibility = View.GONE
+        binding.mimoNewsContainer.visibility = View.GONE
         binding.searchHistorySection.visibility = View.GONE
         binding.trendingSection.visibility = View.GONE
         binding.rvSearchResultsList.visibility = View.GONE
@@ -710,6 +880,180 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupMimoNewsUI() {
+        val spanCount = if (resources.configuration.screenWidthDp >= 600) 2 else 1
+        if (spanCount > 1) {
+            binding.rvMimoNewsList.layoutManager = GridLayoutManager(this, spanCount)
+        } else {
+            binding.rvMimoNewsList.layoutManager = LinearLayoutManager(this)
+        }
+
+        mimoNewsAdapter = MimoNewsAdapter(emptyList()) { item ->
+            showNewsDetailDialog(item)
+        }
+        binding.rvMimoNewsList.adapter = mimoNewsAdapter
+
+        binding.chipNewsNow.setOnClickListener { loadMimoNews("now") }
+        binding.chipNewsUpcoming.setOnClickListener { loadMimoNews("upcoming") }
+        binding.chipNewsFall2026.setOnClickListener { loadMimoNews("fall2026") }
+        binding.chipNewsWinter2027.setOnClickListener { loadMimoNews("winter2027") }
+        binding.chipNewsSpring2027.setOnClickListener { loadMimoNews("spring2027") }
+        binding.chipNewsSchedule.setOnClickListener { loadMimoNews("schedule") }
+
+        binding.btnRefreshNews.setOnClickListener {
+            JikanApiClient.clearCache()
+            loadMimoNews(currentNewsFilter)
+            Toast.makeText(this, "Memperbarui Mimo News...", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnNewsRetry.setOnClickListener {
+            loadMimoNews(currentNewsFilter)
+        }
+    }
+
+    private fun loadMimoNews(filter: String) {
+        currentNewsFilter = filter
+
+        val chips = listOf(
+            Pair("now", binding.chipNewsNow),
+            Pair("upcoming", binding.chipNewsUpcoming),
+            Pair("fall2026", binding.chipNewsFall2026),
+            Pair("winter2027", binding.chipNewsWinter2027),
+            Pair("spring2027", binding.chipNewsSpring2027),
+            Pair("schedule", binding.chipNewsSchedule)
+        )
+
+        for ((key, chip) in chips) {
+            if (key == filter) {
+                chip.setBackgroundResource(R.drawable.badge_gold_bg)
+                chip.setTextColor(Color.parseColor("#17171B"))
+            } else {
+                chip.setBackgroundResource(R.drawable.search_chip_bg)
+                chip.setTextColor(Color.parseColor("#757580"))
+            }
+        }
+
+        // Show loading, hide error state and list
+        binding.ivNewsLoadingGif.visibility = View.VISIBLE
+        binding.layoutNewsError.visibility = View.GONE
+        binding.rvMimoNewsList.visibility = View.GONE
+        Glide.with(this).asGif().load(R.raw.loading_cat).into(binding.ivNewsLoadingGif)
+
+        val onSuccess: (List<MimoNewsItem>) -> Unit = { items ->
+            binding.ivNewsLoadingGif.visibility = View.GONE
+            binding.layoutNewsError.visibility = View.GONE
+            binding.rvMimoNewsList.visibility = View.VISIBLE
+            mimoNewsAdapter.updateData(items)
+        }
+
+        val onError: () -> Unit = {
+            binding.ivNewsLoadingGif.visibility = View.GONE
+            binding.rvMimoNewsList.visibility = View.GONE
+            binding.layoutNewsError.visibility = View.VISIBLE
+        }
+
+        when (filter) {
+            "now"        -> JikanApiClient.getSeasonNow(onSuccess, onError)
+            "upcoming"   -> JikanApiClient.getSeasonUpcoming(onSuccess, onError)
+            "fall2026"   -> JikanApiClient.getSeasonByYear(2026, "fall", onSuccess, onError)
+            "winter2027" -> JikanApiClient.getSeasonByYear(2027, "winter", onSuccess, onError)
+            "spring2027" -> JikanApiClient.getSeasonByYear(2027, "spring", onSuccess, onError)
+            "schedule"   -> JikanApiClient.getSchedules(onSuccess, onError)
+            else         -> JikanApiClient.getSeasonNow(onSuccess, onError)
+        }
+    }
+
+    private fun showNewsDetailDialog(item: MimoNewsItem) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_mimo_news_detail)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        val ivPoster = dialog.findViewById<ImageView>(R.id.ivDialogPoster)
+        val tvTitle = dialog.findViewById<TextView>(R.id.tvDialogTitle)
+        val tvJapaneseTitle = dialog.findViewById<TextView>(R.id.tvDialogJapaneseTitle)
+        val tvReleaseBadge = dialog.findViewById<TextView>(R.id.tvDialogReleaseBadge)
+        val tvStudio = dialog.findViewById<TextView>(R.id.tvDialogStudio)
+        val tvSource = dialog.findViewById<TextView>(R.id.tvDialogSource)
+        val tvGenres = dialog.findViewById<TextView>(R.id.tvDialogGenres)
+        val tvSynopsis = dialog.findViewById<TextView>(R.id.tvDialogSynopsis)
+        val tvMembers = dialog.findViewById<TextView>(R.id.tvDialogMembers)
+        val tvLikes = dialog.findViewById<TextView>(R.id.tvDialogLikes)
+        val tvScore = dialog.findViewById<TextView>(R.id.tvDialogScore)
+        val btnTrailer = dialog.findViewById<Button>(R.id.btnDialogTrailer)
+        val btnClose = dialog.findViewById<Button>(R.id.btnDialogClose)
+        val btnCloseHeader = dialog.findViewById<ImageView>(R.id.btnCloseNewsDialog)
+
+        tvTitle.text = item.title
+        val sub = if (item.titleJapanese.isNotEmpty()) item.titleJapanese else item.titleEnglish
+        if (sub.isNotEmpty()) {
+            tvJapaneseTitle.visibility = View.VISIBLE
+            tvJapaneseTitle.text = sub
+        } else {
+            tvJapaneseTitle.visibility = View.GONE
+        }
+
+        tvReleaseBadge.text = item.seasonYear.ifEmpty { item.releaseDate }
+        tvStudio.text = "Studio: ${item.studio.ifEmpty { "Nyamimo Studio" }}"
+        tvSource.text = "Source: ${item.source.ifEmpty { "Manga" }} • ${item.episodes}"
+        tvGenres.text = if (item.genres.isNotEmpty()) item.genres.joinToString(", ") else "Action, Adventure"
+        tvSynopsis.text = item.synopsis.ifEmpty { "Sinopsis resmi anime ini akan segera diumumkan." }
+
+        // Penonton / Members
+        if (item.members.isNotEmpty()) {
+            tvMembers.visibility = View.VISIBLE
+            tvMembers.text = "👥 ${item.members} Penonton"
+        } else {
+            tvMembers.visibility = View.GONE
+        }
+
+        // Like / Favorites
+        if (item.favorites.isNotEmpty()) {
+            tvLikes.visibility = View.VISIBLE
+            tvLikes.text = "❤️ ${item.favorites} Suka"
+        } else {
+            tvLikes.visibility = View.GONE
+        }
+
+        // Score
+        if (item.score.isNotEmpty() && item.score != "N/A") {
+            tvScore.visibility = View.VISIBLE
+            tvScore.text = "⭐ ${item.score}"
+        } else {
+            tvScore.visibility = View.GONE
+        }
+
+
+        if (item.img.isNotEmpty()) {
+            Glide.with(this)
+                .load(item.img)
+                .placeholder(R.drawable.logo_nyamimo)
+                .centerCrop()
+                .into(ivPoster)
+        }
+
+        val trailer = item.trailerUrl.ifEmpty { item.trailerEmbedUrl }
+        if (trailer.isNotEmpty()) {
+            btnTrailer.visibility = View.VISIBLE
+            btnTrailer.setOnClickListener {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(trailer))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Tidak dapat membuka link trailer", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            btnTrailer.visibility = View.GONE
+        }
+
+        val closeAction = View.OnClickListener { dialog.dismiss() }
+        btnClose.setOnClickListener(closeAction)
+        btnCloseHeader.setOnClickListener(closeAction)
+
+        dialog.show()
+    }
+
     private fun selectBottomNav(navKey: String) {
         currentNav = navKey
         val activeGold = Color.parseColor("#FFCC00")
@@ -720,8 +1064,8 @@ class MainActivity : AppCompatActivity() {
         binding.tvNavHome.setTextColor(inactiveGray)
         binding.ivNavCari.setColorFilter(inactiveGray)
         binding.tvNavCari.setTextColor(inactiveGray)
-        binding.ivNavRiwayat.setColorFilter(inactiveGray)
-        binding.tvNavRiwayat.setTextColor(inactiveGray)
+        binding.ivNavNews.setColorFilter(inactiveGray)
+        binding.tvNavNews.setTextColor(inactiveGray)
         binding.ivNavSaya.setColorFilter(inactiveGray)
         binding.tvNavSaya.setTextColor(inactiveGray)
 
@@ -731,6 +1075,7 @@ class MainActivity : AppCompatActivity() {
                 binding.tvNavHome.setTextColor(activeDark)
                 binding.headerContainer.visibility = View.VISIBLE
                 binding.reelsContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
                 if (!isNetworkAvailable() && homeData == null) {
                     showOfflineScreen(true)
                 } else {
@@ -745,6 +1090,7 @@ class MainActivity : AppCompatActivity() {
                 binding.exploreContainer.visibility = View.VISIBLE
                 binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
                 loadSearchHistoryUI()
                 binding.trendingSection.visibility = View.VISIBLE
@@ -756,19 +1102,23 @@ class MainActivity : AppCompatActivity() {
                 binding.headerContainer.visibility = View.GONE
                 binding.exploreContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.VISIBLE
                 Toast.makeText(this, "Nyamimo Shorts Feed (Geser untuk klip berikutnya)", Toast.LENGTH_SHORT).show()
             }
-            "riwayat" -> {
-                binding.ivNavRiwayat.setColorFilter(activeGold)
-                binding.tvNavRiwayat.setTextColor(activeDark)
-                binding.headerContainer.visibility = View.VISIBLE
-                binding.exploreContainer.visibility = View.VISIBLE
+            "news" -> {
+                binding.ivNavNews.setColorFilter(activeGold)
+                binding.tvNavNews.setTextColor(activeDark)
+                binding.headerContainer.visibility = View.GONE
+                binding.exploreContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
-                selectTab("populer")
+                binding.mimoNewsContainer.visibility = View.VISIBLE
+                if (mimoNewsAdapter.itemCount == 0) {
+                    loadMimoNews(currentNewsFilter)
+                }
             }
             "saya" -> {
                 binding.ivNavSaya.setColorFilter(activeGold)
@@ -776,6 +1126,7 @@ class MainActivity : AppCompatActivity() {
                 binding.headerContainer.visibility = View.GONE
                 binding.exploreContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.VISIBLE
                 updateProfileUI()

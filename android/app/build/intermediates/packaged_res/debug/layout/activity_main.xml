@@ -1031,6 +1031,223 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- VIEW 5: Mimo News (Jadwal Rilis & Anime Musiman Jikan / MAL) -->
+            <LinearLayout
+                android:id="@+id/mimoNewsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#F8F8FA"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- News Header -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#FFFFFF"
+                    android:elevation="2dp"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="10dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@drawable/ic_nav_news"
+                            app:tint="#FFCC00" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Mimo News"
+                                android:textColor="#17171B"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Jadwal Rilis &amp; Anime Musiman (MyAnimeList)"
+                                android:textColor="#757580"
+                                android:textSize="11.5sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/btnRefreshNews"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:padding="6dp"
+                            android:src="@android:drawable/ic_popup_sync"
+                            app:tint="#17171B" />
+                    </LinearLayout>
+
+                    <!-- Seasonal Filter Tabs -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:scrollbars="none">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/chipNewsNow"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/badge_gold_bg"
+                                android:gravity="center"
+                                android:paddingHorizontal="12dp"
+                                android:text="Musim Ini"
+                                android:textColor="#17171B"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/chipNewsUpcoming"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/search_chip_bg"
+                                android:gravity="center"
+                                android:paddingHorizontal="12dp"
+                                android:text="Akan Rilis"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipNewsFall2026"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/search_chip_bg"
+                                android:gravity="center"
+                                android:paddingHorizontal="12dp"
+                                android:text="Fall 2026"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipNewsWinter2027"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/search_chip_bg"
+                                android:gravity="center"
+                                android:paddingHorizontal="12dp"
+                                android:text="Winter 2027"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipNewsSpring2027"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/search_chip_bg"
+                                android:gravity="center"
+                                android:paddingHorizontal="12dp"
+                                android:text="Spring 2027"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipNewsSchedule"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/search_chip_bg"
+                                android:gravity="center"
+                                android:paddingHorizontal="12dp"
+                                android:text="Jadwal Harian"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </HorizontalScrollView>
+                </LinearLayout>
+
+                <!-- Content Area: Loading Mascot + RecyclerView -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:id="@+id/ivNewsLoadingGif"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_centerInParent="true"
+                        android:visibility="gone" />
+
+                    <!-- Error / Empty State -->
+                    <LinearLayout
+                        android:id="@+id/layoutNewsError"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="24dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Gagal memuat data"
+                            android:textColor="#17171B"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:gravity="center" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Periksa koneksi internet, lalu coba lagi"
+                            android:textColor="#757580"
+                            android:textSize="13sp"
+                            android:gravity="center" />
+
+                        <Button
+                            android:id="@+id/btnNewsRetry"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="16dp"
+                            android:paddingStart="24dp"
+                            android:paddingEnd="24dp"
+                            android:text="Coba Lagi"
+                            android:textColor="#17171B"
+                            android:textSize="13sp"
+                            android:backgroundTint="#FFCC00"
+                            android:stateListAnimator="@null" />
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvMimoNewsList"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="20dp" />
+                </RelativeLayout>
+            </LinearLayout>
+
         </FrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -1125,9 +1342,9 @@
             </RelativeLayout>
         </LinearLayout>
 
-        <!-- 4. Riwayat (Clean without badge/star) -->
+        <!-- 4. Mimo News (Jadwal Rilis & Musiman Jikan/MAL) -->
         <LinearLayout
-            android:id="@+id/btnNavRiwayat"
+            android:id="@+id/btnNavNews"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -1136,18 +1353,18 @@
             android:background="?attr/selectableItemBackground">
 
             <ImageView
-                android:id="@+id/ivNavRiwayat"
+                android:id="@+id/ivNavNews"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@drawable/ic_nav_history"
+                android:src="@drawable/ic_nav_news"
                 app:tint="#8E8E93" />
 
             <TextView
-                android:id="@+id/tvNavRiwayat"
+                android:id="@+id/tvNavNews"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Riwayat"
+                android:text="Mimo News"
                 android:textColor="#8E8E93"
                 android:textSize="10sp" />
         </LinearLayout>

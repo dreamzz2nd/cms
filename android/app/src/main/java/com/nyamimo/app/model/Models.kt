@@ -23,7 +23,14 @@ data class AnimeItem(
     @SerializedName("type") val type: String = "",
     @SerializedName("status") val status: String = "",
     @SerializedName("synopsis") val synopsis: String = "",
-    @SerializedName("genres") val genres: List<String> = emptyList()
+    @SerializedName("genres") val genres: List<String> = emptyList(),
+    @SerializedName("watchDate") val watchDate: String = "",
+    @SerializedName("watchProgressPercent") val watchProgressPercent: Int = 0,
+    @SerializedName("watchDurationText") val watchDurationText: String = "",
+    @SerializedName("timeGroup") val timeGroup: String = "Hari Ini",
+    @SerializedName("isDownloaded") val isDownloaded: Boolean = false,
+    @SerializedName("downloadPath") val downloadPath: String = "",
+    @SerializedName("downloadSize") val downloadSize: String = ""
 ) : Serializable
 
 data class GenreItem(
