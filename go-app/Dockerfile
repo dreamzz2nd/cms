@@ -18,6 +18,7 @@ COPY --from=builder /app/nyamimo-server .
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/config.json ./config.json
+COPY --from=builder /app/data ./data
 
 ENV PORT=8080
 EXPOSE 8080
