@@ -2806,9 +2806,15 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 		bodyStr = strings.Replace(bodyStr, "<head>", "<head><base href=\"https://desustream.net/\">", 1)
 	}
 
-	blockerCSS := `
+	isBlogger := strings.Contains(targetURL, "blogger.com")
+
+	var blockerCSS string
+	var bridgeScript string
+
+	if isBlogger {
+		blockerCSS = `
 <style>
-/* ─── NYAMIMO ZERO SERVER PLAYER OVERRIDE ─── */
+/* ─── NYAMIMO BLOGGER PLAYER OVERRIDE ─── */
 .ppVepb, .fWUOAc, .ytp-chrome-top, .ytp-chrome-bottom, .ytp-gradient-top, .ytp-gradient-bottom,
 .ytp-watermark, .ytp-pause-overlay, .ytp-spinner, .ytp-contextmenu,
 .ytp-cued-thumbnail-overlay, .ytp-title, .ytp-share-button, .ytp-show-cards-title,
@@ -2840,7 +2846,7 @@ html, body {
 }
 </style>`
 
-	bridgeScript := `
+		bridgeScript = `
 <script>
 (function() {
 	var attachedVideo = null;
@@ -2912,7 +2918,6 @@ html, body {
 			window.parent.postMessage({ type: 'nyamimo-player-ready', duration: vid.duration || 0 }, '*');
 		} catch(e) {}
 
-		// Attempt autoplay
 		vid.play().catch(function(){});
 		broadcastState();
 	}
@@ -2925,6 +2930,46 @@ html, body {
 	setInterval(tryAttach, 500);
 })();
 </script>`
+	} else {
+		blockerCSS = `
+<style>
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    background: #000 !important;
+}
+video, iframe, #player, .video-stream {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+</style>`
+
+		bridgeScript = `
+<script>
+(function() {
+	function enableControls() {
+		var vid = document.querySelector('video');
+		if (vid) {
+			vid.controls = true;
+			vid.setAttribute('controls', 'true');
+			vid.setAttribute('playsinline', 'true');
+			vid.style.display = 'block';
+			vid.style.visibility = 'visible';
+		}
+	}
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', enableControls);
+	} else {
+		enableControls();
+	}
+	setInterval(enableControls, 500);
+})();
+</script>`
+	}
 
 	if strings.Contains(bodyStr, "<head>") {
 		bodyStr = strings.Replace(bodyStr, "<head>", "<head>"+blockerCSS, 1)
