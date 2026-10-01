@@ -18,6 +18,21 @@
   ],
   "user:admin": [
     {
+      "slug": "suise-gargantia-sub-indo",
+      "title": "Suisei no Gargantia",
+      "img": "https://otakudesu.blog/wp-content/uploads/2019/04/Suisei-no-Gargantia-Sub-Indo.jpg",
+      "episode": "Episode 1",
+      "episodeNum": "1",
+      "episodeTitle": "OVA 1 Subtitle Indonesia",
+      "time": 23,
+      "duration": 1440,
+      "timeFormatted": "00:23",
+      "durationFormatted": "24:00",
+      "progressPercent": 2,
+      "link": "/anime/suise-gargantia-sub-indo/?ep=1\u0026t=23",
+      "updatedAt": 1790872404845
+    },
+    {
       "slug": "made-abyss-subtitle-indonesia",
       "title": "Made in Abyss",
       "img": "https://otakudesu.blog/wp-content/uploads/2017/07/Made-in-Abyss-Sub-Indo.jpg",
