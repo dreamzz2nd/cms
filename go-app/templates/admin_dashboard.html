@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ 
-    activeTab: (window.location.hash && ['overview','users','trending','ads','watermark','player','apps','site','gdrive'].includes(window.location.hash.substring(1))) ? window.location.hash.substring(1) : 'overview',
+    activeTab: (window.location.hash && ['overview','users','trending','ads','watermark','player','apps','site','gdrive','scraper','reports'].includes(window.location.hash.substring(1))) ? window.location.hash.substring(1) : 'overview',
     heroSlides: {{if .Config.App.HeroCarousel.Slides}}{{.Config.App.HeroCarousel.Slides | toJson}}{{else}}[]{{end}},
     previewSlideIdx: 0,
     addHeroSlide() {
@@ -298,6 +298,20 @@
             <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-white shadow-sm animate-pulse">
                 Auto-Sync
             </span>
+        </button>
+
+        <button 
+            type="button" 
+            @click="activeTab = 'reports'" 
+            :class="activeTab === 'reports' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer relative"
+        >
+            <i data-lucide="flag" class="w-4 h-4 text-rose-500"></i> Laporan Video Error ({{len .Reports}})
+            {{if gt .UnresolvedReportsCount 0}}
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500 text-white shadow-sm animate-pulse">
+                {{.UnresolvedReportsCount}} Baru
+            </span>
+            {{end}}
         </button>
     </div>
 
@@ -1176,6 +1190,7 @@
 
     <!-- TAB 6: PENGATURAN POSISI PLAYER BLOGGER & LIVE PREVIEW SUBTITLE -->
     <div x-show="activeTab === 'player'" class="space-y-6" x-data="{
+        useNyamimoPlayer: {{if .Config.BloggerPlayer.UseNyamimoPlayer}}true{{else}}false{{end}},
         bottomOffset: {{if .Config.BloggerPlayer.BottomOffsetPx}}{{.Config.BloggerPlayer.BottomOffsetPx}}{{else}}45{{end}},
         fullscreenOffset: {{if .Config.BloggerPlayer.FullscreenOffsetPx}}{{.Config.BloggerPlayer.FullscreenOffsetPx}}{{else}}60{{end}},
         previewMode: 'normal'
@@ -1187,10 +1202,10 @@
                     <div>
                         <h3 class="text-lg font-bold font-title text-[#17171B] flex items-center gap-2.5">
                             <span class="w-2.5 h-6 bg-[#FFCC00] rounded-full"></span>
-                            Pengaturan Posisi Player Blogger & Keamanan Subtitle
+                            Pengaturan Pemutar Video (Player Nyamimo & Blogger)
                         </h3>
                         <p class="text-xs text-[#55555B] mt-1">
-                            Atur seberapa jauh pemutar video Blogger (Google) diturunkan ke bawah untuk menyembunyikan garis merah server tanpa memotong teks subtitle anime.
+                            Atur apakah ingin memakai skin pemutar eksklusif Nyamimo (Cinema UI, Skip OP, Watermark, & Crop Blogger) atau menggunakan pemutar iframe standar bawaan.
                         </p>
                     </div>
 
@@ -1202,65 +1217,107 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     
-                    <!-- Left: Control Sliders (5 Cols) -->
-                    <div class="lg:col-span-5 space-y-6 bg-[#F8F8F6] p-6 rounded-2xl border border-[#E2E2DC]">
+                    <!-- Left: Controls & Switch (5 Cols) -->
+                    <div class="lg:col-span-5 space-y-5 bg-[#F8F8F6] p-6 rounded-2xl border border-[#E2E2DC]">
                         
-                        <!-- Normal Mode Offset -->
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold font-title text-[#17171B]">
-                                    Offset Penurunan Normal Mode (px)
+                        <!-- Main Master Switch: Pakai Player Nyamimo atau Tidak -->
+                        <div class="p-4 rounded-2xl bg-white border border-[#E2E2DC] shadow-sm space-y-3">
+                            <div class="flex items-center justify-between gap-4">
+                                <div>
+                                    <label class="text-xs font-bold font-title text-[#17171B] flex items-center gap-1.5">
+                                        <i data-lucide="sparkles" class="w-4 h-4 text-[#FFCC00]"></i>
+                                        Gunakan Player Nyamimo (Cinema UI)
+                                    </label>
+                                    <p class="text-[11px] text-[#55555B] mt-0.5">
+                                        Aktifkan kontrol sinematik Nyamimo (Skip OP, Speed, Watermark, & Pemotong Garis Blogger).
+                                    </p>
+                                </div>
+                                
+                                <!-- Toggle Switch -->
+                                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                    <input type="checkbox" name="use_nyamimo_player" value="1" x-model="useNyamimoPlayer" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
                                 </label>
-                                <span class="px-2.5 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-mono font-extrabold text-xs" x-text="bottomOffset + ' px'"></span>
                             </div>
-                            <input type="range" min="0" max="120" step="1" x-model.number="bottomOffset" name="bottom_offset_px"
-                                class="w-full accent-[#FFCC00] cursor-pointer" />
-                            <div class="flex justify-between text-[10px] text-[#A0A0A8] font-mono">
-                                <span>0px (Rasio Penuh)</span>
-                                <span>45px (Optimal)</span>
-                                <span>120px (Maksimal)</span>
+
+                            <div class="flex items-center gap-2 pt-2 border-t border-[#E2E2DC]">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase font-title"
+                                    :class="useNyamimoPlayer ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'"
+                                    x-text="useNyamimoPlayer ? '● PLAYER NYAMIMO AKTIF' : '○ MODE IFRAME STANDAR (ASLI)'">
+                                </span>
+                                <span class="text-[10px] text-[#A0A0A8]" x-text="useNyamimoPlayer ? 'Fitur pemotong & kontrol kustom aktif' : 'Player diputar murni tanpa overlay Nyamimo'"></span>
                             </div>
-                            <p class="text-[11px] text-[#55555B] leading-relaxed">
-                                Nilai <strong>40px - 50px</strong> adalah nilai rekomendasi optimal agar garis kontrol Blogger terpotong tanpa memakan teks subtitle anime.
-                            </p>
                         </div>
 
-                        <!-- Fullscreen Mode Offset -->
-                        <div class="space-y-3 pt-4 border-t border-[#E2E2DC]">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold font-title text-[#17171B]">
-                                    Offset Penurunan Fullscreen Mode (px)
-                                </label>
-                                <span class="px-2.5 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-mono font-extrabold text-xs" x-text="fullscreenOffset + ' px'"></span>
+                        <!-- Offsets Controls (Shown only when Player Nyamimo is Active) -->
+                        <div x-show="useNyamimoPlayer" x-transition class="space-y-5 pt-2">
+                            <!-- Normal Mode Offset -->
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold font-title text-[#17171B]">
+                                        Offset Penurunan Normal Mode (px)
+                                    </label>
+                                    <span class="px-2.5 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-mono font-extrabold text-xs" x-text="bottomOffset + ' px'"></span>
+                                </div>
+                                <input type="range" min="0" max="120" step="1" x-model.number="bottomOffset" name="bottom_offset_px"
+                                    class="w-full accent-[#FFCC00] cursor-pointer" />
+                                <div class="flex justify-between text-[10px] text-[#A0A0A8] font-mono">
+                                    <span>0px (Rasio Penuh)</span>
+                                    <span>45px (Optimal)</span>
+                                    <span>120px (Maksimal)</span>
+                                </div>
+                                <p class="text-[11px] text-[#55555B] leading-relaxed">
+                                    Nilai <strong>40px - 50px</strong> adalah nilai rekomendasi optimal agar garis kontrol Blogger terpotong tanpa memakan teks subtitle anime.
+                                </p>
                             </div>
-                            <input type="range" min="0" max="150" step="1" x-model.number="fullscreenOffset" name="fullscreen_offset_px"
-                                class="w-full accent-[#FFCC00] cursor-pointer" />
-                            <div class="flex justify-between text-[10px] text-[#A0A0A8] font-mono">
-                                <span>0px</span>
-                                <span>60px (Optimal)</span>
-                                <span>150px</span>
+
+                            <!-- Fullscreen Mode Offset -->
+                            <div class="space-y-3 pt-4 border-t border-[#E2E2DC]">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold font-title text-[#17171B]">
+                                        Offset Penurunan Fullscreen Mode (px)
+                                    </label>
+                                    <span class="px-2.5 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-mono font-extrabold text-xs" x-text="fullscreenOffset + ' px'"></span>
+                                </div>
+                                <input type="range" min="0" max="150" step="1" x-model.number="fullscreenOffset" name="fullscreen_offset_px"
+                                    class="w-full accent-[#FFCC00] cursor-pointer" />
+                                <div class="flex justify-between text-[10px] text-[#A0A0A8] font-mono">
+                                    <span>0px</span>
+                                    <span>60px (Optimal)</span>
+                                    <span>150px</span>
+                                </div>
+                                <p class="text-[11px] text-[#55555B] leading-relaxed">
+                                    Offset yang diterapkan ketika pengguna menonton dalam mode Layar Penuh (Fullscreen).
+                                </p>
                             </div>
-                            <p class="text-[11px] text-[#55555B] leading-relaxed">
-                                Offset yang diterapkan ketika pengguna menonton dalam mode Layar Penuh (Fullscreen).
-                            </p>
+
+                            <!-- Safety Status Indicator Badge -->
+                            <div class="p-4 rounded-xl border transition-all"
+                                :class="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 55 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : ((previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 80 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-rose-50 border-rose-200 text-rose-800')">
+                                <div class="flex items-center gap-2 font-bold text-xs font-title">
+                                    <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 55">
+                                        <span>✅ Status Subtitle: AMAN & TERBACA JELAS</span>
+                                    </template>
+                                    <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) > 55 && (previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 80">
+                                        <span>⚠️ Status Subtitle: CUKUP DEKAT DENGAN TEKS</span>
+                                    </template>
+                                    <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) > 80">
+                                        <span>🛑 Status Subtitle: BERISIKO TERPOTONG</span>
+                                    </template>
+                                </div>
+                                <p class="text-[11px] mt-1 opacity-90">
+                                    Perhatikan tampilan simulasi subtitle di kotak preview sebelah kanan saat menggeser slider.
+                                </p>
+                            </div>
                         </div>
 
-                        <!-- Safety Status Indicator Badge -->
-                        <div class="p-4 rounded-xl border transition-all"
-                            :class="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 55 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : ((previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 80 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-rose-50 border-rose-200 text-rose-800')">
-                            <div class="flex items-center gap-2 font-bold text-xs font-title">
-                                <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 55">
-                                    <span>✅ Status Subtitle: AMAN & TERBACA JELAS</span>
-                                </template>
-                                <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) > 55 && (previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 80">
-                                    <span>⚠️ Status Subtitle: CUKUP DEKAT DENGAN TEKS</span>
-                                </template>
-                                <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) > 80">
-                                    <span>🛑 Status Subtitle: BERISIKO TERPOTONG</span>
-                                </template>
+                        <!-- Standard Mode Info (When Nyamimo Player is Disabled) -->
+                        <div x-show="!useNyamimoPlayer" x-transition class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2">
+                            <div class="flex items-center gap-2 font-bold text-xs font-title text-amber-800">
+                                <i data-lucide="info" class="w-4 h-4 text-amber-600"></i> Mode Player Bawaan (Iframe Standar)
                             </div>
-                            <p class="text-[11px] mt-1 opacity-90">
-                                Perhatikan tampilan simulasi subtitle di kotak preview sebelah kanan saat menggeser slider.
+                            <p class="text-[11px] text-amber-700 leading-relaxed">
+                                Video akan dimuat murni langsung melalui iframe sumber aslinya tanpa modifikasi ketinggian frame atau kontrol kustom Nyamimo. Kontrol pemutaran akan mengikuti kontrol bawaan masing-masing server.
                             </p>
                         </div>
 
@@ -1288,7 +1345,7 @@
                             <!-- Simulated Video Content Background -->
                             <div class="w-full h-full relative overflow-hidden flex items-center justify-center">
                                 <div class="w-full absolute transition-all duration-150"
-                                    :style="'height: calc(100% + ' + (previewMode === 'normal' ? bottomOffset : fullscreenOffset) + 'px); margin-bottom: -' + (previewMode === 'normal' ? bottomOffset : fullscreenOffset) + 'px;'">
+                                    :style="'height: calc(100% + ' + (useNyamimoPlayer ? (previewMode === 'normal' ? bottomOffset : fullscreenOffset) : 0) + 'px); margin-bottom: -' + (useNyamimoPlayer ? (previewMode === 'normal' ? bottomOffset : fullscreenOffset) : 0) + 'px;'">
                                     
                                     <!-- Background Anime Image -->
                                     <img src="https://v2.samehadaku.how/wp-content/uploads/2025/10/151242.jpg" class="w-full h-full object-cover brightness-75" />
@@ -1315,20 +1372,61 @@
                                 </div>
                             </div>
 
-                            <!-- Crop Mask Boundary Indicators -->
-                            <div class="absolute inset-0 pointer-events-none border-2 border-dashed border-[#FFCC00]/40 rounded-2xl flex flex-col justify-between p-3">
-                                <div class="flex justify-between items-center text-[10px] bg-black/70 px-2.5 py-1 rounded text-white font-mono self-start border border-white/20">
-                                    <span>Batas Bingkai Nyamimo (16:9)</span>
+                            <!-- Simulated Nyamimo Cinema HUD Overlay (Only if useNyamimoPlayer is true) -->
+                            <template x-if="useNyamimoPlayer">
+                                <div class="absolute inset-0 z-20 flex flex-col justify-between p-3 pointer-events-none">
+                                    <!-- Top Header Bar -->
+                                    <div class="flex items-center justify-between bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-white/10 -mx-1 -mt-1">
+                                        <div class="flex items-center gap-2 text-[11px] font-bold text-white">
+                                            <span class="w-5 h-5 rounded-full bg-[#FFCC00]/20 text-[#FFCC00] flex items-center justify-center text-[10px]">▶</span>
+                                            <span>Ep 1 - Uchi no Otouto-domo ga Sumimasen</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="px-2 py-0.5 rounded bg-black/60 text-[#FFCC00] text-[10px] font-bold border border-[#FFCC00]/30 font-title">HD Auto</span>
+                                            <span class="px-2 py-0.5 rounded bg-[#FFCC00] text-[#17171B] text-[10px] font-extrabold font-title">Nyamimo</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bottom Action Bar -->
+                                    <div class="flex items-center justify-between bg-black/70 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-white/10 -mx-1 -mb-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-mono">1.0x</span>
+                                            <span class="px-2.5 py-0.5 rounded bg-[#FFCC00] text-[#17171B] text-[10px] font-extrabold font-title flex items-center gap-1 shadow">
+                                                <span>⏩ Skip OP (+85s)</span>
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] font-mono text-gray-300">00:25 / 24:00</span>
+                                            <span class="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">⛶ Layar Penuh</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="flex justify-between items-center text-[10px] bg-black/70 px-2.5 py-1 rounded text-[#FFCC00] font-mono self-end border border-[#FFCC00]/40">
-                                    <span x-text="'Diturunkan: ' + (previewMode === 'normal' ? bottomOffset : fullscreenOffset) + 'px'"></span>
+                            </template>
+
+                            <!-- Crop Mask Boundary Indicators (When Nyamimo Player is enabled) -->
+                            <template x-if="useNyamimoPlayer">
+                                <div class="absolute inset-0 pointer-events-none border-2 border-dashed border-[#FFCC00]/40 rounded-2xl flex flex-col justify-between p-3 z-30">
+                                    <div class="flex justify-between items-center text-[10px] bg-black/70 px-2.5 py-1 rounded text-white font-mono self-start border border-white/20">
+                                        <span>Batas Bingkai Nyamimo (16:9)</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[10px] bg-black/70 px-2.5 py-1 rounded text-[#FFCC00] font-mono self-end border border-[#FFCC00]/40">
+                                        <span x-text="'Diturunkan: ' + (previewMode === 'normal' ? bottomOffset : fullscreenOffset) + 'px'"></span>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
+
+                            <!-- Standard Mode Badge Indicator (When Nyamimo Player is disabled) -->
+                            <template x-if="!useNyamimoPlayer">
+                                <div class="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded-lg border border-white/20 text-white font-mono text-[10px] flex items-center gap-1.5 z-20">
+                                    <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                                    <span>Simulasi Mode Player Standar / Iframe Asli (Tanpa Skin Nyamimo)</span>
+                                </div>
+                            </template>
 
                         </div>
 
                         <p class="text-[11px] text-[#A0A0A8] italic">
-                            * Kotak preview di atas mensimulasikan pemotong video Blogger secara langsung. Pastikan teks subtitle anime tetap berada di atas garis bawah bingkai kuning.
+                            * Kotak preview di atas mensimulasikan pemutar video secara langsung berdasarkan konfigurasi yang dipilih.
                         </p>
                     </div>
 
@@ -2312,7 +2410,12 @@
         startScraper(mode) {
             this.loadingAction = true;
             this.stats.is_running = true;
-            this.stats.current_task = (mode === 'all' || mode === 'full') ? 'Scraping Seluruh Anime (A - Z)...' : 'Scraping Ongoing & Tamat...';
+            if (mode === 'samehadaku_all') this.stats.current_task = 'Scraping Samehadaku (A - Z)...';
+            else if (mode === 'samehadaku_ongoing') this.stats.current_task = 'Scraping Samehadaku Ongoing...';
+            else if (mode === 'scrape_all_sources') this.stats.current_task = 'Scraping Semua Sumber (Otakudesu + Samehadaku)...';
+            else if (mode === 'rescrape_all') this.stats.current_task = 'Re-scraping Bersih (A - Z)...';
+            else this.stats.current_task = 'Scraping Otakudesu (A - Z)...';
+
             fetch('/api/admin/scraper/start?mode=' + mode, { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
@@ -2321,16 +2424,25 @@
                 })
                 .catch(err => {
                     this.loadingAction = false;
+                    this.stats.is_running = false;
                     alert('Gagal memulai scraper: ' + err.message);
                 });
         },
         stopScraper() {
+            this.loadingAction = false;
+            this.stats.is_running = false;
+            this.stats.current_task = 'Dihentikan';
             fetch('/api/admin/scraper/stop', { method: 'POST' })
                 .then(res => res.json())
                 .then(() => {
+                    this.stats.is_running = false;
+                    this.stats.current_task = 'Dihentikan';
                     this.fetchLogs();
                 })
-                .catch(() => {});
+                .catch(() => {
+                    this.stats.is_running = false;
+                    this.fetchLogs();
+                });
         }
     }">
         <!-- Top Status Hero Banner -->
@@ -2357,27 +2469,39 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 flex-wrap">
-                    <button type="button" @click="startScraper('ongoing')" :disabled="stats.is_running || loadingAction"
-                        class="px-5 py-3 rounded-2xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 flex-wrap">
+                    <button type="button" @click="startScraper('samehadaku_all')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-2.5 rounded-2xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
+                        <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        <span>Scrape Samehadaku (A - Z)</span>
+                    </button>
+
+                    <button type="button" @click="startScraper('samehadaku_ongoing')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
                         <i data-lucide="zap" class="w-4 h-4"></i>
-                        <span>Scrape Ongoing & Tamat</span>
+                        <span>Samehadaku Ongoing</span>
+                    </button>
+
+                    <button type="button" @click="startScraper('scrape_all_sources')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                        <span>Scrape Semua Sumber (Otakudesu + Samehadaku)</span>
                     </button>
 
                     <button type="button" @click="startScraper('all')" :disabled="stats.is_running || loadingAction"
-                        class="px-5 py-3 rounded-2xl bg-white hover:bg-gray-100 text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50">
-                        <i data-lucide="globe" class="w-4 h-4 text-purple-600"></i>
-                        <span>Scrape Update (A - Z)</span>
+                        class="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
+                        <i data-lucide="globe" class="w-4 h-4 text-purple-400"></i>
+                        <span>Otakudesu (A - Z)</span>
                     </button>
 
                     <button type="button" @click="if(confirm('Apakah Anda yakin ingin mereset database dan mengikis ulang seluruh anime & episode dari A-Z?')) startScraper('rescrape_all')" :disabled="stats.is_running || loadingAction"
-                        class="px-5 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50">
+                        class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        <span>Scrape Ulang Bersih (A - Z)</span>
+                        <span>Scrape Ulang Bersih</span>
                     </button>
 
                     <button type="button" @click="stopScraper()" x-show="stats.is_running"
-                        class="px-4 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+                        class="px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer font-title">
                         <i data-lucide="square" class="w-4 h-4"></i>
                         <span>Stop</span>
                     </button>
@@ -2465,6 +2589,268 @@
                 <span>Auto-refresh: 1.2s • Dedicated Go routine scraper</span>
                 <span>Storage Target: data/anime_database.json</span>
             </div>
+        </div>
+    </div>
+
+    <!-- TAB 10: MANAJEMEN LAPORAN ANIME & VIDEO ERROR -->
+    <div x-show="activeTab === 'reports'" class="space-y-6" x-data="{
+        reportFilter: 'all',
+        searchQuery: '',
+        reports: {{if .Reports}}{{.Reports | toJson}}{{else}}[]{{end}},
+        get countPending() {
+            return this.reports.filter(r => r.status === 'pending' || !r.status).length;
+        },
+        get countResolved() {
+            return this.reports.filter(r => r.status === 'resolved').length;
+        },
+        get filteredReports() {
+            return this.reports.filter(r => {
+                const matchStatus = this.reportFilter === 'all' || 
+                    (this.reportFilter === 'pending' && (r.status === 'pending' || !r.status)) || 
+                    (this.reportFilter === 'resolved' && r.status === 'resolved');
+                const q = this.searchQuery.toLowerCase().trim();
+                const matchQuery = !q || 
+                    (r.anime_title && r.anime_title.toLowerCase().includes(q)) || 
+                    (r.anime_slug && r.anime_slug.toLowerCase().includes(q)) || 
+                    (r.reporter && r.reporter.toLowerCase().includes(q)) ||
+                    (r.issue_label && r.issue_label.toLowerCase().includes(q)) ||
+                    (r.note && r.note.toLowerCase().includes(q));
+                return matchStatus && matchQuery;
+            });
+        },
+        toggleStatus(report) {
+            const nextStatus = report.status === 'resolved' ? 'pending' : 'resolved';
+            fetch('/api/admin/reports/resolve?id=' + encodeURIComponent(report.id) + '&status=' + nextStatus, { 
+                method: 'POST', 
+                headers: { 'Accept': 'application/json' } 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    report.status = nextStatus;
+                }
+            })
+            .catch(err => alert('Gagal mengubah status: ' + err.message));
+        },
+        deleteItem(report) {
+            if (!confirm('Hapus laporan untuk anime ' + report.anime_title + ' ini?')) return;
+            fetch('/api/admin/reports/delete?id=' + encodeURIComponent(report.id), { 
+                method: 'POST', 
+                headers: { 'Accept': 'application/json' } 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    this.reports = this.reports.filter(r => r.id !== report.id);
+                }
+            })
+            .catch(err => alert('Gagal menghapus laporan: ' + err.message));
+        },
+        clearAllResolved() {
+            if (!confirm('Hapus semua laporan yang telah berstatus Selesai?')) return;
+            fetch('/api/admin/reports/delete?id=all_resolved', { 
+                method: 'POST', 
+                headers: { 'Accept': 'application/json' } 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    this.reports = this.reports.filter(r => r.status !== 'resolved');
+                }
+            })
+            .catch(err => alert('Gagal membersihkan laporan: ' + err.message));
+        }
+    }">
+        <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            
+            <!-- Header Banner -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E2DC] pb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-lg bg-rose-500 text-white font-extrabold text-[10px] uppercase font-title tracking-wider">
+                            USER FEEDBACK & ISSUES
+                        </span>
+                        <template x-if="countPending > 0">
+                            <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-extrabold animate-pulse" x-text="countPending + ' Perlu Ditangani'"></span>
+                        </template>
+                    </div>
+                    <h2 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2 mt-1">
+                        <i data-lucide="flag" class="w-5 h-5 text-rose-500"></i> Laporan Video Anime Error
+                    </h2>
+                    <p class="text-xs text-[#55555B] mt-0.5">Daftar laporan kendala pemutaran video, server mati, dan subtitle yang dikirimkan oleh pengunjung website.</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="clearAllResolved()" :disabled="countResolved === 0"
+                        class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-rose-50 text-gray-700 hover:text-rose-600 border border-gray-200 text-xs font-bold transition-all flex items-center gap-1.5 font-title cursor-pointer disabled:opacity-40">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Bersihkan Selesai (<span x-text="countResolved"></span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Counters -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="p-4 rounded-2xl bg-[#F8F8F6] border border-[#E2E2DC]">
+                    <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wider font-title">Total Seluruh Laporan</div>
+                    <div class="text-2xl font-extrabold text-[#17171B] font-title mt-1" x-text="reports.length + ' Laporan'"></div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Tercatat di Database Lokal</div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200">
+                    <div class="text-[11px] font-bold text-rose-700 uppercase tracking-wider font-title">Belum Ditangani (Pending)</div>
+                    <div class="text-2xl font-extrabold text-rose-600 font-title mt-1" x-text="countPending + ' Judul'"></div>
+                    <div class="text-[10px] text-rose-500 mt-0.5">Membutuhkan Pemeriksaan Server</div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                    <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider font-title">Laporan Selesai Ditangani</div>
+                    <div class="text-2xl font-extrabold text-emerald-600 font-title mt-1" x-text="countResolved + ' Selesai'"></div>
+                    <div class="text-[10px] text-emerald-500 mt-0.5">Server / Subtitle Telah Normal</div>
+                </div>
+            </div>
+
+            <!-- Filters & Search Toolbar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-1.5 bg-[#F8F8F6] p-1 rounded-xl border border-[#E2E2DC] text-xs font-title font-bold">
+                    <button type="button" @click="reportFilter = 'all'"
+                        :class="reportFilter === 'all' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                        class="px-3 py-1.5 rounded-lg transition-all">
+                        Semua (<span x-text="reports.length"></span>)
+                    </button>
+                    <button type="button" @click="reportFilter = 'pending'"
+                        :class="reportFilter === 'pending' ? 'bg-rose-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                        class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
+                        <span>Belum Selesai</span>
+                        <span class="px-1.5 py-0.2 bg-white/20 rounded-full text-[10px]" x-text="countPending"></span>
+                    </button>
+                    <button type="button" @click="reportFilter = 'resolved'"
+                        :class="reportFilter === 'resolved' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                        class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
+                        <span>Selesai</span>
+                        <span class="px-1.5 py-0.2 bg-white/20 rounded-full text-[10px]" x-text="countResolved"></span>
+                    </button>
+                </div>
+
+                <!-- Search Box -->
+                <div class="relative w-full sm:w-72">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" x-model="searchQuery" placeholder="Cari anime, pelapor, atau masalah..."
+                        class="w-full pl-9 pr-3 py-2 bg-[#F8F8F6] border border-[#E2E2DC] rounded-xl text-xs text-[#17171B] placeholder-gray-400 focus:outline-none focus:border-[#FFCC00] transition-colors">
+                </div>
+            </div>
+
+            <!-- Reports Table -->
+            <div class="overflow-x-auto rounded-2xl border border-[#E2E2DC]">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-[#F8F8F6] text-gray-500 font-title font-bold uppercase tracking-wider text-[10px] border-b border-[#E2E2DC]">
+                        <tr>
+                            <th class="py-3 px-4">Anime & Episode</th>
+                            <th class="py-3 px-4">Kategori Masalah</th>
+                            <th class="py-3 px-4">Server & URL</th>
+                            <th class="py-3 px-4">Pelapor & Catatan</th>
+                            <th class="py-3 px-4 text-center">Status</th>
+                            <th class="py-3 px-4 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#E2E2DC] bg-white">
+                        <template x-if="filteredReports.length === 0">
+                            <tr>
+                                <td colspan="6" class="py-12 text-center text-gray-400">
+                                    <div class="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mx-auto mb-2">
+                                        <i data-lucide="inbox" class="w-6 h-6"></i>
+                                    </div>
+                                    <p class="font-title font-bold text-xs text-gray-600">Tidak ada laporan error</p>
+                                    <p class="text-[11px] mt-0.5 text-gray-400">Semua anime dan server video berfungsi dengan normal.</p>
+                                </td>
+                            </tr>
+                        </template>
+
+                        <template x-for="(report, idx) in filteredReports" :key="report.id">
+                            <tr class="hover:bg-[#F8F8F6] transition-colors" :class="report.status === 'resolved' ? 'opacity-70 bg-gray-50/50' : ''">
+                                <!-- Anime & Episode Info -->
+                                <td class="py-3 px-4">
+                                    <div class="font-bold text-[#17171B] font-title flex items-center gap-1.5">
+                                        <span x-text="report.anime_title"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="px-2 py-0.5 rounded bg-[#17171B] text-[#FFCC00] font-mono text-[10px] font-bold" x-text="'Eps ' + (report.episode_num || '1')"></span>
+                                        <a :href="'/anime/' + report.anime_slug + '/?ep=' + (report.episode_num || '1')" target="_blank"
+                                            class="text-[10px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-semibold">
+                                            <i data-lucide="external-link" class="w-3 h-3"></i> Tonton & Cek
+                                        </a>
+                                    </div>
+                                </td>
+
+                                <!-- Issue Category Badge -->
+                                <td class="py-3 px-4">
+                                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold font-title inline-flex items-center gap-1"
+                                        :class="{
+                                            'bg-rose-100 text-rose-800 border border-rose-200': report.issue_type === 'video_broken',
+                                            'bg-amber-100 text-amber-800 border border-amber-200': report.issue_type === 'server_down',
+                                            'bg-blue-100 text-blue-800 border border-blue-200': report.issue_type === 'subtitle_missing',
+                                            'bg-purple-100 text-purple-800 border border-purple-200': report.issue_type === 'audio_broken',
+                                            'bg-orange-100 text-orange-800 border border-orange-200': report.issue_type === 'wrong_ep',
+                                            'bg-gray-100 text-gray-800 border border-gray-200': report.issue_type === 'other' || !report.issue_type
+                                        }"
+                                        x-text="report.issue_label || 'Video Rusak'">
+                                    </span>
+                                </td>
+
+                                <!-- Server Info -->
+                                <td class="py-3 px-4">
+                                    <div class="font-mono text-[11px] text-[#17171B] font-bold" x-text="report.server_name || 'Blogger / DesuStream'"></div>
+                                    <template x-if="report.video_url">
+                                        <div class="text-[10px] text-gray-400 font-mono truncate max-w-xs mt-0.5" x-text="report.video_url"></div>
+                                    </template>
+                                </td>
+
+                                <!-- Reporter & Note -->
+                                <td class="py-3 px-4 max-w-xs">
+                                    <div class="text-[11px] font-medium text-gray-600">
+                                        <span>Dari: </span><strong class="text-[#17171B]" x-text="report.reporter || 'Tamu'"></strong>
+                                    </div>
+                                    <template x-if="report.note">
+                                        <div class="mt-1 p-2 rounded-lg bg-gray-50 border border-gray-200 text-[11px] text-gray-700 italic">
+                                            "<span x-text="report.note"></span>"
+                                        </div>
+                                    </template>
+                                </td>
+
+                                <!-- Status Badge -->
+                                <td class="py-3 px-4 text-center">
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase font-title inline-flex items-center gap-1"
+                                        :class="report.status === 'resolved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200 animate-pulse'">
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="report.status === 'resolved' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                                        <span x-text="report.status === 'resolved' ? 'Selesai' : 'Belum Ditangani'"></span>
+                                    </span>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- Toggle Status Button -->
+                                        <button type="button" @click="toggleStatus(report)"
+                                            :class="report.status === 'resolved' ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'"
+                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold font-title transition-all flex items-center gap-1 cursor-pointer">
+                                            <i :data-lucide="report.status === 'resolved' ? 'rotate-ccw' : 'check'" class="w-3.5 h-3.5"></i>
+                                            <span x-text="report.status === 'resolved' ? 'Buka Lagi' : 'Tandai Selesai'"></span>
+                                        </button>
+
+                                        <!-- Delete Button -->
+                                        <button type="button" @click="deleteItem(report)"
+                                            class="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                            title="Hapus Laporan">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
     </div>
 

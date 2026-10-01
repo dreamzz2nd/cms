@@ -102,26 +102,33 @@
                 </div>
             </div>
 
-            <!-- Catatan Diagnostik Pemutaran Video Box -->
+            <!-- Catatan Diagnostik & Lapor Error Box -->
             <div
-                class="bg-white border border-[#E2E2DC] rounded-xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                class="bg-white border border-[#E2E2DC] rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-start gap-3">
                     <div
-                        class="w-8 h-8 rounded-lg bg-[#17171B] flex items-center justify-center text-[#FFCC00] shrink-0 mt-0.5">
-                        <i data-lucide="info" class="w-4 h-4"></i>
+                        class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                     </div>
                     <div>
-                        <h4 class="text-xs font-bold font-title text-[#1A1A1E]">Catatan Diagnostik Pemutaran Video</h4>
+                        <h4 class="text-xs font-bold font-title text-[#1A1A1E]">Ada Masalah / Video Tidak Bisa Diputar?</h4>
                         <p class="text-xs text-[#55555B] leading-relaxed mt-0.5">
-                            Jika kendala berlanjut setelah mengganti server, silakan nonaktifkan ekstensi AdBlock atau
-                            periksa koneksi DNS provider kamu. Tim teknis Nyamimo telah menerima laporan otomatis ini.
+                            Jika video buffering, layar hitam, atau subtitle rusak, kamu bisa lapor langsung ke admin agar segera diperbaiki.
                         </p>
                     </div>
                 </div>
-                <button onclick="alert('Log diagnostik disalin ke clipboard!');"
-                    class="px-4 py-2 rounded-lg bg-[#F6F5F0] hover:bg-[#E2E2DC] border border-[#E2E2DC] text-[#1A1A1E] font-bold text-xs transition-colors shrink-0 font-title">
-                    Salin Log Error
-                </button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="openErrorReportModal()"
+                        class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-all flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95 font-title cursor-pointer">
+                        <i data-lucide="flag" class="w-4 h-4"></i>
+                        <span>Lapor Anime Error</span>
+                    </button>
+                    <button onclick="copyDiagnosticsLog()"
+                        class="px-3 py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] border border-[#E2E2DC] text-[#55555B] hover:text-[#17171B] font-bold text-xs transition-colors font-title cursor-pointer"
+                        title="Salin Data Diagnostik Player">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Below Video Player Ad Slot -->
@@ -418,13 +425,19 @@
         visibility: visible !important;
     }
 
+    {{$useNyamimoPlayer := (siteConfig).BloggerPlayer.UseNyamimoPlayer}}
     {{$bOffset := 45}}
     {{$bFsOffset := 60}}
-    {{if (siteConfig).BloggerPlayer.BottomOffsetPx}}
-        {{$bOffset = (siteConfig).BloggerPlayer.BottomOffsetPx}}
-    {{end}}
-    {{if (siteConfig).BloggerPlayer.FullscreenOffsetPx}}
-        {{$bFsOffset = (siteConfig).BloggerPlayer.FullscreenOffsetPx}}
+    {{if not $useNyamimoPlayer}}
+        {{$bOffset = 0}}
+        {{$bFsOffset = 0}}
+    {{else}}
+        {{if (siteConfig).BloggerPlayer.BottomOffsetPx}}
+            {{$bOffset = (siteConfig).BloggerPlayer.BottomOffsetPx}}
+        {{end}}
+        {{if (siteConfig).BloggerPlayer.FullscreenOffsetPx}}
+            {{$bFsOffset = (siteConfig).BloggerPlayer.FullscreenOffsetPx}}
+        {{end}}
     {{end}}
 
     #player-iframe, #player-iframe-container iframe {
@@ -434,13 +447,16 @@
         pointer-events: auto !important;
     }
 
+    {{if and $useNyamimoPlayer (gt $bOffset 0)}}
     #player-iframe[src*="blogger.com"],
     #player-iframe-container iframe[src*="blogger.com"] {
         width: 100% !important;
         height: calc(100% + {{$bOffset}}px) !important;
         margin-bottom: -{{$bOffset}}px !important;
     }
+    {{end}}
 
+    {{if and $useNyamimoPlayer (gt $bFsOffset 0)}}
     #nyamimo-player-wrapper:fullscreen #player-iframe[src*="blogger.com"],
     #nyamimo-player-wrapper:-webkit-full-screen #player-iframe[src*="blogger.com"],
     #nyamimo-player-wrapper:-moz-full-screen #player-iframe[src*="blogger.com"],
@@ -456,6 +472,7 @@
         height: calc(100% + {{$bFsOffset}}px) !important;
         margin-bottom: -{{$bFsOffset}}px !important;
     }
+    {{end}}
 
     #nyamimo-player-wrapper:fullscreen #player-watermark-overlay,
     #nyamimo-player-wrapper:-webkit-full-screen #player-watermark-overlay,
@@ -473,8 +490,7 @@
 <!-- Video Player Box Container (Black Background Neutral) -->
 <div id="nyamimo-player-wrapper"
     class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-[#2B2B32] shadow-2xl select-none group flex flex-col justify-between cursor-pointer"
-    onmousemove="onPlayerMouseMove()"
-    onmouseleave="onPlayerMouseLeave()">
+    {{if $useNyamimoPlayer}}onmousemove="onPlayerMouseMove()" onmouseleave="onPlayerMouseLeave()"{{end}}>
 
     <!-- Underlay: Native Video / Iframe (Cleanly clipped to hide default server bars) -->
     <div id="player-iframe-container"
@@ -500,6 +516,7 @@
         {{end}}
     </div>
 
+    {{if $useNyamimoPlayer}}
     <!-- Double Click Ripple Overlay Indicator -->
     <div id="seek-ripple-left" class="absolute left-8 top-1/2 -translate-y-1/2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-md border border-[#FFCC00]/40 text-[#FFCC00] font-bold text-xs flex items-center gap-1.5 opacity-0 pointer-events-none transition-all duration-300 z-40">
         <i data-lucide="rotate-ccw" class="w-4 h-4"></i> -10s
@@ -510,6 +527,7 @@
 
     <!-- Transparent Click Surface to pass interactions to video -->
     <div id="player-click-surface" class="absolute inset-0 z-20 pointer-events-none"></div>
+    {{end}}
 
     <!-- Video Player Watermark Overlay (Positioned in 4 Corners with Fullscreen Support) -->
     {{$wm := (siteConfig).Watermark}}
@@ -532,6 +550,7 @@
     {{end}}
     {{end}}
 
+    {{if $useNyamimoPlayer}}
     <!-- ===== NYAMIMO CINEMATIC OVERLAY UI (Matches Screenshot 2) ===== -->
     <div id="nyamimo-cinema-overlay"
         class="absolute inset-0 z-30 flex flex-col justify-between pointer-events-none transition-opacity duration-300 opacity-100 p-3 sm:p-5">
@@ -699,6 +718,7 @@
 
         </div>
     </div>
+    {{end}}
 </div>
 
 <!-- Hidden container to safely pass Go template variables to client-side JS -->
@@ -2199,6 +2219,240 @@
             activeEpEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
     }, 300);
-    // ===== End Seamless Episode Switching =====
+    // ===== Error Reporting & Diagnostics Helpers =====
+    function copyDiagnosticsLog() {
+        var info = 'NYAMIMO DIAGNOSTICS LOG\n' +
+            'Anime: ' + currentAnimeTitle + ' (' + currentAnimeSlug + ')\n' +
+            'Episode: ' + currentActiveEp + '\n' +
+            'Active Server: ' + (window.activeServerTitle || 'Default') + '\n' +
+            'Video URL: ' + (window.activeVideoUrl || 'N/A') + '\n' +
+            'User Agent: ' + navigator.userAgent + '\n' +
+            'Timestamp: ' + new Date().toISOString();
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(info).then(function() {
+                showServerToast('📋 Data diagnostik player berhasil disalin!');
+            });
+        } else {
+            prompt('Salin log berikut:', info);
+        }
+    }
+
+    function openErrorReportModal() {
+        var modal = document.getElementById('report-error-modal');
+        if (!modal) return;
+        
+        // Auto-fill context
+        var animeEl = document.getElementById('report-anime-title');
+        var epEl = document.getElementById('report-ep-num');
+        var serverEl = document.getElementById('report-server-name');
+        
+        if (animeEl) animeEl.textContent = currentAnimeTitle || 'Anime';
+        if (epEl) epEl.textContent = 'Episode ' + (currentActiveEp || '1');
+        
+        var activeSrv = 'Server Otomatis';
+        var activeBtn = document.querySelector('.server-btn.active-server');
+        if (activeBtn) {
+            activeSrv = activeBtn.getAttribute('data-video-title') || activeSrv;
+        }
+        if (serverEl) serverEl.textContent = activeSrv;
+        
+        // Reset state
+        document.getElementById('report-form-view').style.display = 'block';
+        document.getElementById('report-success-view').style.display = 'none';
+        document.getElementById('report-submit-btn').disabled = false;
+        document.getElementById('report-submit-btn').innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Kirim Laporan';
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        if (window.lucide) lucide.createIcons();
+    }
+
+    function closeErrorReportModal() {
+        var modal = document.getElementById('report-error-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function submitAnimeReport(event) {
+        if (event) event.preventDefault();
+        var submitBtn = document.getElementById('report-submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Mengirim...';
+        }
+
+        var selectedRadio = document.querySelector('input[name="report_issue_type"]:checked');
+        var issueType = selectedRadio ? selectedRadio.value : 'video_broken';
+        var issueLabel = selectedRadio ? selectedRadio.getAttribute('data-label') : 'Video Rusak';
+        var note = document.getElementById('report-note') ? document.getElementById('report-note').value : '';
+        
+        var activeSrv = 'Server Otomatis';
+        var activeVideo = '';
+        var activeBtn = document.querySelector('.server-btn.active-server');
+        if (activeBtn) {
+            activeSrv = activeBtn.getAttribute('data-video-title') || activeSrv;
+            activeVideo = activeBtn.getAttribute('data-video-path') || '';
+        }
+
+        var payload = {
+            anime_slug: currentAnimeSlug,
+            anime_title: currentAnimeTitle,
+            episode_num: currentActiveEp,
+            server_name: activeSrv,
+            video_url: activeVideo,
+            issue_type: issueType,
+            issue_label: issueLabel,
+            note: note
+        };
+
+        fetch('/api/report-error', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data && data.success) {
+                document.getElementById('report-form-view').style.display = 'none';
+                document.getElementById('report-success-view').style.display = 'block';
+                if (window.lucide) lucide.createIcons();
+                setTimeout(function() {
+                    closeErrorReportModal();
+                }, 2800);
+            } else {
+                alert('Gagal mengirim laporan: ' + (data ? data.message : 'Unknown error'));
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Kirim Laporan';
+                }
+            }
+        })
+        .catch(function(err) {
+            alert('Gagal mengirim laporan. Pastikan koneksi internet lancar.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Kirim Laporan';
+            }
+        });
+
+        return false;
+    }
 </script>
+
+<!-- ===== MODAL LAPOR ANIME ERROR ===== -->
+<div id="report-error-modal" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all">
+    <div class="relative w-full max-w-lg bg-[#17171B] border border-[#2B2B32] rounded-3xl shadow-2xl overflow-hidden text-white font-sans animate-fade-in">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between p-5 sm:p-6 border-b border-white/10 bg-[#212126]">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-500 shadow-md">
+                    <i data-lucide="flag" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold font-title text-white">Lapor Video / Anime Error</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Bantu kami memperbaiki masalah streaming dengan cepat</p>
+                </div>
+            </div>
+            <button onclick="closeErrorReportModal()" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <div id="report-form-view" class="p-5 sm:p-6 space-y-5">
+            <!-- Anime Context Badge -->
+            <div class="p-3.5 rounded-2xl bg-[#0E0E12] border border-white/10 space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono text-[#FFCC00] uppercase font-bold tracking-wider">Target Anime</span>
+                    <span id="report-server-name" class="text-[10px] font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">Server</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <h4 id="report-anime-title" class="text-sm font-bold text-white font-title truncate">Anime Title</h4>
+                    <span id="report-ep-num" class="px-2 py-0.5 rounded bg-[#FFCC00] text-[#17171B] font-extrabold text-[10px] font-title shrink-0">Episode 1</span>
+                </div>
+            </div>
+
+            <!-- Problem Selector -->
+            <div class="space-y-2.5">
+                <label class="text-xs font-bold font-title text-gray-300">Pilih Jenis Kendala / Masalah:</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFCC00] hover:bg-white/10 cursor-pointer transition-all">
+                        <input type="radio" name="report_issue_type" value="video_broken" data-label="Video Blank / Tidak Bisa Diputar" checked class="accent-[#FFCC00]">
+                        <span class="text-xs text-gray-200">🔴 Layar Hitam / Rusak</span>
+                    </label>
+
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFCC00] hover:bg-white/10 cursor-pointer transition-all">
+                        <input type="radio" name="report_issue_type" value="server_down" data-label="Server Mati / Loading Terus" class="accent-[#FFCC00]">
+                        <span class="text-xs text-gray-200">🟡 Server Loading Terus</span>
+                    </label>
+
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFCC00] hover:bg-white/10 cursor-pointer transition-all">
+                        <input type="radio" name="report_issue_type" value="subtitle_missing" data-label="Subtitle Hilang / Teks Rusak" class="accent-[#FFCC00]">
+                        <span class="text-xs text-gray-200">🔵 Subtitle Hilang / Rusak</span>
+                    </label>
+
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFCC00] hover:bg-white/10 cursor-pointer transition-all">
+                        <input type="radio" name="report_issue_type" value="audio_broken" data-label="Suara / Audio Bisu atau Rusak" class="accent-[#FFCC00]">
+                        <span class="text-xs text-gray-200">🟣 Suara Bisu / Rusak</span>
+                    </label>
+
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFCC00] hover:bg-white/10 cursor-pointer transition-all">
+                        <input type="radio" name="report_issue_type" value="wrong_ep" data-label="Episode Tertukar / Salah Judul" class="accent-[#FFCC00]">
+                        <span class="text-xs text-gray-200">🟠 Episode Tertukar</span>
+                    </label>
+
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFCC00] hover:bg-white/10 cursor-pointer transition-all">
+                        <input type="radio" name="report_issue_type" value="other" data-label="Masalah Lainnya" class="accent-[#FFCC00]">
+                        <span class="text-xs text-gray-200">⚪ Masalah Lainnya</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="space-y-1.5">
+                <label for="report-note" class="text-xs font-bold font-title text-gray-300">Catatan Tambahan (Opsional):</label>
+                <textarea id="report-note" rows="2" placeholder="Contoh: Menit ke 05:20 video macet atau subtitle tidak sync..."
+                    class="w-full bg-[#0E0E12] border border-white/10 rounded-xl p-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#FFCC00] transition-colors"></textarea>
+            </div>
+
+            <!-- Reporter Info & Action -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-white/10">
+                <div class="text-[11px] text-gray-400">
+                    <span>Pelapor: </span>
+                    <strong class="text-white">{{if .User}}@{{.User.Username}}{{else}}Tamu / Guest (Anonim){{end}}</strong>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeErrorReportModal()"
+                        class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white font-bold text-xs transition-colors font-title">
+                        Batal
+                    </button>
+                    <button type="button" id="report-submit-btn" onclick="submitAnimeReport(event)"
+                        class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-all shadow-lg flex items-center gap-2 font-title cursor-pointer">
+                        <i data-lucide="send" class="w-4 h-4"></i> Kirim Laporan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Screen -->
+        <div id="report-success-view" class="p-8 text-center space-y-4" style="display: none;">
+            <div class="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-lg">
+                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-extrabold text-white font-title">Laporan Berhasil Terkirim!</h3>
+                <p class="text-xs text-gray-300 max-w-sm mx-auto leading-relaxed">
+                    Terima kasih telah melapor. Laporan kamu langsung masuk ke Dashboard Admin Nyamimo dan akan segera ditindaklanjuti.
+                </p>
+            </div>
+            <button onclick="closeErrorReportModal()" class="px-6 py-2 rounded-xl bg-[#FFCC00] text-[#17171B] font-extrabold text-xs font-title shadow">
+                Tutup
+            </button>
+        </div>
+
+    </div>
+</div>
 {{end}}

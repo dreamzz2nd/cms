@@ -86,10 +86,54 @@
       "background_image": "/static/welcome_bg.jpg",
       "button_text": "MASUK",
       "allow_skip": true
+    },
+    "hero_carousel": {
+      "enabled": true,
+      "auto_slide": true,
+      "interval_ms": 5000,
+      "slides": [
+        {
+          "id": "slide-1",
+          "title": "Solo Leveling: Arise",
+          "subtitle": "Aksi, Fantasi • Korea \u0026 Jepang • Full 12 Episode",
+          "badge": "TOP 1 REKOMENDASI",
+          "background_url": "https://images.alphacoders.com/134/1349544.jpeg",
+          "object_url": "https://pngimg.com/d/sword_PNG5509.png",
+          "action_type": "anime",
+          "target_slug": "solo-leveling",
+          "order": 1,
+          "is_active": true
+        },
+        {
+          "id": "slide-2",
+          "title": "Gachiakuta",
+          "subtitle": "Shounen, Aksi, Supranatural • Subtitle Indonesia • BONES",
+          "badge": "DOLBY AUDIO",
+          "background_url": "https://images.alphacoders.com/136/1367097.jpeg",
+          "object_url": "",
+          "action_type": "anime",
+          "target_slug": "gachiakuta",
+          "order": 2,
+          "is_active": true
+        },
+        {
+          "id": "slide-3",
+          "title": "Demon Slayer: Infinity Castle",
+          "subtitle": "Petualangan, Iblis • Movie \u0026 Series • Ultra HD 1080p",
+          "badge": "VIP EXCLUSIVE",
+          "background_url": "https://images.alphacoders.com/134/1340156.jpeg",
+          "object_url": "",
+          "action_type": "anime",
+          "target_slug": "kimetsu-no-yaiba",
+          "order": 3,
+          "is_active": true
+        }
+      ]
     }
   },
   "blogger_player": {
-    "bottom_offset_px": 0,
-    "fullscreen_offset_px": 0
+    "use_nyamimo_player": false,
+    "bottom_offset_px": 45,
+    "fullscreen_offset_px": 60
   }
 }

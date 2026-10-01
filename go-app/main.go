@@ -276,8 +276,9 @@ type GDriveSettings struct {
 }
 
 type BloggerPlayerSettings struct {
-	BottomOffsetPx     int `json:"bottom_offset_px"`
-	FullscreenOffsetPx int `json:"fullscreen_offset_px"`
+	UseNyamimoPlayer   bool `json:"use_nyamimo_player"`
+	BottomOffsetPx     int  `json:"bottom_offset_px"`
+	FullscreenOffsetPx int  `json:"fullscreen_offset_px"`
 }
 
 type AppConfig struct {
@@ -320,6 +321,24 @@ type AdminDashboardData struct {
 	UniqueVisitors      int64
 	TodayUniqueVisitors int64
 	PopularPages        []PageViewStat
+	Reports             []AnimeErrorReport
+	UnresolvedReportsCount int
+}
+
+type AnimeErrorReport struct {
+	ID         string    `json:"id"`
+	AnimeSlug  string    `json:"anime_slug"`
+	AnimeTitle string    `json:"anime_title"`
+	EpisodeNum string    `json:"episode_num"`
+	ServerName string    `json:"server_name"`
+	VideoURL   string    `json:"video_url"`
+	IssueType  string    `json:"issue_type"`
+	IssueLabel string    `json:"issue_label"`
+	Note       string    `json:"note"`
+	Reporter   string    `json:"reporter"`
+	IP         string    `json:"ip"`
+	CreatedAt  time.Time `json:"created_at"`
+	Status     string    `json:"status"` // "pending", "resolved"
 }
 
 type ResolutionOption struct {
@@ -543,6 +562,10 @@ var (
 	watchHistoryDbLock sync.RWMutex
 	watchHistoryFile   = "data/watch_history.json"
 
+	reportsDb     = make([]AnimeErrorReport, 0)
+	reportsDbLock sync.RWMutex
+	reportsFile   = "data/reports.json"
+
 	appConfig     AppConfig
 	appConfigLock sync.RWMutex
 	configPath    = "config.json"
@@ -578,6 +601,93 @@ func saveWatchHistoryUnsafe() {
 	if data, err := json.MarshalIndent(watchHistoryDb, "", "  "); err == nil {
 		_ = os.WriteFile(watchHistoryFile, data, 0644)
 	}
+}
+
+func initReportsDb() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := os.ReadFile(reportsFile); err == nil {
+		reportsDbLock.Lock()
+		_ = json.Unmarshal(data, &reportsDb)
+		reportsDbLock.Unlock()
+	}
+}
+
+func saveReportsDbUnsafe() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := json.MarshalIndent(reportsDb, "", "  "); err == nil {
+		_ = os.WriteFile(reportsFile, data, 0644)
+	}
+}
+
+func addErrorReport(report AnimeErrorReport) {
+	reportsDbLock.Lock()
+	defer reportsDbLock.Unlock()
+	reportsDb = append([]AnimeErrorReport{report}, reportsDb...)
+	if len(reportsDb) > 1000 {
+		reportsDb = reportsDb[:1000]
+	}
+	saveReportsDbUnsafe()
+}
+
+func getAllReports() []AnimeErrorReport {
+	reportsDbLock.RLock()
+	defer reportsDbLock.RUnlock()
+	res := make([]AnimeErrorReport, len(reportsDb))
+	copy(res, reportsDb)
+	return res
+}
+
+func getUnresolvedReportsCount() int {
+	reportsDbLock.RLock()
+	defer reportsDbLock.RUnlock()
+	count := 0
+	for _, r := range reportsDb {
+		if r.Status == "pending" || r.Status == "" {
+			count++
+		}
+	}
+	return count
+}
+
+func updateReportStatus(reportID, status string) bool {
+	reportsDbLock.Lock()
+	defer reportsDbLock.Unlock()
+	found := false
+	for i := range reportsDb {
+		if reportsDb[i].ID == reportID {
+			reportsDb[i].Status = status
+			found = true
+			break
+		}
+	}
+	if found {
+		saveReportsDbUnsafe()
+	}
+	return found
+}
+
+func deleteReport(reportID string) bool {
+	reportsDbLock.Lock()
+	defer reportsDbLock.Unlock()
+	if reportID == "all_resolved" {
+		filtered := make([]AnimeErrorReport, 0)
+		for _, r := range reportsDb {
+			if r.Status != "resolved" {
+				filtered = append(filtered, r)
+			}
+		}
+		reportsDb = filtered
+		saveReportsDbUnsafe()
+		return true
+	}
+	for i := range reportsDb {
+		if reportsDb[i].ID == reportID {
+			reportsDb = append(reportsDb[:i], reportsDb[i+1:]...)
+			saveReportsDbUnsafe()
+			return true
+		}
+	}
+	return false
 }
 
 func formatTimeSec(sec float64) string {
@@ -848,6 +958,11 @@ func getDefaultConfig() AppConfig {
 				},
 			},
 		},
+		BloggerPlayer: BloggerPlayerSettings{
+			UseNyamimoPlayer:   true,
+			BottomOffsetPx:     45,
+			FullscreenOffsetPx: 60,
+		},
 	}
 }
 
@@ -985,6 +1100,7 @@ func main() {
 	loadAppConfig()
 	initUsersDb()
 	initWatchHistory()
+	initReportsDb()
 
 	mux := http.NewServeMux()
 
@@ -1017,6 +1133,11 @@ func main() {
 	mux.HandleFunc("/api/register", handleRegisterAPI)
 	mux.HandleFunc("/logout", handleLogout)
 	mux.HandleFunc("/api/user/heartbeat", handleUserHeartbeat)
+
+	// Anime Error Reporting Routes
+	mux.HandleFunc("/api/report-error", handleReportErrorAPI)
+	mux.HandleFunc("/api/admin/reports/resolve", handleAdminResolveReport)
+	mux.HandleFunc("/api/admin/reports/delete", handleAdminDeleteReport)
 
 	// Native Android App REST API V1 (Bilibili Style Architecture)
 	mux.HandleFunc("/api/v1/home", handleAPIV1Home)
@@ -2285,11 +2406,19 @@ func formatPlayerHTML(rawIframe template.HTML, videoURL string) (template.HTML, 
 		if targetURL != "" {
 			targetURL = strings.ReplaceAll(targetURL, "token==", "token=")
 			bOffset := appConfig.BloggerPlayer.BottomOffsetPx
-			if bOffset == 0 {
+			if !appConfig.BloggerPlayer.UseNyamimoPlayer {
+				bOffset = 0
+			} else if bOffset == 0 {
 				bOffset = 45
 			}
+			var styleAttr string
+			if bOffset > 0 {
+				styleAttr = fmt.Sprintf(`style="height: calc(100%% + %dpx); margin-bottom: -%dpx;"`, bOffset, bOffset)
+			} else {
+				styleAttr = `style="width: 100%; height: 100%;"`
+			}
 			html := fmt.Sprintf(`
-			<iframe id="player-iframe" src="%s" class="w-full border-0 pointer-events-auto" style="height: calc(100%% + %dpx); margin-bottom: -%dpx;" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>`, targetURL, bOffset, bOffset)
+			<iframe id="player-iframe" src="%s" class="w-full border-0 pointer-events-auto" %s allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>`, targetURL, styleAttr)
 			return template.HTML(html), targetURL
 		}
 	}
@@ -2375,8 +2504,11 @@ func getQualityRank(title, videoURL string) int {
 		base = 721
 	}
 
-	// ⭐ Mega Server is Top Priority for unmatched reliability and playback speed
-	if strings.Contains(t, "mega") || strings.Contains(videoURL, "mega.nz") {
+	// ⭐ #1 Top Priority: Blogspot / Blogger (Fastest Google CDN video stream)
+	if strings.Contains(t, "blogspot") || strings.Contains(t, "blogger") || strings.Contains(videoURL, "blogger.com") {
+		base += 20000
+	} else if strings.Contains(t, "mega") || strings.Contains(videoURL, "mega.nz") {
+		// ⭐ #2 Priority: Mega Server
 		base += 10000
 	} else if strings.Contains(t, "vidhide") || strings.Contains(t, "filedon") || strings.Contains(t, "solidfiles") || strings.Contains(t, "mp4upload") || strings.Contains(t, "yourupload") {
 		base += 2000
@@ -2608,11 +2740,13 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 	if strings.Contains(targetURL, "wibufile") {
-		req.Header.Set("Referer", "https://samehadaku.email/")
+		req.Header.Set("Referer", "https://samehadaku.li/")
 	} else if strings.Contains(targetURL, "blogger.com") {
 		req.Header.Set("Referer", "https://www.blogger.com/")
 	} else if strings.Contains(targetURL, "desustream") || strings.Contains(targetURL, "playdesu") || strings.Contains(targetURL, "ondesu") || strings.Contains(targetURL, "desudrive") || strings.Contains(targetURL, "otakudesu") {
 		req.Header.Set("Referer", "https://otakudesu.blog/")
+	} else if strings.Contains(targetURL, "samehadaku") {
+		req.Header.Set("Referer", "https://samehadaku.li/")
 	} else {
 		req.Header.Set("Referer", "https://otakudesu.blog/")
 	}
@@ -2856,9 +2990,11 @@ func handleAdminDashboard(w http.ResponseWriter, r *http.Request) {
 		ServerUptime:       uptimeStr,
 		UsersList:          usersList,
 		HeroAnime:          heroAnime,
-		PopularAnime:       popularItems,
-		Config:             getAppConfig(),
-		SavedNotice:        r.URL.Query().Get("saved"),
+		PopularAnime:           popularItems,
+		Config:                 getAppConfig(),
+		SavedNotice:            r.URL.Query().Get("saved"),
+		Reports:                getAllReports(),
+		UnresolvedReportsCount: getUnresolvedReportsCount(),
 	}
 
 	renderPage(w, "admin_dashboard.html", data)
@@ -3069,6 +3205,7 @@ func handleAdminBloggerPlayerSave(w http.ResponseWriter, r *http.Request) {
 
 	_ = r.ParseForm()
 
+	useNyamimo := r.FormValue("use_nyamimo_player") == "1" || r.FormValue("use_nyamimo_player") == "true" || r.FormValue("use_nyamimo_player") == "on"
 	offset, _ := strconv.Atoi(r.FormValue("bottom_offset_px"))
 	fsOffset, _ := strconv.Atoi(r.FormValue("fullscreen_offset_px"))
 
@@ -3084,6 +3221,7 @@ func handleAdminBloggerPlayerSave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	appConfigLock.Lock()
+	appConfig.BloggerPlayer.UseNyamimoPlayer = useNyamimo
 	appConfig.BloggerPlayer.BottomOffsetPx = offset
 	appConfig.BloggerPlayer.FullscreenOffsetPx = fsOffset
 	_ = saveAppConfigUnsafe()
@@ -3372,6 +3510,203 @@ func handleAdminScraperLogs(w http.ResponseWriter, r *http.Request) {
 		"logs":    logs,
 		"stats":   stats,
 	})
+}
+
+// User & Guest Error Reporting API
+func handleReportErrorAPI(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"success":false,"message":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var reqData struct {
+		AnimeSlug      string `json:"anime_slug"`
+		AnimeSlugAlt   string `json:"animeSlug"`
+		AnimeTitle     string `json:"anime_title"`
+		AnimeTitleAlt  string `json:"animeTitle"`
+		EpisodeNum     string `json:"episode_num"`
+		EpisodeNumAlt  string `json:"episodeNum"`
+		ServerName     string `json:"server_name"`
+		ServerNameAlt  string `json:"serverName"`
+		VideoURL       string `json:"video_url"`
+		VideoURLAlt    string `json:"videoUrl"`
+		IssueType      string `json:"issue_type"`
+		IssueTypeAlt   string `json:"issueType"`
+		IssueLabel     string `json:"issue_label"`
+		IssueLabelAlt  string `json:"issueLabel"`
+		Note           string `json:"note"`
+	}
+
+	if strings.Contains(r.Header.Get("Content-Type"), "application/json") {
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err == nil && len(bodyBytes) > 0 {
+			_ = json.Unmarshal(bodyBytes, &reqData)
+		}
+	} else {
+		_ = r.ParseForm()
+		reqData.AnimeSlug = strings.TrimSpace(r.FormValue("anime_slug"))
+		if reqData.AnimeSlug == "" {
+			reqData.AnimeSlug = strings.TrimSpace(r.FormValue("animeSlug"))
+		}
+		reqData.AnimeTitle = strings.TrimSpace(r.FormValue("anime_title"))
+		if reqData.AnimeTitle == "" {
+			reqData.AnimeTitle = strings.TrimSpace(r.FormValue("animeTitle"))
+		}
+		reqData.EpisodeNum = strings.TrimSpace(r.FormValue("episode_num"))
+		if reqData.EpisodeNum == "" {
+			reqData.EpisodeNum = strings.TrimSpace(r.FormValue("episodeNum"))
+		}
+		reqData.ServerName = strings.TrimSpace(r.FormValue("server_name"))
+		if reqData.ServerName == "" {
+			reqData.ServerName = strings.TrimSpace(r.FormValue("serverName"))
+		}
+		reqData.VideoURL = strings.TrimSpace(r.FormValue("video_url"))
+		if reqData.VideoURL == "" {
+			reqData.VideoURL = strings.TrimSpace(r.FormValue("videoUrl"))
+		}
+		reqData.IssueType = strings.TrimSpace(r.FormValue("issue_type"))
+		if reqData.IssueType == "" {
+			reqData.IssueType = strings.TrimSpace(r.FormValue("issueType"))
+		}
+		reqData.IssueLabel = strings.TrimSpace(r.FormValue("issue_label"))
+		if reqData.IssueLabel == "" {
+			reqData.IssueLabel = strings.TrimSpace(r.FormValue("issueLabel"))
+		}
+		reqData.Note = strings.TrimSpace(r.FormValue("note"))
+	}
+
+	if reqData.AnimeSlug == "" && reqData.AnimeSlugAlt != "" {
+		reqData.AnimeSlug = reqData.AnimeSlugAlt
+	}
+	if reqData.AnimeTitle == "" && reqData.AnimeTitleAlt != "" {
+		reqData.AnimeTitle = reqData.AnimeTitleAlt
+	}
+	if reqData.EpisodeNum == "" && reqData.EpisodeNumAlt != "" {
+		reqData.EpisodeNum = reqData.EpisodeNumAlt
+	}
+	if reqData.ServerName == "" && reqData.ServerNameAlt != "" {
+		reqData.ServerName = reqData.ServerNameAlt
+	}
+	if reqData.VideoURL == "" && reqData.VideoURLAlt != "" {
+		reqData.VideoURL = reqData.VideoURLAlt
+	}
+	if reqData.IssueType == "" && reqData.IssueTypeAlt != "" {
+		reqData.IssueType = reqData.IssueTypeAlt
+	}
+	if reqData.IssueLabel == "" && reqData.IssueLabelAlt != "" {
+		reqData.IssueLabel = reqData.IssueLabelAlt
+	}
+
+	if reqData.AnimeTitle == "" && reqData.AnimeSlug != "" {
+		reqData.AnimeTitle = reqData.AnimeSlug
+	}
+	if reqData.IssueLabel == "" {
+		switch reqData.IssueType {
+		case "video_broken":
+			reqData.IssueLabel = "Video Tidak Bisa Diputar / Layar Hitam"
+		case "server_down":
+			reqData.IssueLabel = "Server Rusak / Loading Berputar Terus"
+		case "subtitle_missing":
+			reqData.IssueLabel = "Subtitle Hilang / Teks Tidak Pas"
+		case "audio_broken":
+			reqData.IssueLabel = "Suara / Audio Tidak Ada / Rusak"
+		case "wrong_ep":
+			reqData.IssueLabel = "Episode Tertukar / Salah Judul"
+		default:
+			reqData.IssueLabel = "Masalah Pemutaran Lainnya"
+		}
+	}
+
+	reporterName := "Tamu (Guest)"
+	if user := getLoggedInUser(r); user != nil {
+		reporterName = fmt.Sprintf("@%s (%s)", user.Username, user.Name)
+	}
+
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+
+	report := AnimeErrorReport{
+		ID:         fmt.Sprintf("rep-%d", time.Now().UnixNano()),
+		AnimeSlug:  reqData.AnimeSlug,
+		AnimeTitle: reqData.AnimeTitle,
+		EpisodeNum: reqData.EpisodeNum,
+		ServerName: reqData.ServerName,
+		VideoURL:   reqData.VideoURL,
+		IssueType:  reqData.IssueType,
+		IssueLabel: reqData.IssueLabel,
+		Note:       reqData.Note,
+		Reporter:   reporterName,
+		IP:         ip,
+		CreatedAt:  time.Now(),
+		Status:     "pending",
+	}
+
+	addErrorReport(report)
+
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Laporan kamu berhasil dikirim! Tim teknis Nyamimo akan segera memperbaikinya.",
+		"report":  report,
+	})
+}
+
+func handleAdminResolveReport(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, `{"success":false,"message":"Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	reportID := r.URL.Query().Get("id")
+	if reportID == "" {
+		reportID = r.FormValue("id")
+	}
+	status := r.URL.Query().Get("status")
+	if status == "" {
+		status = r.FormValue("status")
+	}
+	if status == "" {
+		status = "resolved"
+	}
+
+	updated := updateReportStatus(reportID, status)
+	if r.Header.Get("Accept") == "application/json" || strings.Contains(r.Header.Get("Content-Type"), "application/json") {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": updated,
+			"status":  status,
+		})
+		return
+	}
+
+	http.Redirect(w, r, "/admin?saved=report#reports", http.StatusSeeOther)
+}
+
+func handleAdminDeleteReport(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, `{"success":false,"message":"Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	reportID := r.URL.Query().Get("id")
+	if reportID == "" {
+		reportID = r.FormValue("id")
+	}
+
+	deleted := deleteReport(reportID)
+	if r.Header.Get("Accept") == "application/json" || strings.Contains(r.Header.Get("Content-Type"), "application/json") {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": deleted,
+		})
+		return
+	}
+
+	http.Redirect(w, r, "/admin?saved=report#reports", http.StatusSeeOther)
 }
 
 func cleanGDriveFolderID(input string) string {

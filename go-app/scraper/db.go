@@ -135,6 +135,23 @@ func (s *AnimeStore) GetStats() ScraperStats {
 	}
 }
 
+func (s *AnimeStore) IsStopped() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if !s.IsRunning {
+		return true
+	}
+	if s.stopChan == nil {
+		return true
+	}
+	select {
+	case <-s.stopChan:
+		return true
+	default:
+		return false
+	}
+}
+
 func (s *AnimeStore) ResetCatalog() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
