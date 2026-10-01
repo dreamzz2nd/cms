@@ -1123,6 +1123,10 @@ func main() {
 	// SEO Routes
 	mux.HandleFunc("/robots.txt", handleRobotsTXT)
 	mux.HandleFunc("/sitemap.xml", handleSitemapXML)
+	mux.HandleFunc("/googlefc8232336168e2c6.html", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprintf(w, "google-site-verification: googlefc8232336168e2c6.html")
+	})
 
 	// Auth Routes (Local & Google OAuth 2.0)
 	mux.HandleFunc("/login", handleLogin)
