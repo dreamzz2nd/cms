@@ -566,10 +566,32 @@ var (
 	reportsDbLock sync.RWMutex
 	reportsFile   = "data/reports.json"
 
+	heroCarouselFile   = "data/carousel.json"
+	heroCarouselDbLock sync.RWMutex
+
 	appConfig     AppConfig
 	appConfigLock sync.RWMutex
 	configPath    = "config.json"
 )
+
+func initHeroCarousel() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := os.ReadFile(heroCarouselFile); err == nil {
+		heroCarouselDbLock.Lock()
+		_ = json.Unmarshal(data, &customHeroCarousel)
+		heroCarouselDbLock.Unlock()
+	}
+	if len(customHeroCarousel) == 0 {
+		customHeroCarousel = defaultHDHeroAnime
+	}
+}
+
+func saveHeroCarouselUnsafe() {
+	_ = os.MkdirAll("data", 0755)
+	if data, err := json.MarshalIndent(customHeroCarousel, "", "  "); err == nil {
+		_ = os.WriteFile(heroCarouselFile, data, 0644)
+	}
+}
 
 func initUsersDb() {
 	_ = os.MkdirAll("data", 0755)
@@ -1099,6 +1121,7 @@ func main() {
 	api = client.NewAPIClient(10 * time.Minute)
 	loadAppConfig()
 	initUsersDb()
+	initHeroCarousel()
 	initWatchHistory()
 	initReportsDb()
 
@@ -1166,6 +1189,8 @@ func main() {
 	mux.HandleFunc("/api/admin/user/delete", handleAdminUserDelete)
 	mux.HandleFunc("/api/admin/user/toggle-adfree", handleAdminUserToggleAdFree)
 	mux.HandleFunc("/api/admin/carousel/add", handleAdminCarouselAdd)
+	mux.HandleFunc("/api/admin/carousel/edit", handleAdminCarouselEdit)
+	mux.HandleFunc("/api/admin/carousel/move", handleAdminCarouselMove)
 	mux.HandleFunc("/api/admin/carousel/delete", handleAdminCarouselDelete)
 	mux.HandleFunc("/api/admin/carousel/reset", handleAdminCarouselReset)
 	mux.HandleFunc("/api/admin/wallpaper-search", handleWallpaperSearch)
@@ -4193,7 +4218,11 @@ func handleAdminCarousel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	heroAnime := customHeroCarousel
+	heroCarouselDbLock.RLock()
+	heroAnime := make([]client.AnimeItem, len(customHeroCarousel))
+	copy(heroAnime, customHeroCarousel)
+	heroCarouselDbLock.RUnlock()
+
 	if len(heroAnime) == 0 {
 		heroAnime = defaultHDHeroAnime
 	}
@@ -4215,38 +4244,134 @@ func handleAdminCarouselAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
-	title := r.FormValue("title")
-	slug := r.FormValue("slug")
-	img := r.FormValue("img")
-	episode := r.FormValue("episode")
-	score := r.FormValue("score")
-	animeType := r.FormValue("type")
+	title := strings.TrimSpace(r.FormValue("title"))
+	slug := strings.TrimSpace(r.FormValue("slug"))
+	img := strings.TrimSpace(r.FormValue("img"))
+	episode := strings.TrimSpace(r.FormValue("episode"))
+	score := strings.TrimSpace(r.FormValue("score"))
+	animeType := strings.TrimSpace(r.FormValue("type"))
+
+	if slug == "" {
+		slug = slugifyAnimeTitle(title)
+	}
 
 	newItem := client.AnimeItem{
 		Title:   title,
 		Slug:    slug,
+		Link:    "/anime/" + slug,
 		Img:     client.GetCleanHDImage(img),
 		Episode: episode,
 		Score:   score,
 		Type:    animeType,
 	}
 
+	heroCarouselDbLock.Lock()
+	defer heroCarouselDbLock.Unlock()
+
 	if len(customHeroCarousel) == 0 {
-		var newAnimeResp client.AnimeListResponse
-		_ = api.GetJSON("/new-anime", &newAnimeResp)
-		items := newAnimeResp.Data
-		if len(items) > 8 {
-			items = items[:8]
-		}
-		for i := range items {
-			items[i].Slug = client.GetAnimeSlug(items[i])
-			items[i].Score = client.FormatScore(items[i].Score)
-			items[i].Img = client.GetCleanHDImage(items[i].Img)
-		}
-		customHeroCarousel = items
+		customHeroCarousel = append([]client.AnimeItem{}, defaultHDHeroAnime...)
 	}
 
 	customHeroCarousel = append([]client.AnimeItem{newItem}, customHeroCarousel...)
+	saveHeroCarouselUnsafe()
+
+	http.Redirect(w, r, "/admin/carousel", http.StatusSeeOther)
+}
+
+func handleAdminCarouselEdit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin/carousel", http.StatusSeeOther)
+		return
+	}
+
+	r.ParseForm()
+	origSlug := strings.TrimSpace(r.FormValue("orig_slug"))
+	title := strings.TrimSpace(r.FormValue("title"))
+	slug := strings.TrimSpace(r.FormValue("slug"))
+	img := strings.TrimSpace(r.FormValue("img"))
+	episode := strings.TrimSpace(r.FormValue("episode"))
+	score := strings.TrimSpace(r.FormValue("score"))
+	animeType := strings.TrimSpace(r.FormValue("type"))
+
+	if slug == "" {
+		slug = slugifyAnimeTitle(title)
+	}
+
+	heroCarouselDbLock.Lock()
+	defer heroCarouselDbLock.Unlock()
+
+	if len(customHeroCarousel) == 0 {
+		customHeroCarousel = append([]client.AnimeItem{}, defaultHDHeroAnime...)
+	}
+
+	found := false
+	for i := range customHeroCarousel {
+		if customHeroCarousel[i].Slug == origSlug || (origSlug == "" && customHeroCarousel[i].Slug == slug) {
+			customHeroCarousel[i].Title = title
+			customHeroCarousel[i].Slug = slug
+			customHeroCarousel[i].Link = "/anime/" + slug
+			if img != "" {
+				customHeroCarousel[i].Img = client.GetCleanHDImage(img)
+			}
+			customHeroCarousel[i].Episode = episode
+			customHeroCarousel[i].Score = score
+			customHeroCarousel[i].Type = animeType
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		newItem := client.AnimeItem{
+			Title:   title,
+			Slug:    slug,
+			Link:    "/anime/" + slug,
+			Img:     client.GetCleanHDImage(img),
+			Episode: episode,
+			Score:   score,
+			Type:    animeType,
+		}
+		customHeroCarousel = append(customHeroCarousel, newItem)
+	}
+
+	saveHeroCarouselUnsafe()
+	http.Redirect(w, r, "/admin/carousel", http.StatusSeeOther)
+}
+
+func handleAdminCarouselMove(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin/carousel", http.StatusSeeOther)
+		return
+	}
+
+	r.ParseForm()
+	slug := strings.TrimSpace(r.FormValue("slug"))
+	dir := strings.TrimSpace(r.FormValue("dir")) // "up" or "down"
+
+	heroCarouselDbLock.Lock()
+	defer heroCarouselDbLock.Unlock()
+
+	if len(customHeroCarousel) == 0 {
+		customHeroCarousel = append([]client.AnimeItem{}, defaultHDHeroAnime...)
+	}
+
+	idx := -1
+	for i, it := range customHeroCarousel {
+		if it.Slug == slug {
+			idx = i
+			break
+		}
+	}
+
+	if idx != -1 {
+		if dir == "up" && idx > 0 {
+			customHeroCarousel[idx], customHeroCarousel[idx-1] = customHeroCarousel[idx-1], customHeroCarousel[idx]
+		} else if dir == "down" && idx < len(customHeroCarousel)-1 {
+			customHeroCarousel[idx], customHeroCarousel[idx+1] = customHeroCarousel[idx+1], customHeroCarousel[idx]
+		}
+		saveHeroCarouselUnsafe()
+	}
+
 	http.Redirect(w, r, "/admin/carousel", http.StatusSeeOther)
 }
 
@@ -4257,21 +4382,13 @@ func handleAdminCarouselDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
-	slug := r.FormValue("slug")
+	slug := strings.TrimSpace(r.FormValue("slug"))
+
+	heroCarouselDbLock.Lock()
+	defer heroCarouselDbLock.Unlock()
 
 	if len(customHeroCarousel) == 0 {
-		var newAnimeResp client.AnimeListResponse
-		_ = api.GetJSON("/new-anime", &newAnimeResp)
-		items := newAnimeResp.Data
-		if len(items) > 8 {
-			items = items[:8]
-		}
-		for i := range items {
-			items[i].Slug = client.GetAnimeSlug(items[i])
-			items[i].Score = client.FormatScore(items[i].Score)
-			items[i].Img = client.GetCleanHDImage(items[i].Img)
-		}
-		customHeroCarousel = items
+		customHeroCarousel = append([]client.AnimeItem{}, defaultHDHeroAnime...)
 	}
 
 	var filtered []client.AnimeItem
@@ -4281,6 +4398,7 @@ func handleAdminCarouselDelete(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	customHeroCarousel = filtered
+	saveHeroCarouselUnsafe()
 
 	http.Redirect(w, r, "/admin/carousel", http.StatusSeeOther)
 }
@@ -4291,7 +4409,12 @@ func handleAdminCarouselReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customHeroCarousel = nil
+	heroCarouselDbLock.Lock()
+	defer heroCarouselDbLock.Unlock()
+
+	customHeroCarousel = append([]client.AnimeItem{}, defaultHDHeroAnime...)
+	saveHeroCarouselUnsafe()
+
 	http.Redirect(w, r, "/admin/carousel", http.StatusSeeOther)
 }
 
@@ -5078,6 +5201,135 @@ type WallpaperItem struct {
 	Title      string `json:"title"`
 }
 
+type aniListMediaItem struct {
+	ID    int `json:"id"`
+	Title struct {
+		Romaji  string `json:"romaji"`
+		English string `json:"english"`
+	} `json:"title"`
+	BannerImage string `json:"bannerImage"`
+	CoverImage  struct {
+		ExtraLarge string `json:"extraLarge"`
+		Large      string `json:"large"`
+	} `json:"coverImage"`
+}
+
+type aniListSearchResponse struct {
+	Data struct {
+		Page struct {
+			Media []aniListMediaItem `json:"media"`
+		} `json:"Page"`
+	} `json:"data"`
+}
+
+func fetchAniListWallpapers(query string) []WallpaperItem {
+	if strings.TrimSpace(query) == "" {
+		return nil
+	}
+	graphqlQuery := `query ($search: String) { Page(page: 1, perPage: 8) { media(search: $search, type: ANIME, sort: SEARCH_MATCH) { id title { romaji english } bannerImage coverImage { extraLarge large } } } }`
+	reqBody, err := json.Marshal(map[string]interface{}{
+		"query":     graphqlQuery,
+		"variables": map[string]string{"search": query},
+	})
+	if err != nil {
+		return nil
+	}
+
+	req, err := http.NewRequest("POST", "https://graphql.anilist.co", bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "NyamimoAnimeStream/2.0")
+
+	c := &http.Client{Timeout: 4 * time.Second}
+	resp, err := c.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	var result aniListSearchResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil
+	}
+
+	var items []WallpaperItem
+	for _, m := range result.Data.Page.Media {
+		title := m.Title.Romaji
+		if m.Title.English != "" {
+			title = m.Title.English
+		}
+		if m.BannerImage != "" {
+			items = append(items, WallpaperItem{
+				URL:        m.BannerImage,
+				Resolution: "Official Banner Landscape HD",
+				Title:      title,
+			})
+		}
+		if m.CoverImage.ExtraLarge != "" {
+			items = append(items, WallpaperItem{
+				URL:        m.CoverImage.ExtraLarge,
+				Resolution: "Official Poster ExtraLarge HD",
+				Title:      title,
+			})
+		}
+	}
+	return items
+}
+
+type wallhavenSearchResponse struct {
+	Data []struct {
+		Path       string `json:"path"`
+		Resolution string `json:"resolution"`
+	} `json:"data"`
+}
+
+func fetchWallhavenWallpapers(query string) []WallpaperItem {
+	if strings.TrimSpace(query) == "" {
+		return nil
+	}
+	targetURL := "https://wallhaven.cc/api/v1/search?q=" + url.QueryEscape(query) + "&categories=010&purity=100&sorting=relevance"
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	c := &http.Client{Timeout: 4 * time.Second}
+	resp, err := c.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	var result wallhavenSearchResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil
+	}
+
+	var items []WallpaperItem
+	for _, it := range result.Data {
+		if it.Path != "" {
+			res := it.Resolution
+			if res == "" {
+				res = "4K / HD Landscape"
+			} else {
+				res = res + " HD"
+			}
+			items = append(items, WallpaperItem{
+				URL:        it.Path,
+				Resolution: res,
+				Title:      query,
+			})
+			if len(items) >= 8 {
+				break
+			}
+		}
+	}
+	return items
+}
+
 func fetchWallpaperCat(slug string) ([]WallpaperItem, error) {
 	targetURL := "https://wallpapercat.com/" + slug
 	req, err := http.NewRequest("GET", targetURL, nil)
@@ -5086,7 +5338,7 @@ func fetchWallpaperCat(slug string) ([]WallpaperItem, error) {
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
-	c := &http.Client{Timeout: 5 * time.Second}
+	c := &http.Client{Timeout: 4 * time.Second}
 	resp, err := c.Do(req)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status %d", resp.StatusCode)
@@ -5173,9 +5425,34 @@ func handleWallpaperSearch(w http.ResponseWriter, r *http.Request) {
 		q = r.URL.Query().Get("title")
 	}
 	q = strings.TrimSpace(q)
+	targetID := r.URL.Query().Get("target")
+	if targetID == "" {
+		targetID = "input-img"
+	}
 
 	var items []WallpaperItem
+	seenURL := make(map[string]bool)
+
 	if q != "" {
+		// 1. AniList Official High-Res Banners & Covers
+		aniItems := fetchAniListWallpapers(q)
+		for _, it := range aniItems {
+			if !seenURL[it.URL] {
+				seenURL[it.URL] = true
+				items = append(items, it)
+			}
+		}
+
+		// 2. Wallhaven 4K/HD Wallpapers
+		wallhavenItems := fetchWallhavenWallpapers(q)
+		for _, it := range wallhavenItems {
+			if !seenURL[it.URL] {
+				seenURL[it.URL] = true
+				items = append(items, it)
+			}
+		}
+
+		// 3. WallpaperCat
 		slugBase := slugifyAnimeTitle(q)
 		candidates := []string{
 			slugBase + "-wallpapers",
@@ -5187,7 +5464,12 @@ func handleWallpaperSearch(w http.ResponseWriter, r *http.Request) {
 		for _, cand := range candidates {
 			found, err := fetchWallpaperCat(cand)
 			if err == nil && len(found) > 0 {
-				items = found
+				for _, it := range found {
+					if !seenURL[it.URL] {
+						seenURL[it.URL] = true
+						items = append(items, it)
+					}
+				}
 				break
 			}
 		}
@@ -5207,27 +5489,27 @@ func handleWallpaperSearch(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	titleLabel := q
 	if titleLabel == "" {
-		titleLabel = "Koleksi Rekomendasi"
+		titleLabel = "Koleksi Rekomendasi HD"
 	}
 	fmt.Fprintf(w, `<div class="space-y-3 pt-3 border-t border-[#E2E2DC]">
 		<div class="flex items-center justify-between">
-			<span class="text-xs font-bold text-[#1A1A1E]">Pilih Wallpaper WallpaperCat HD ("%s"):</span>
-			<span class="text-[11px] font-semibold text-[#55555B]">%d gambar HD</span>
+			<span class="text-xs font-bold text-[#1A1A1E]">Pilih Wallpaper HD ("%s"):</span>
+			<span class="text-[11px] font-semibold text-[#55555B]">%d gambar HD ditemukan</span>
 		</div>
-		<div class="grid grid-cols-2 gap-2.5 max-h-64 overflow-y-auto p-2 border border-[#E2E2DC] rounded-xl bg-[#F6F5F0]">`, template.HTMLEscapeString(titleLabel), len(items))
+		<div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-2 border border-[#E2E2DC] rounded-xl bg-[#F6F5F0]">`, template.HTMLEscapeString(titleLabel), len(items))
 
 	for _, item := range items {
-		fmt.Fprintf(w, `<div class="group relative rounded-lg overflow-hidden border border-[#E2E2DC] hover:border-[#FFCC00] cursor-pointer transition-all bg-black aspect-video shadow-sm" onclick="selectWallpaper('%s')">
+		fmt.Fprintf(w, `<div class="group relative rounded-lg overflow-hidden border border-[#E2E2DC] hover:border-[#FFCC00] cursor-pointer transition-all bg-black aspect-video shadow-sm" onclick="selectWallpaper('%s', '%s')">
 			<img src="%s" alt="Wallpaper" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-			<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#FFCC00] text-[#17171B] shadow">
+			<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#FFCC00] text-[#17171B] shadow truncate max-w-[90%%]">
 				%s
 			</span>
 			<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
 				<span class="px-2 py-1 rounded bg-[#FFCC00] text-[#17171B] text-[10px] font-extrabold shadow flex items-center gap-1">
-					✓ Pilih Gambar Ini
+					✓ Pilih Gambar
 				</span>
 			</div>
-		</div>`, template.HTMLEscapeString(item.URL), template.HTMLEscapeString(item.URL), template.HTMLEscapeString(item.Resolution))
+		</div>`, template.HTMLEscapeString(item.URL), template.HTMLEscapeString(targetID), template.HTMLEscapeString(item.URL), template.HTMLEscapeString(item.Resolution))
 	}
 
 	fmt.Fprintf(w, `</div></div>`)
