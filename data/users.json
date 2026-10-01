@@ -4,7 +4,8 @@
     "password": "admin123",
     "name": "Administrator Nyamimo",
     "role": "admin",
-    "last_seen_at": 1790690319
+    "last_seen_at": 1790818497,
+    "ad_free": true
   },
   "ibrahimrizky696": {
     "username": "ibrahimrizky696",

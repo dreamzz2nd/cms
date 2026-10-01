@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0B0B0E">
+
+    <!-- Background Poster Image (Collage / Admin Custom URL) -->
+    <ImageView
+        android:id="@+id/ivWelcomeBg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/welcome_bg_default" />
+
+    <!-- Dark Cinematic Gradient Overlay -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/welcome_gradient_overlay" />
+
+    <!-- Top Action Bar (LATER / Lewati Button) -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="36dp">
+
+        <TextView
+            android:id="@+id/btnWelcomeLater"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/bg_later_badge"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="7dp"
+            android:text="LATER"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:clickable="true"
+            android:focusable="true" />
+    </RelativeLayout>
+
+    <!-- Bottom Content Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="36dp">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/tvWelcomeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selamat Datang"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <!-- Description / Message -->
+        <TextView
+            android:id="@+id/tvWelcomeDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:lineSpacingExtra="4dp"
+            android:text="Ingin tahu tentang konten paling populer di seluruh dunia? Semuanya ada di Nyamimo, jutaan konten luar biasa ada di sini, serial anime, film, dan masih banyak lagi! Ayo dan jadi salah satu dari kami!"
+            android:textColor="#C5C5CE"
+            android:textSize="13sp" />
+
+        <!-- Primary Action Button: MASUK -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnWelcomeLogin"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_welcome_btn"
+            android:text="MASUK"
+            android:textColor="#000000"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="true" />
+
+    </LinearLayout>
+
+</RelativeLayout>

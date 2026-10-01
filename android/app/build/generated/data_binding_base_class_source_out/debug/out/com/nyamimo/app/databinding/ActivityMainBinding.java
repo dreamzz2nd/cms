@@ -13,11 +13,13 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
+import androidx.viewpager2.widget.ViewPager2;
 import com.nyamimo.app.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -28,6 +30,9 @@ public final class ActivityMainBinding implements ViewBinding {
   private final RelativeLayout rootView;
 
   @NonNull
+  public final CardView bannerVipCard;
+
+  @NonNull
   public final LinearLayout bottomBarBstation;
 
   @NonNull
@@ -35,6 +40,12 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final TextView btnClearSearchHistory;
+
+  @NonNull
+  public final ImageView btnKoleksiClearSearch;
+
+  @NonNull
+  public final ImageView btnKoleksiToggleSearch;
 
   @NonNull
   public final LinearLayout btnNavCari;
@@ -61,6 +72,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView btnOfflineRetry;
 
   @NonNull
+  public final LinearLayout btnProfileJoinVip;
+
+  @NonNull
   public final ImageView btnReelsBookmark;
 
   @NonNull
@@ -79,7 +93,52 @@ public final class ActivityMainBinding implements ViewBinding {
   public final ImageView btnRefreshTrending;
 
   @NonNull
-  public final TextView btnViewAllHistory;
+  public final TextView btnSeeAllContinue;
+
+  @NonNull
+  public final LinearLayout cardDiamondMine;
+
+  @NonNull
+  public final LinearLayout cardKoinMine;
+
+  @NonNull
+  public final LinearLayout cardVipMine;
+
+  @NonNull
+  public final TextView chipAksesAll;
+
+  @NonNull
+  public final TextView chipAksesGratis;
+
+  @NonNull
+  public final TextView chipAksesVip;
+
+  @NonNull
+  public final TextView chipGenreAksi;
+
+  @NonNull
+  public final TextView chipGenreAll;
+
+  @NonNull
+  public final TextView chipGenreBergairah;
+
+  @NonNull
+  public final TextView chipGenreFantasi;
+
+  @NonNull
+  public final TextView chipGenreFiksi;
+
+  @NonNull
+  public final TextView chipGenreIsekai;
+
+  @NonNull
+  public final TextView chipGenreKomedi;
+
+  @NonNull
+  public final TextView chipGenrePercintaan;
+
+  @NonNull
+  public final TextView chipGenrePetualangan;
 
   @NonNull
   public final TextView chipNewsFall2026;
@@ -100,13 +159,70 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView chipNewsWinter2027;
 
   @NonNull
+  public final TextView chipSortPopuler;
+
+  @NonNull
+  public final TextView chipSortRating;
+
+  @NonNull
+  public final TextView chipSortTerbaru;
+
+  @NonNull
+  public final TextView chipSubtitleAll;
+
+  @NonNull
+  public final TextView chipSubtitleDub;
+
+  @NonNull
+  public final TextView chipSubtitleManual;
+
+  @NonNull
+  public final TextView chipWilayahAll;
+
+  @NonNull
+  public final TextView chipWilayahChina;
+
+  @NonNull
+  public final TextView chipWilayahJapan;
+
+  @NonNull
+  public final TextView chipWilayahKorea;
+
+  @NonNull
+  public final LinearLayout continueWatchingSection;
+
+  @NonNull
+  public final EditText etKoleksiSearch;
+
+  @NonNull
   public final EditText etTopSearch;
 
   @NonNull
   public final NestedScrollView exploreContainer;
 
   @NonNull
+  public final LinearLayout filterRowAkses;
+
+  @NonNull
+  public final LinearLayout filterRowGenre;
+
+  @NonNull
+  public final LinearLayout filterRowSort;
+
+  @NonNull
+  public final LinearLayout filterRowSubtitle;
+
+  @NonNull
+  public final LinearLayout filterRowWilayah;
+
+  @NonNull
   public final LinearLayout headerContainer;
+
+  @NonNull
+  public final RelativeLayout heroCarouselSection;
+
+  @NonNull
+  public final View indicatorKoleksiAnime;
 
   @NonNull
   public final ImageView ivMainLoadingGif;
@@ -136,19 +252,46 @@ public final class ActivityMainBinding implements ViewBinding {
   public final ImageView ivProfileAvatar;
 
   @NonNull
+  public final ImageView ivProfileNotif;
+
+  @NonNull
+  public final ImageView ivProfileScan;
+
+  @NonNull
   public final ImageView ivReelsMusicDisc;
 
   @NonNull
   public final ImageView ivReelsPosterBg;
 
   @NonNull
+  public final NestedScrollView koleksiContainer;
+
+  @NonNull
+  public final LinearLayout layoutHeroDots;
+
+  @NonNull
+  public final LinearLayout layoutKoleksiFilters;
+
+  @NonNull
+  public final LinearLayout layoutKoleksiSearchBar;
+
+  @NonNull
+  public final LinearLayout layoutKoleksiTopTabs;
+
+  @NonNull
   public final LinearLayout layoutNewsError;
+
+  @NonNull
+  public final LinearLayout layoutProfileHeaderClick;
+
+  @NonNull
+  public final LinearLayout layoutVipBtnGroup;
 
   @NonNull
   public final LinearLayout mainLoadingOverlay;
 
   @NonNull
-  public final LinearLayout menuAcara;
+  public final LinearLayout menuBahasaSaya;
 
   @NonNull
   public final LinearLayout menuFavoritSaya;
@@ -160,7 +303,13 @@ public final class ActivityMainBinding implements ViewBinding {
   public final LinearLayout menuPengaturan;
 
   @NonNull
-  public final LinearLayout menuPusatBantuan;
+  public final LinearLayout menuPointsSaya;
+
+  @NonNull
+  public final LinearLayout menuRiwayatSaya;
+
+  @NonNull
+  public final LinearLayout menuSubtitleSaya;
 
   @NonNull
   public final LinearLayout menuUnduhanSaya;
@@ -178,13 +327,16 @@ public final class ActivityMainBinding implements ViewBinding {
   public final RelativeLayout reelsContainer;
 
   @NonNull
+  public final RecyclerView rvContinueWatching;
+
+  @NonNull
+  public final RecyclerView rvKoleksiGrid;
+
+  @NonNull
   public final RecyclerView rvMimoNewsList;
 
   @NonNull
   public final RecyclerView rvPosterGrid;
-
-  @NonNull
-  public final RecyclerView rvProfileHistory;
 
   @NonNull
   public final RecyclerView rvSearchHistory;
@@ -214,6 +366,27 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tabFantasy;
 
   @NonNull
+  public final TextView tabKoleksiAnime;
+
+  @NonNull
+  public final LinearLayout tabKoleksiAnimeWrapper;
+
+  @NonNull
+  public final TextView tabKoleksiDonghua;
+
+  @NonNull
+  public final TextView tabKoleksiDrama;
+
+  @NonNull
+  public final TextView tabKoleksiFilm;
+
+  @NonNull
+  public final TextView tabKoleksiShorts;
+
+  @NonNull
+  public final TextView tabKoleksiVariety;
+
+  @NonNull
   public final TextView tabPopuler;
 
   @NonNull
@@ -232,6 +405,12 @@ public final class ActivityMainBinding implements ViewBinding {
   public final LinearLayout trendingSection;
 
   @NonNull
+  public final TextView tvKoleksiEmpty;
+
+  @NonNull
+  public final TextView tvKoleksiHeaderTitle;
+
+  @NonNull
   public final TextView tvNavCari;
 
   @NonNull
@@ -244,7 +423,16 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvNavSaya;
 
   @NonNull
+  public final TextView tvProfileJoinVipText;
+
+  @NonNull
   public final TextView tvProfileName;
+
+  @NonNull
+  public final TextView tvProfileVipSubtitle;
+
+  @NonNull
+  public final TextView tvProfileVipTitle;
 
   @NonNull
   public final TextView tvReelsAuthor;
@@ -261,48 +449,86 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final TextView tvReelsTitle;
 
-  private ActivityMainBinding(@NonNull RelativeLayout rootView,
+  @NonNull
+  public final ViewPager2 vpHeroCarousel;
+
+  private ActivityMainBinding(@NonNull RelativeLayout rootView, @NonNull CardView bannerVipCard,
       @NonNull LinearLayout bottomBarBstation, @NonNull ImageView btnClearSearch,
-      @NonNull TextView btnClearSearchHistory, @NonNull LinearLayout btnNavCari,
+      @NonNull TextView btnClearSearchHistory, @NonNull ImageView btnKoleksiClearSearch,
+      @NonNull ImageView btnKoleksiToggleSearch, @NonNull LinearLayout btnNavCari,
       @NonNull LinearLayout btnNavFab, @NonNull LinearLayout btnNavHome,
       @NonNull LinearLayout btnNavNews, @NonNull LinearLayout btnNavSaya,
       @NonNull Button btnNewsRetry, @NonNull LinearLayout btnOfflineOpenDownloads,
-      @NonNull TextView btnOfflineRetry, @NonNull ImageView btnReelsBookmark,
-      @NonNull ImageView btnReelsComment, @NonNull ImageView btnReelsLike,
-      @NonNull ImageView btnReelsShare, @NonNull ImageView btnRefreshNews,
-      @NonNull ImageView btnRefreshTrending, @NonNull TextView btnViewAllHistory,
+      @NonNull TextView btnOfflineRetry, @NonNull LinearLayout btnProfileJoinVip,
+      @NonNull ImageView btnReelsBookmark, @NonNull ImageView btnReelsComment,
+      @NonNull ImageView btnReelsLike, @NonNull ImageView btnReelsShare,
+      @NonNull ImageView btnRefreshNews, @NonNull ImageView btnRefreshTrending,
+      @NonNull TextView btnSeeAllContinue, @NonNull LinearLayout cardDiamondMine,
+      @NonNull LinearLayout cardKoinMine, @NonNull LinearLayout cardVipMine,
+      @NonNull TextView chipAksesAll, @NonNull TextView chipAksesGratis,
+      @NonNull TextView chipAksesVip, @NonNull TextView chipGenreAksi,
+      @NonNull TextView chipGenreAll, @NonNull TextView chipGenreBergairah,
+      @NonNull TextView chipGenreFantasi, @NonNull TextView chipGenreFiksi,
+      @NonNull TextView chipGenreIsekai, @NonNull TextView chipGenreKomedi,
+      @NonNull TextView chipGenrePercintaan, @NonNull TextView chipGenrePetualangan,
       @NonNull TextView chipNewsFall2026, @NonNull TextView chipNewsNow,
       @NonNull TextView chipNewsSchedule, @NonNull TextView chipNewsSpring2027,
       @NonNull TextView chipNewsUpcoming, @NonNull TextView chipNewsWinter2027,
+      @NonNull TextView chipSortPopuler, @NonNull TextView chipSortRating,
+      @NonNull TextView chipSortTerbaru, @NonNull TextView chipSubtitleAll,
+      @NonNull TextView chipSubtitleDub, @NonNull TextView chipSubtitleManual,
+      @NonNull TextView chipWilayahAll, @NonNull TextView chipWilayahChina,
+      @NonNull TextView chipWilayahJapan, @NonNull TextView chipWilayahKorea,
+      @NonNull LinearLayout continueWatchingSection, @NonNull EditText etKoleksiSearch,
       @NonNull EditText etTopSearch, @NonNull NestedScrollView exploreContainer,
-      @NonNull LinearLayout headerContainer, @NonNull ImageView ivMainLoadingGif,
-      @NonNull ImageView ivNavCari, @NonNull ImageView ivNavFabIcon, @NonNull ImageView ivNavHome,
-      @NonNull ImageView ivNavNews, @NonNull ImageView ivNavSaya,
-      @NonNull ImageView ivNewsLoadingGif, @NonNull ImageView ivOfflineCatGif,
-      @NonNull ImageView ivProfileAvatar, @NonNull ImageView ivReelsMusicDisc,
-      @NonNull ImageView ivReelsPosterBg, @NonNull LinearLayout layoutNewsError,
-      @NonNull LinearLayout mainLoadingOverlay, @NonNull LinearLayout menuAcara,
+      @NonNull LinearLayout filterRowAkses, @NonNull LinearLayout filterRowGenre,
+      @NonNull LinearLayout filterRowSort, @NonNull LinearLayout filterRowSubtitle,
+      @NonNull LinearLayout filterRowWilayah, @NonNull LinearLayout headerContainer,
+      @NonNull RelativeLayout heroCarouselSection, @NonNull View indicatorKoleksiAnime,
+      @NonNull ImageView ivMainLoadingGif, @NonNull ImageView ivNavCari,
+      @NonNull ImageView ivNavFabIcon, @NonNull ImageView ivNavHome, @NonNull ImageView ivNavNews,
+      @NonNull ImageView ivNavSaya, @NonNull ImageView ivNewsLoadingGif,
+      @NonNull ImageView ivOfflineCatGif, @NonNull ImageView ivProfileAvatar,
+      @NonNull ImageView ivProfileNotif, @NonNull ImageView ivProfileScan,
+      @NonNull ImageView ivReelsMusicDisc, @NonNull ImageView ivReelsPosterBg,
+      @NonNull NestedScrollView koleksiContainer, @NonNull LinearLayout layoutHeroDots,
+      @NonNull LinearLayout layoutKoleksiFilters, @NonNull LinearLayout layoutKoleksiSearchBar,
+      @NonNull LinearLayout layoutKoleksiTopTabs, @NonNull LinearLayout layoutNewsError,
+      @NonNull LinearLayout layoutProfileHeaderClick, @NonNull LinearLayout layoutVipBtnGroup,
+      @NonNull LinearLayout mainLoadingOverlay, @NonNull LinearLayout menuBahasaSaya,
       @NonNull LinearLayout menuFavoritSaya, @NonNull LinearLayout menuFeedback,
-      @NonNull LinearLayout menuPengaturan, @NonNull LinearLayout menuPusatBantuan,
+      @NonNull LinearLayout menuPengaturan, @NonNull LinearLayout menuPointsSaya,
+      @NonNull LinearLayout menuRiwayatSaya, @NonNull LinearLayout menuSubtitleSaya,
       @NonNull LinearLayout menuUnduhanSaya, @NonNull LinearLayout mimoNewsContainer,
       @NonNull LinearLayout offlineContainer, @NonNull NestedScrollView profileContainer,
-      @NonNull RelativeLayout reelsContainer, @NonNull RecyclerView rvMimoNewsList,
-      @NonNull RecyclerView rvPosterGrid, @NonNull RecyclerView rvProfileHistory,
-      @NonNull RecyclerView rvSearchHistory, @NonNull RecyclerView rvSearchResultsList,
-      @NonNull RecyclerView rvTrendingTags, @NonNull LinearLayout searchHistorySection,
-      @NonNull LinearLayout searchPillBar, @NonNull SwipeRefreshLayout swipeRefresh,
-      @NonNull TextView tabAction, @NonNull TextView tabAnime, @NonNull TextView tabFantasy,
+      @NonNull RelativeLayout reelsContainer, @NonNull RecyclerView rvContinueWatching,
+      @NonNull RecyclerView rvKoleksiGrid, @NonNull RecyclerView rvMimoNewsList,
+      @NonNull RecyclerView rvPosterGrid, @NonNull RecyclerView rvSearchHistory,
+      @NonNull RecyclerView rvSearchResultsList, @NonNull RecyclerView rvTrendingTags,
+      @NonNull LinearLayout searchHistorySection, @NonNull LinearLayout searchPillBar,
+      @NonNull SwipeRefreshLayout swipeRefresh, @NonNull TextView tabAction,
+      @NonNull TextView tabAnime, @NonNull TextView tabFantasy, @NonNull TextView tabKoleksiAnime,
+      @NonNull LinearLayout tabKoleksiAnimeWrapper, @NonNull TextView tabKoleksiDonghua,
+      @NonNull TextView tabKoleksiDrama, @NonNull TextView tabKoleksiFilm,
+      @NonNull TextView tabKoleksiShorts, @NonNull TextView tabKoleksiVariety,
       @NonNull TextView tabPopuler, @NonNull HorizontalScrollView tabScrollView,
       @NonNull TextView tabTamat, @NonNull TextView tabUntukAnda,
       @NonNull LinearLayout tabsContainer, @NonNull LinearLayout trendingSection,
+      @NonNull TextView tvKoleksiEmpty, @NonNull TextView tvKoleksiHeaderTitle,
       @NonNull TextView tvNavCari, @NonNull TextView tvNavHome, @NonNull TextView tvNavNews,
-      @NonNull TextView tvNavSaya, @NonNull TextView tvProfileName, @NonNull TextView tvReelsAuthor,
+      @NonNull TextView tvNavSaya, @NonNull TextView tvProfileJoinVipText,
+      @NonNull TextView tvProfileName, @NonNull TextView tvProfileVipSubtitle,
+      @NonNull TextView tvProfileVipTitle, @NonNull TextView tvReelsAuthor,
       @NonNull TextView tvReelsCommentCount, @NonNull TextView tvReelsLikeCount,
-      @NonNull TextView tvReelsMusic, @NonNull TextView tvReelsTitle) {
+      @NonNull TextView tvReelsMusic, @NonNull TextView tvReelsTitle,
+      @NonNull ViewPager2 vpHeroCarousel) {
     this.rootView = rootView;
+    this.bannerVipCard = bannerVipCard;
     this.bottomBarBstation = bottomBarBstation;
     this.btnClearSearch = btnClearSearch;
     this.btnClearSearchHistory = btnClearSearchHistory;
+    this.btnKoleksiClearSearch = btnKoleksiClearSearch;
+    this.btnKoleksiToggleSearch = btnKoleksiToggleSearch;
     this.btnNavCari = btnNavCari;
     this.btnNavFab = btnNavFab;
     this.btnNavHome = btnNavHome;
@@ -311,22 +537,57 @@ public final class ActivityMainBinding implements ViewBinding {
     this.btnNewsRetry = btnNewsRetry;
     this.btnOfflineOpenDownloads = btnOfflineOpenDownloads;
     this.btnOfflineRetry = btnOfflineRetry;
+    this.btnProfileJoinVip = btnProfileJoinVip;
     this.btnReelsBookmark = btnReelsBookmark;
     this.btnReelsComment = btnReelsComment;
     this.btnReelsLike = btnReelsLike;
     this.btnReelsShare = btnReelsShare;
     this.btnRefreshNews = btnRefreshNews;
     this.btnRefreshTrending = btnRefreshTrending;
-    this.btnViewAllHistory = btnViewAllHistory;
+    this.btnSeeAllContinue = btnSeeAllContinue;
+    this.cardDiamondMine = cardDiamondMine;
+    this.cardKoinMine = cardKoinMine;
+    this.cardVipMine = cardVipMine;
+    this.chipAksesAll = chipAksesAll;
+    this.chipAksesGratis = chipAksesGratis;
+    this.chipAksesVip = chipAksesVip;
+    this.chipGenreAksi = chipGenreAksi;
+    this.chipGenreAll = chipGenreAll;
+    this.chipGenreBergairah = chipGenreBergairah;
+    this.chipGenreFantasi = chipGenreFantasi;
+    this.chipGenreFiksi = chipGenreFiksi;
+    this.chipGenreIsekai = chipGenreIsekai;
+    this.chipGenreKomedi = chipGenreKomedi;
+    this.chipGenrePercintaan = chipGenrePercintaan;
+    this.chipGenrePetualangan = chipGenrePetualangan;
     this.chipNewsFall2026 = chipNewsFall2026;
     this.chipNewsNow = chipNewsNow;
     this.chipNewsSchedule = chipNewsSchedule;
     this.chipNewsSpring2027 = chipNewsSpring2027;
     this.chipNewsUpcoming = chipNewsUpcoming;
     this.chipNewsWinter2027 = chipNewsWinter2027;
+    this.chipSortPopuler = chipSortPopuler;
+    this.chipSortRating = chipSortRating;
+    this.chipSortTerbaru = chipSortTerbaru;
+    this.chipSubtitleAll = chipSubtitleAll;
+    this.chipSubtitleDub = chipSubtitleDub;
+    this.chipSubtitleManual = chipSubtitleManual;
+    this.chipWilayahAll = chipWilayahAll;
+    this.chipWilayahChina = chipWilayahChina;
+    this.chipWilayahJapan = chipWilayahJapan;
+    this.chipWilayahKorea = chipWilayahKorea;
+    this.continueWatchingSection = continueWatchingSection;
+    this.etKoleksiSearch = etKoleksiSearch;
     this.etTopSearch = etTopSearch;
     this.exploreContainer = exploreContainer;
+    this.filterRowAkses = filterRowAkses;
+    this.filterRowGenre = filterRowGenre;
+    this.filterRowSort = filterRowSort;
+    this.filterRowSubtitle = filterRowSubtitle;
+    this.filterRowWilayah = filterRowWilayah;
     this.headerContainer = headerContainer;
+    this.heroCarouselSection = heroCarouselSection;
+    this.indicatorKoleksiAnime = indicatorKoleksiAnime;
     this.ivMainLoadingGif = ivMainLoadingGif;
     this.ivNavCari = ivNavCari;
     this.ivNavFabIcon = ivNavFabIcon;
@@ -336,23 +597,35 @@ public final class ActivityMainBinding implements ViewBinding {
     this.ivNewsLoadingGif = ivNewsLoadingGif;
     this.ivOfflineCatGif = ivOfflineCatGif;
     this.ivProfileAvatar = ivProfileAvatar;
+    this.ivProfileNotif = ivProfileNotif;
+    this.ivProfileScan = ivProfileScan;
     this.ivReelsMusicDisc = ivReelsMusicDisc;
     this.ivReelsPosterBg = ivReelsPosterBg;
+    this.koleksiContainer = koleksiContainer;
+    this.layoutHeroDots = layoutHeroDots;
+    this.layoutKoleksiFilters = layoutKoleksiFilters;
+    this.layoutKoleksiSearchBar = layoutKoleksiSearchBar;
+    this.layoutKoleksiTopTabs = layoutKoleksiTopTabs;
     this.layoutNewsError = layoutNewsError;
+    this.layoutProfileHeaderClick = layoutProfileHeaderClick;
+    this.layoutVipBtnGroup = layoutVipBtnGroup;
     this.mainLoadingOverlay = mainLoadingOverlay;
-    this.menuAcara = menuAcara;
+    this.menuBahasaSaya = menuBahasaSaya;
     this.menuFavoritSaya = menuFavoritSaya;
     this.menuFeedback = menuFeedback;
     this.menuPengaturan = menuPengaturan;
-    this.menuPusatBantuan = menuPusatBantuan;
+    this.menuPointsSaya = menuPointsSaya;
+    this.menuRiwayatSaya = menuRiwayatSaya;
+    this.menuSubtitleSaya = menuSubtitleSaya;
     this.menuUnduhanSaya = menuUnduhanSaya;
     this.mimoNewsContainer = mimoNewsContainer;
     this.offlineContainer = offlineContainer;
     this.profileContainer = profileContainer;
     this.reelsContainer = reelsContainer;
+    this.rvContinueWatching = rvContinueWatching;
+    this.rvKoleksiGrid = rvKoleksiGrid;
     this.rvMimoNewsList = rvMimoNewsList;
     this.rvPosterGrid = rvPosterGrid;
-    this.rvProfileHistory = rvProfileHistory;
     this.rvSearchHistory = rvSearchHistory;
     this.rvSearchResultsList = rvSearchResultsList;
     this.rvTrendingTags = rvTrendingTags;
@@ -362,22 +635,35 @@ public final class ActivityMainBinding implements ViewBinding {
     this.tabAction = tabAction;
     this.tabAnime = tabAnime;
     this.tabFantasy = tabFantasy;
+    this.tabKoleksiAnime = tabKoleksiAnime;
+    this.tabKoleksiAnimeWrapper = tabKoleksiAnimeWrapper;
+    this.tabKoleksiDonghua = tabKoleksiDonghua;
+    this.tabKoleksiDrama = tabKoleksiDrama;
+    this.tabKoleksiFilm = tabKoleksiFilm;
+    this.tabKoleksiShorts = tabKoleksiShorts;
+    this.tabKoleksiVariety = tabKoleksiVariety;
     this.tabPopuler = tabPopuler;
     this.tabScrollView = tabScrollView;
     this.tabTamat = tabTamat;
     this.tabUntukAnda = tabUntukAnda;
     this.tabsContainer = tabsContainer;
     this.trendingSection = trendingSection;
+    this.tvKoleksiEmpty = tvKoleksiEmpty;
+    this.tvKoleksiHeaderTitle = tvKoleksiHeaderTitle;
     this.tvNavCari = tvNavCari;
     this.tvNavHome = tvNavHome;
     this.tvNavNews = tvNavNews;
     this.tvNavSaya = tvNavSaya;
+    this.tvProfileJoinVipText = tvProfileJoinVipText;
     this.tvProfileName = tvProfileName;
+    this.tvProfileVipSubtitle = tvProfileVipSubtitle;
+    this.tvProfileVipTitle = tvProfileVipTitle;
     this.tvReelsAuthor = tvReelsAuthor;
     this.tvReelsCommentCount = tvReelsCommentCount;
     this.tvReelsLikeCount = tvReelsLikeCount;
     this.tvReelsMusic = tvReelsMusic;
     this.tvReelsTitle = tvReelsTitle;
+    this.vpHeroCarousel = vpHeroCarousel;
   }
 
   @Override
@@ -407,6 +693,12 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.bannerVipCard;
+      CardView bannerVipCard = ViewBindings.findChildViewById(rootView, id);
+      if (bannerVipCard == null) {
+        break missingId;
+      }
+
       id = R.id.bottomBarBstation;
       LinearLayout bottomBarBstation = ViewBindings.findChildViewById(rootView, id);
       if (bottomBarBstation == null) {
@@ -422,6 +714,18 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnClearSearchHistory;
       TextView btnClearSearchHistory = ViewBindings.findChildViewById(rootView, id);
       if (btnClearSearchHistory == null) {
+        break missingId;
+      }
+
+      id = R.id.btnKoleksiClearSearch;
+      ImageView btnKoleksiClearSearch = ViewBindings.findChildViewById(rootView, id);
+      if (btnKoleksiClearSearch == null) {
+        break missingId;
+      }
+
+      id = R.id.btnKoleksiToggleSearch;
+      ImageView btnKoleksiToggleSearch = ViewBindings.findChildViewById(rootView, id);
+      if (btnKoleksiToggleSearch == null) {
         break missingId;
       }
 
@@ -473,6 +777,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnProfileJoinVip;
+      LinearLayout btnProfileJoinVip = ViewBindings.findChildViewById(rootView, id);
+      if (btnProfileJoinVip == null) {
+        break missingId;
+      }
+
       id = R.id.btnReelsBookmark;
       ImageView btnReelsBookmark = ViewBindings.findChildViewById(rootView, id);
       if (btnReelsBookmark == null) {
@@ -509,9 +819,99 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btnViewAllHistory;
-      TextView btnViewAllHistory = ViewBindings.findChildViewById(rootView, id);
-      if (btnViewAllHistory == null) {
+      id = R.id.btnSeeAllContinue;
+      TextView btnSeeAllContinue = ViewBindings.findChildViewById(rootView, id);
+      if (btnSeeAllContinue == null) {
+        break missingId;
+      }
+
+      id = R.id.cardDiamondMine;
+      LinearLayout cardDiamondMine = ViewBindings.findChildViewById(rootView, id);
+      if (cardDiamondMine == null) {
+        break missingId;
+      }
+
+      id = R.id.cardKoinMine;
+      LinearLayout cardKoinMine = ViewBindings.findChildViewById(rootView, id);
+      if (cardKoinMine == null) {
+        break missingId;
+      }
+
+      id = R.id.cardVipMine;
+      LinearLayout cardVipMine = ViewBindings.findChildViewById(rootView, id);
+      if (cardVipMine == null) {
+        break missingId;
+      }
+
+      id = R.id.chipAksesAll;
+      TextView chipAksesAll = ViewBindings.findChildViewById(rootView, id);
+      if (chipAksesAll == null) {
+        break missingId;
+      }
+
+      id = R.id.chipAksesGratis;
+      TextView chipAksesGratis = ViewBindings.findChildViewById(rootView, id);
+      if (chipAksesGratis == null) {
+        break missingId;
+      }
+
+      id = R.id.chipAksesVip;
+      TextView chipAksesVip = ViewBindings.findChildViewById(rootView, id);
+      if (chipAksesVip == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenreAksi;
+      TextView chipGenreAksi = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenreAksi == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenreAll;
+      TextView chipGenreAll = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenreAll == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenreBergairah;
+      TextView chipGenreBergairah = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenreBergairah == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenreFantasi;
+      TextView chipGenreFantasi = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenreFantasi == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenreFiksi;
+      TextView chipGenreFiksi = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenreFiksi == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenreIsekai;
+      TextView chipGenreIsekai = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenreIsekai == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenreKomedi;
+      TextView chipGenreKomedi = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenreKomedi == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenrePercintaan;
+      TextView chipGenrePercintaan = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenrePercintaan == null) {
+        break missingId;
+      }
+
+      id = R.id.chipGenrePetualangan;
+      TextView chipGenrePetualangan = ViewBindings.findChildViewById(rootView, id);
+      if (chipGenrePetualangan == null) {
         break missingId;
       }
 
@@ -551,6 +951,78 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.chipSortPopuler;
+      TextView chipSortPopuler = ViewBindings.findChildViewById(rootView, id);
+      if (chipSortPopuler == null) {
+        break missingId;
+      }
+
+      id = R.id.chipSortRating;
+      TextView chipSortRating = ViewBindings.findChildViewById(rootView, id);
+      if (chipSortRating == null) {
+        break missingId;
+      }
+
+      id = R.id.chipSortTerbaru;
+      TextView chipSortTerbaru = ViewBindings.findChildViewById(rootView, id);
+      if (chipSortTerbaru == null) {
+        break missingId;
+      }
+
+      id = R.id.chipSubtitleAll;
+      TextView chipSubtitleAll = ViewBindings.findChildViewById(rootView, id);
+      if (chipSubtitleAll == null) {
+        break missingId;
+      }
+
+      id = R.id.chipSubtitleDub;
+      TextView chipSubtitleDub = ViewBindings.findChildViewById(rootView, id);
+      if (chipSubtitleDub == null) {
+        break missingId;
+      }
+
+      id = R.id.chipSubtitleManual;
+      TextView chipSubtitleManual = ViewBindings.findChildViewById(rootView, id);
+      if (chipSubtitleManual == null) {
+        break missingId;
+      }
+
+      id = R.id.chipWilayahAll;
+      TextView chipWilayahAll = ViewBindings.findChildViewById(rootView, id);
+      if (chipWilayahAll == null) {
+        break missingId;
+      }
+
+      id = R.id.chipWilayahChina;
+      TextView chipWilayahChina = ViewBindings.findChildViewById(rootView, id);
+      if (chipWilayahChina == null) {
+        break missingId;
+      }
+
+      id = R.id.chipWilayahJapan;
+      TextView chipWilayahJapan = ViewBindings.findChildViewById(rootView, id);
+      if (chipWilayahJapan == null) {
+        break missingId;
+      }
+
+      id = R.id.chipWilayahKorea;
+      TextView chipWilayahKorea = ViewBindings.findChildViewById(rootView, id);
+      if (chipWilayahKorea == null) {
+        break missingId;
+      }
+
+      id = R.id.continueWatchingSection;
+      LinearLayout continueWatchingSection = ViewBindings.findChildViewById(rootView, id);
+      if (continueWatchingSection == null) {
+        break missingId;
+      }
+
+      id = R.id.etKoleksiSearch;
+      EditText etKoleksiSearch = ViewBindings.findChildViewById(rootView, id);
+      if (etKoleksiSearch == null) {
+        break missingId;
+      }
+
       id = R.id.etTopSearch;
       EditText etTopSearch = ViewBindings.findChildViewById(rootView, id);
       if (etTopSearch == null) {
@@ -563,9 +1035,51 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.filterRowAkses;
+      LinearLayout filterRowAkses = ViewBindings.findChildViewById(rootView, id);
+      if (filterRowAkses == null) {
+        break missingId;
+      }
+
+      id = R.id.filterRowGenre;
+      LinearLayout filterRowGenre = ViewBindings.findChildViewById(rootView, id);
+      if (filterRowGenre == null) {
+        break missingId;
+      }
+
+      id = R.id.filterRowSort;
+      LinearLayout filterRowSort = ViewBindings.findChildViewById(rootView, id);
+      if (filterRowSort == null) {
+        break missingId;
+      }
+
+      id = R.id.filterRowSubtitle;
+      LinearLayout filterRowSubtitle = ViewBindings.findChildViewById(rootView, id);
+      if (filterRowSubtitle == null) {
+        break missingId;
+      }
+
+      id = R.id.filterRowWilayah;
+      LinearLayout filterRowWilayah = ViewBindings.findChildViewById(rootView, id);
+      if (filterRowWilayah == null) {
+        break missingId;
+      }
+
       id = R.id.headerContainer;
       LinearLayout headerContainer = ViewBindings.findChildViewById(rootView, id);
       if (headerContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.heroCarouselSection;
+      RelativeLayout heroCarouselSection = ViewBindings.findChildViewById(rootView, id);
+      if (heroCarouselSection == null) {
+        break missingId;
+      }
+
+      id = R.id.indicatorKoleksiAnime;
+      View indicatorKoleksiAnime = ViewBindings.findChildViewById(rootView, id);
+      if (indicatorKoleksiAnime == null) {
         break missingId;
       }
 
@@ -623,6 +1137,18 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.ivProfileNotif;
+      ImageView ivProfileNotif = ViewBindings.findChildViewById(rootView, id);
+      if (ivProfileNotif == null) {
+        break missingId;
+      }
+
+      id = R.id.ivProfileScan;
+      ImageView ivProfileScan = ViewBindings.findChildViewById(rootView, id);
+      if (ivProfileScan == null) {
+        break missingId;
+      }
+
       id = R.id.ivReelsMusicDisc;
       ImageView ivReelsMusicDisc = ViewBindings.findChildViewById(rootView, id);
       if (ivReelsMusicDisc == null) {
@@ -635,9 +1161,51 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.koleksiContainer;
+      NestedScrollView koleksiContainer = ViewBindings.findChildViewById(rootView, id);
+      if (koleksiContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.layoutHeroDots;
+      LinearLayout layoutHeroDots = ViewBindings.findChildViewById(rootView, id);
+      if (layoutHeroDots == null) {
+        break missingId;
+      }
+
+      id = R.id.layoutKoleksiFilters;
+      LinearLayout layoutKoleksiFilters = ViewBindings.findChildViewById(rootView, id);
+      if (layoutKoleksiFilters == null) {
+        break missingId;
+      }
+
+      id = R.id.layoutKoleksiSearchBar;
+      LinearLayout layoutKoleksiSearchBar = ViewBindings.findChildViewById(rootView, id);
+      if (layoutKoleksiSearchBar == null) {
+        break missingId;
+      }
+
+      id = R.id.layoutKoleksiTopTabs;
+      LinearLayout layoutKoleksiTopTabs = ViewBindings.findChildViewById(rootView, id);
+      if (layoutKoleksiTopTabs == null) {
+        break missingId;
+      }
+
       id = R.id.layoutNewsError;
       LinearLayout layoutNewsError = ViewBindings.findChildViewById(rootView, id);
       if (layoutNewsError == null) {
+        break missingId;
+      }
+
+      id = R.id.layoutProfileHeaderClick;
+      LinearLayout layoutProfileHeaderClick = ViewBindings.findChildViewById(rootView, id);
+      if (layoutProfileHeaderClick == null) {
+        break missingId;
+      }
+
+      id = R.id.layoutVipBtnGroup;
+      LinearLayout layoutVipBtnGroup = ViewBindings.findChildViewById(rootView, id);
+      if (layoutVipBtnGroup == null) {
         break missingId;
       }
 
@@ -647,9 +1215,9 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.menuAcara;
-      LinearLayout menuAcara = ViewBindings.findChildViewById(rootView, id);
-      if (menuAcara == null) {
+      id = R.id.menuBahasaSaya;
+      LinearLayout menuBahasaSaya = ViewBindings.findChildViewById(rootView, id);
+      if (menuBahasaSaya == null) {
         break missingId;
       }
 
@@ -671,9 +1239,21 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.menuPusatBantuan;
-      LinearLayout menuPusatBantuan = ViewBindings.findChildViewById(rootView, id);
-      if (menuPusatBantuan == null) {
+      id = R.id.menuPointsSaya;
+      LinearLayout menuPointsSaya = ViewBindings.findChildViewById(rootView, id);
+      if (menuPointsSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.menuRiwayatSaya;
+      LinearLayout menuRiwayatSaya = ViewBindings.findChildViewById(rootView, id);
+      if (menuRiwayatSaya == null) {
+        break missingId;
+      }
+
+      id = R.id.menuSubtitleSaya;
+      LinearLayout menuSubtitleSaya = ViewBindings.findChildViewById(rootView, id);
+      if (menuSubtitleSaya == null) {
         break missingId;
       }
 
@@ -707,6 +1287,18 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.rvContinueWatching;
+      RecyclerView rvContinueWatching = ViewBindings.findChildViewById(rootView, id);
+      if (rvContinueWatching == null) {
+        break missingId;
+      }
+
+      id = R.id.rvKoleksiGrid;
+      RecyclerView rvKoleksiGrid = ViewBindings.findChildViewById(rootView, id);
+      if (rvKoleksiGrid == null) {
+        break missingId;
+      }
+
       id = R.id.rvMimoNewsList;
       RecyclerView rvMimoNewsList = ViewBindings.findChildViewById(rootView, id);
       if (rvMimoNewsList == null) {
@@ -716,12 +1308,6 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.rvPosterGrid;
       RecyclerView rvPosterGrid = ViewBindings.findChildViewById(rootView, id);
       if (rvPosterGrid == null) {
-        break missingId;
-      }
-
-      id = R.id.rvProfileHistory;
-      RecyclerView rvProfileHistory = ViewBindings.findChildViewById(rootView, id);
-      if (rvProfileHistory == null) {
         break missingId;
       }
 
@@ -779,6 +1365,48 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tabKoleksiAnime;
+      TextView tabKoleksiAnime = ViewBindings.findChildViewById(rootView, id);
+      if (tabKoleksiAnime == null) {
+        break missingId;
+      }
+
+      id = R.id.tabKoleksiAnimeWrapper;
+      LinearLayout tabKoleksiAnimeWrapper = ViewBindings.findChildViewById(rootView, id);
+      if (tabKoleksiAnimeWrapper == null) {
+        break missingId;
+      }
+
+      id = R.id.tabKoleksiDonghua;
+      TextView tabKoleksiDonghua = ViewBindings.findChildViewById(rootView, id);
+      if (tabKoleksiDonghua == null) {
+        break missingId;
+      }
+
+      id = R.id.tabKoleksiDrama;
+      TextView tabKoleksiDrama = ViewBindings.findChildViewById(rootView, id);
+      if (tabKoleksiDrama == null) {
+        break missingId;
+      }
+
+      id = R.id.tabKoleksiFilm;
+      TextView tabKoleksiFilm = ViewBindings.findChildViewById(rootView, id);
+      if (tabKoleksiFilm == null) {
+        break missingId;
+      }
+
+      id = R.id.tabKoleksiShorts;
+      TextView tabKoleksiShorts = ViewBindings.findChildViewById(rootView, id);
+      if (tabKoleksiShorts == null) {
+        break missingId;
+      }
+
+      id = R.id.tabKoleksiVariety;
+      TextView tabKoleksiVariety = ViewBindings.findChildViewById(rootView, id);
+      if (tabKoleksiVariety == null) {
+        break missingId;
+      }
+
       id = R.id.tabPopuler;
       TextView tabPopuler = ViewBindings.findChildViewById(rootView, id);
       if (tabPopuler == null) {
@@ -815,6 +1443,18 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tvKoleksiEmpty;
+      TextView tvKoleksiEmpty = ViewBindings.findChildViewById(rootView, id);
+      if (tvKoleksiEmpty == null) {
+        break missingId;
+      }
+
+      id = R.id.tvKoleksiHeaderTitle;
+      TextView tvKoleksiHeaderTitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvKoleksiHeaderTitle == null) {
+        break missingId;
+      }
+
       id = R.id.tvNavCari;
       TextView tvNavCari = ViewBindings.findChildViewById(rootView, id);
       if (tvNavCari == null) {
@@ -839,9 +1479,27 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tvProfileJoinVipText;
+      TextView tvProfileJoinVipText = ViewBindings.findChildViewById(rootView, id);
+      if (tvProfileJoinVipText == null) {
+        break missingId;
+      }
+
       id = R.id.tvProfileName;
       TextView tvProfileName = ViewBindings.findChildViewById(rootView, id);
       if (tvProfileName == null) {
+        break missingId;
+      }
+
+      id = R.id.tvProfileVipSubtitle;
+      TextView tvProfileVipSubtitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvProfileVipSubtitle == null) {
+        break missingId;
+      }
+
+      id = R.id.tvProfileVipTitle;
+      TextView tvProfileVipTitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvProfileVipTitle == null) {
         break missingId;
       }
 
@@ -875,21 +1533,41 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((RelativeLayout) rootView, bottomBarBstation, btnClearSearch,
-          btnClearSearchHistory, btnNavCari, btnNavFab, btnNavHome, btnNavNews, btnNavSaya,
-          btnNewsRetry, btnOfflineOpenDownloads, btnOfflineRetry, btnReelsBookmark, btnReelsComment,
-          btnReelsLike, btnReelsShare, btnRefreshNews, btnRefreshTrending, btnViewAllHistory,
-          chipNewsFall2026, chipNewsNow, chipNewsSchedule, chipNewsSpring2027, chipNewsUpcoming,
-          chipNewsWinter2027, etTopSearch, exploreContainer, headerContainer, ivMainLoadingGif,
-          ivNavCari, ivNavFabIcon, ivNavHome, ivNavNews, ivNavSaya, ivNewsLoadingGif,
-          ivOfflineCatGif, ivProfileAvatar, ivReelsMusicDisc, ivReelsPosterBg, layoutNewsError,
-          mainLoadingOverlay, menuAcara, menuFavoritSaya, menuFeedback, menuPengaturan,
-          menuPusatBantuan, menuUnduhanSaya, mimoNewsContainer, offlineContainer, profileContainer,
-          reelsContainer, rvMimoNewsList, rvPosterGrid, rvProfileHistory, rvSearchHistory,
-          rvSearchResultsList, rvTrendingTags, searchHistorySection, searchPillBar, swipeRefresh,
-          tabAction, tabAnime, tabFantasy, tabPopuler, tabScrollView, tabTamat, tabUntukAnda,
-          tabsContainer, trendingSection, tvNavCari, tvNavHome, tvNavNews, tvNavSaya, tvProfileName,
-          tvReelsAuthor, tvReelsCommentCount, tvReelsLikeCount, tvReelsMusic, tvReelsTitle);
+      id = R.id.vpHeroCarousel;
+      ViewPager2 vpHeroCarousel = ViewBindings.findChildViewById(rootView, id);
+      if (vpHeroCarousel == null) {
+        break missingId;
+      }
+
+      return new ActivityMainBinding((RelativeLayout) rootView, bannerVipCard, bottomBarBstation,
+          btnClearSearch, btnClearSearchHistory, btnKoleksiClearSearch, btnKoleksiToggleSearch,
+          btnNavCari, btnNavFab, btnNavHome, btnNavNews, btnNavSaya, btnNewsRetry,
+          btnOfflineOpenDownloads, btnOfflineRetry, btnProfileJoinVip, btnReelsBookmark,
+          btnReelsComment, btnReelsLike, btnReelsShare, btnRefreshNews, btnRefreshTrending,
+          btnSeeAllContinue, cardDiamondMine, cardKoinMine, cardVipMine, chipAksesAll,
+          chipAksesGratis, chipAksesVip, chipGenreAksi, chipGenreAll, chipGenreBergairah,
+          chipGenreFantasi, chipGenreFiksi, chipGenreIsekai, chipGenreKomedi, chipGenrePercintaan,
+          chipGenrePetualangan, chipNewsFall2026, chipNewsNow, chipNewsSchedule, chipNewsSpring2027,
+          chipNewsUpcoming, chipNewsWinter2027, chipSortPopuler, chipSortRating, chipSortTerbaru,
+          chipSubtitleAll, chipSubtitleDub, chipSubtitleManual, chipWilayahAll, chipWilayahChina,
+          chipWilayahJapan, chipWilayahKorea, continueWatchingSection, etKoleksiSearch, etTopSearch,
+          exploreContainer, filterRowAkses, filterRowGenre, filterRowSort, filterRowSubtitle,
+          filterRowWilayah, headerContainer, heroCarouselSection, indicatorKoleksiAnime,
+          ivMainLoadingGif, ivNavCari, ivNavFabIcon, ivNavHome, ivNavNews, ivNavSaya,
+          ivNewsLoadingGif, ivOfflineCatGif, ivProfileAvatar, ivProfileNotif, ivProfileScan,
+          ivReelsMusicDisc, ivReelsPosterBg, koleksiContainer, layoutHeroDots, layoutKoleksiFilters,
+          layoutKoleksiSearchBar, layoutKoleksiTopTabs, layoutNewsError, layoutProfileHeaderClick,
+          layoutVipBtnGroup, mainLoadingOverlay, menuBahasaSaya, menuFavoritSaya, menuFeedback,
+          menuPengaturan, menuPointsSaya, menuRiwayatSaya, menuSubtitleSaya, menuUnduhanSaya,
+          mimoNewsContainer, offlineContainer, profileContainer, reelsContainer, rvContinueWatching,
+          rvKoleksiGrid, rvMimoNewsList, rvPosterGrid, rvSearchHistory, rvSearchResultsList,
+          rvTrendingTags, searchHistorySection, searchPillBar, swipeRefresh, tabAction, tabAnime,
+          tabFantasy, tabKoleksiAnime, tabKoleksiAnimeWrapper, tabKoleksiDonghua, tabKoleksiDrama,
+          tabKoleksiFilm, tabKoleksiShorts, tabKoleksiVariety, tabPopuler, tabScrollView, tabTamat,
+          tabUntukAnda, tabsContainer, trendingSection, tvKoleksiEmpty, tvKoleksiHeaderTitle,
+          tvNavCari, tvNavHome, tvNavNews, tvNavSaya, tvProfileJoinVipText, tvProfileName,
+          tvProfileVipSubtitle, tvProfileVipTitle, tvReelsAuthor, tvReelsCommentCount,
+          tvReelsLikeCount, tvReelsMusic, tvReelsTitle, vpHeroCarousel);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

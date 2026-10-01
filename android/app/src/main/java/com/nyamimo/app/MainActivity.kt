@@ -30,9 +30,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.nyamimo.app.adapter.BstationPosterAdapter
+import com.nyamimo.app.adapter.ContinueWatchingAdapter
 import com.nyamimo.app.adapter.DownloadFullAdapter
-import com.nyamimo.app.adapter.DownloadItemAdapter
-import com.nyamimo.app.adapter.HistoryAdapter
 import com.nyamimo.app.adapter.HistoryFullAdapter
 import com.nyamimo.app.adapter.MimoNewsAdapter
 import com.nyamimo.app.adapter.SearchHistoryAdapter
@@ -46,6 +45,11 @@ import com.nyamimo.app.model.AnimeItem
 import com.nyamimo.app.model.HomeResponse
 import com.nyamimo.app.model.MimoNewsItem
 import com.nyamimo.app.util.SessionManager
+import com.nyamimo.app.adapter.ParallaxHeroBannerAdapter
+import com.nyamimo.app.adapter.ParallaxPageTransformer
+import com.nyamimo.app.adapter.KoleksiAnimeAdapter
+import com.nyamimo.app.util.ParallaxSlideItem
+import androidx.viewpager2.widget.ViewPager2
 
 class MainActivity : AppCompatActivity() {
 
@@ -56,14 +60,32 @@ class MainActivity : AppCompatActivity() {
     private var currentNewsFilter: String = "now"
 
     private lateinit var posterAdapter: BstationPosterAdapter
+    private lateinit var continueWatchingAdapter: ContinueWatchingAdapter
+    private lateinit var parallaxBannerAdapter: ParallaxHeroBannerAdapter
+    private lateinit var koleksiAdapter: KoleksiAnimeAdapter
     private lateinit var searchSuggestionAdapter: SearchSuggestionAdapter
-    private lateinit var historyAdapter: HistoryAdapter
     private lateinit var searchHistoryAdapter: SearchHistoryAdapter
     private lateinit var trendingTagAdapter: TrendingTagAdapter
     private lateinit var mimoNewsAdapter: MimoNewsAdapter
 
+    // Shared RecycledViewPool for ultra-smooth low-RAM card rendering
+    private val sharedPosterPool = RecyclerView.RecycledViewPool().apply {
+        setMaxRecycledViews(0, 30)
+    }
+
+    private var selectedKoleksiTab: String = "anime"
+    private var selectedWilayah: String = "all"
+    private var selectedGenre: String = "all"
+    private var selectedSubtitle: String = "all"
+    private var selectedAkses: String = "all"
+    private var selectedSort: String = "populer"
+    private var koleksiSearchQuery: String = ""
+
     private val searchHandler = Handler(Looper.getMainLooper())
     private var searchRunnable: Runnable? = null
+    private val heroSlideHandler = Handler(Looper.getMainLooper())
+    private var heroSlideRunnable: Runnable? = null
+    private var currentHeroSlides: List<ParallaxSlideItem> = emptyList()
     private var isReelsLiked = false
     private var isReelsBookmarked = false
 
@@ -74,37 +96,91 @@ class MainActivity : AppCompatActivity() {
 
         setupAdapters()
         setupMimoNewsUI()
+        setupKoleksiUI()
         setupSearchInput()
         setupListeners()
         setupTrendingTags()
         setupReelsInteractions()
         loadSearchHistoryUI()
+        loadHeroCarouselUI()
+        loadContinueWatchingUI()
         updateProfileUI()
+        ApiClient.fetchAppConfig(this)
         loadData()
+        checkWelcomeScreen()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateProfileUI()
+        loadHeroCarouselUI()
+        loadContinueWatchingUI()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        heroSlideRunnable?.let { heroSlideHandler.removeCallbacks(it) }
+        searchRunnable?.let { searchHandler.removeCallbacks(it) }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        heroSlideHandler.removeCallbacksAndMessages(null)
+        searchHandler.removeCallbacksAndMessages(null)
+    }
+
+    private fun checkWelcomeScreen() {
+        val user = SessionManager.getUser(this)
+        if (!user.isLoggedIn && !SessionManager.hasSkippedWelcome(this)) {
+            val cfg = SessionManager.getAppConfig(this)
+            val welcomeEnabled = cfg.welcome_screen.enabled
+            if (welcomeEnabled) {
+                val intent = Intent(this, WelcomeActivity::class.java)
+                startActivity(intent)
+            }
+        }
     }
 
     private fun setupAdapters() {
         val spanCount = if (resources.configuration.screenWidthDp >= 600) 4 else 3
         binding.rvPosterGrid.layoutManager = GridLayoutManager(this, spanCount)
+        binding.rvPosterGrid.setHasFixedSize(true)
+        binding.rvPosterGrid.setItemViewCacheSize(20)
+        binding.rvPosterGrid.setRecycledViewPool(sharedPosterPool)
         posterAdapter = BstationPosterAdapter(emptyList()) { anime ->
             playAnimeDirectly(anime)
         }
         binding.rvPosterGrid.adapter = posterAdapter
 
+        binding.rvContinueWatching.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvContinueWatching.setHasFixedSize(true)
+        binding.rvContinueWatching.setItemViewCacheSize(10)
+        continueWatchingAdapter = ContinueWatchingAdapter(emptyList()) { anime ->
+            val intent = Intent(this, AnimeDetailActivity::class.java).apply {
+                putExtra("slug", anime.slug)
+                putExtra("title", anime.title)
+                putExtra("score", anime.score)
+                putExtra("status", anime.status)
+                putExtra("type", anime.type)
+                putExtra("episode", anime.episode)
+                putExtra("target_episode", anime.episode)
+                putExtra("synopsis", anime.synopsis)
+            }
+            startActivity(intent)
+        }
+        binding.rvContinueWatching.adapter = continueWatchingAdapter
+
         binding.rvSearchResultsList.layoutManager = LinearLayoutManager(this)
+        binding.rvSearchResultsList.setHasFixedSize(true)
+        binding.rvSearchResultsList.setItemViewCacheSize(10)
         searchSuggestionAdapter = SearchSuggestionAdapter(emptyList()) { anime ->
             SessionManager.addSearchQuery(this, anime.title)
             playAnimeDirectly(anime)
         }
         binding.rvSearchResultsList.adapter = searchSuggestionAdapter
 
-        binding.rvProfileHistory.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        historyAdapter = HistoryAdapter(emptyList()) { anime ->
-            playAnimeDirectly(anime)
-        }
-        binding.rvProfileHistory.adapter = historyAdapter
-
         binding.rvSearchHistory.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvSearchHistory.setHasFixedSize(true)
         searchHistoryAdapter = SearchHistoryAdapter(emptyList()) { query ->
             binding.etTopSearch.setText(query)
             binding.etTopSearch.setSelection(query.length)
@@ -113,6 +189,7 @@ class MainActivity : AppCompatActivity() {
         binding.rvSearchHistory.adapter = searchHistoryAdapter
 
         binding.rvTrendingTags.layoutManager = GridLayoutManager(this, 2)
+        binding.rvTrendingTags.setHasFixedSize(true)
         trendingTagAdapter = TrendingTagAdapter(emptyList()) { tag ->
             binding.etTopSearch.setText(tag.title)
             binding.etTopSearch.setSelection(tag.title.length)
@@ -121,6 +198,174 @@ class MainActivity : AppCompatActivity() {
             performSearch(tag.title)
         }
         binding.rvTrendingTags.adapter = trendingTagAdapter
+
+        // Hero Carousel Parallax ViewPager2 setup
+        parallaxBannerAdapter = ParallaxHeroBannerAdapter(emptyList()) { slide ->
+            if (slide.target_slug.isNotEmpty()) {
+                val intent = Intent(this, AnimeDetailActivity::class.java).apply {
+                    putExtra("slug", slide.target_slug)
+                    putExtra("title", slide.title)
+                }
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "Menonton ${slide.title}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.vpHeroCarousel.adapter = parallaxBannerAdapter
+        binding.vpHeroCarousel.setPageTransformer(ParallaxPageTransformer())
+        binding.vpHeroCarousel.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                updateHeroDots(position)
+            }
+        })
+
+        // Koleksi Anime Grid setup (Sharing view pool with main poster grid for zero-lag tab transitions)
+        val koleksiSpan = if (resources.configuration.screenWidthDp >= 600) 4 else 3
+        binding.rvKoleksiGrid.layoutManager = GridLayoutManager(this, koleksiSpan)
+        binding.rvKoleksiGrid.setHasFixedSize(true)
+        binding.rvKoleksiGrid.setItemViewCacheSize(20)
+        binding.rvKoleksiGrid.setRecycledViewPool(sharedPosterPool)
+        koleksiAdapter = KoleksiAnimeAdapter(emptyList()) { anime ->
+            playAnimeDirectly(anime)
+        }
+        binding.rvKoleksiGrid.adapter = koleksiAdapter
+    }
+
+    private fun loadHeroCarouselUI() {
+        val cfg = SessionManager.getAppConfig(this)
+        val heroCfg = cfg.hero_carousel
+        if (!heroCfg.enabled) {
+            binding.heroCarouselSection.visibility = View.GONE
+            heroSlideRunnable?.let { heroSlideHandler.removeCallbacks(it) }
+            return
+        }
+
+        val activeSlides = if (heroCfg.slides.isNotEmpty()) {
+            heroCfg.slides.filter { it.is_active }
+        } else {
+            emptyList()
+        }
+
+        val finalSlides = if (activeSlides.isNotEmpty()) {
+            activeSlides
+        } else {
+            listOf(
+                ParallaxSlideItem(
+                    id = "slide-1",
+                    title = "Solo Leveling: Arise",
+                    subtitle = "Aksi, Fantasi • Korea & Jepang • Full 12 Episode",
+                    badge = "TOP 1 REKOMENDASI",
+                    background_url = "https://images.alphacoders.com/134/1349544.jpeg",
+                    object_url = "https://pngimg.com/d/sword_PNG5509.png",
+                    target_slug = "solo-leveling",
+                    is_active = true
+                ),
+                ParallaxSlideItem(
+                    id = "slide-2",
+                    title = "Gachiakuta",
+                    subtitle = "Shounen, Aksi, Supranatural • Sub Indo • Studio BONES",
+                    badge = "DOLBY AUDIO",
+                    background_url = "https://images.alphacoders.com/136/1367097.jpeg",
+                    object_url = "",
+                    target_slug = "gachiakuta",
+                    is_active = true
+                ),
+                ParallaxSlideItem(
+                    id = "slide-3",
+                    title = "Demon Slayer: Kimetsu",
+                    subtitle = "Petualangan, Iblis • Full HD 1080p • Ufotable",
+                    badge = "VIP EXCLUSIVE",
+                    background_url = "https://images.alphacoders.com/134/1340156.jpeg",
+                    object_url = "",
+                    target_slug = "kimetsu-no-yaiba",
+                    is_active = true
+                )
+            )
+        }
+
+        currentHeroSlides = finalSlides
+        if (currentTab == "untuk_anda" && currentNav == "home") {
+            binding.heroCarouselSection.visibility = View.VISIBLE
+        }
+        parallaxBannerAdapter.updateData(finalSlides)
+
+        // Setup dots indicator
+        setupHeroDots(finalSlides.size)
+        updateHeroDots(binding.vpHeroCarousel.currentItem.coerceAtMost(finalSlides.size - 1).coerceAtLeast(0))
+
+        // Setup auto slide timer
+        heroSlideRunnable?.let { heroSlideHandler.removeCallbacks(it) }
+        if (heroCfg.auto_slide && finalSlides.size > 1) {
+            val interval = heroCfg.interval_ms.toLong().coerceAtLeast(3000L)
+            heroSlideRunnable = object : Runnable {
+                override fun run() {
+                    if (binding.vpHeroCarousel.adapter?.itemCount ?: 0 > 1) {
+                        val nextItem = (binding.vpHeroCarousel.currentItem + 1) % finalSlides.size
+                        binding.vpHeroCarousel.setCurrentItem(nextItem, true)
+                        heroSlideHandler.postDelayed(this, interval)
+                    }
+                }
+            }
+            heroSlideHandler.postDelayed(heroSlideRunnable!!, interval)
+        }
+    }
+
+    private fun setupHeroDots(count: Int) {
+        binding.layoutHeroDots.removeAllViews()
+        for (i in 0 until count) {
+            val dot = View(this).apply {
+                val size = (resources.displayMetrics.density * 6).toInt()
+                val margin = (resources.displayMetrics.density * 3).toInt()
+                val params = LinearLayout.LayoutParams(size, size).apply {
+                    setMargins(margin, 0, margin, 0)
+                }
+                layoutParams = params
+                setBackgroundResource(R.drawable.dot_hero_inactive)
+            }
+            binding.layoutHeroDots.addView(dot)
+        }
+    }
+
+    private fun updateHeroDots(activeIdx: Int) {
+        val count = binding.layoutHeroDots.childCount
+        for (i in 0 until count) {
+            val dot = binding.layoutHeroDots.getChildAt(i) ?: continue
+            val density = resources.displayMetrics.density
+            if (i == activeIdx) {
+                dot.setBackgroundResource(R.drawable.dot_hero_active)
+                val params = dot.layoutParams as LinearLayout.LayoutParams
+                params.width = (density * 18).toInt()
+                params.height = (density * 4).toInt()
+                dot.layoutParams = params
+            } else {
+                dot.setBackgroundResource(R.drawable.dot_hero_inactive)
+                val params = dot.layoutParams as LinearLayout.LayoutParams
+                params.width = (density * 6).toInt()
+                params.height = (density * 6).toInt()
+                dot.layoutParams = params
+            }
+        }
+    }
+
+    private fun loadContinueWatchingUI() {
+        val history = SessionManager.getWatchHistory(this)
+        if (history.isNotEmpty()) {
+            binding.continueWatchingSection.visibility = View.VISIBLE
+            continueWatchingAdapter.updateData(history)
+        } else {
+            homeData?.let {
+                val demoList = it.ongoing.take(6).mapIndexed { idx, anime ->
+                    anime.copy(
+                        episode = "${idx + 1}",
+                        watchProgressPercent = 40 + (idx * 15) % 55,
+                        watchDurationText = "12:${30 + idx * 4} / 24:00"
+                    )
+                }
+                binding.continueWatchingSection.visibility = View.VISIBLE
+                continueWatchingAdapter.updateData(demoList)
+            }
+        }
     }
 
     private fun loadSearchHistoryUI() {
@@ -166,6 +411,7 @@ class MainActivity : AppCompatActivity() {
                     binding.rvPosterGrid.visibility = View.GONE
                     binding.searchHistorySection.visibility = View.GONE
                     binding.trendingSection.visibility = View.GONE
+                    binding.heroCarouselSection.visibility = View.GONE
 
                     searchRunnable?.let { searchHandler.removeCallbacks(it) }
                     searchRunnable = Runnable { performSearch(query) }
@@ -274,37 +520,66 @@ class MainActivity : AppCompatActivity() {
         binding.btnNavNews.setOnClickListener { selectBottomNav("news") }
         binding.btnNavSaya.setOnClickListener { selectBottomNav("saya") }
 
-        binding.btnViewAllHistory.setOnClickListener {
+        binding.btnSeeAllContinue.setOnClickListener {
             openHistoryScreen()
         }
 
-        // Profile Avatar Login Click
-        binding.ivProfileAvatar.setOnClickListener {
-            showAuthDialog()
+        // Profile Header Login Click
+        binding.ivProfileAvatar.setOnClickListener { showAuthDialog() }
+        binding.tvProfileName.setOnClickListener { showAuthDialog() }
+        binding.layoutProfileHeaderClick.setOnClickListener { showAuthDialog() }
+
+        // Profile Top Icons
+        binding.ivProfileScan.setOnClickListener {
+            Toast.makeText(this, "Fitur Pindai QR Nyamimo segera hadir!", Toast.LENGTH_SHORT).show()
         }
-        binding.tvProfileName.setOnClickListener {
-            showAuthDialog()
+        binding.ivProfileNotif.setOnClickListener {
+            showSimpleDialogSheet("Notifikasi Nyamimo", "Belum ada pesan baru. Nikmati streaming anime favoritmu hari ini!")
         }
 
-        // Setup the 6 Menus in Tab Saya
-        binding.menuUnduhanSaya.setOnClickListener {
-            openDownloadsScreen()
+        // Profile VIP Banner & Quick Action Cards
+        val onVipClick = View.OnClickListener {
+            showSimpleDialogSheet("Nyamimo VIP Pass", "Nikmati keuntungan VIP Nyamimo:\n✨ Bebas Iklan Selamanya\n⚡ Server Ultra High-Speed 1080p 60fps\n📥 Unduh Anime Sepuasnya Tanpa Batas\n🎁 Badge & Efek Profil Eksklusif\n\nVIP Standard mulai dari Rp19.000 / bulan.")
+        }
+        binding.bannerVipCard.setOnClickListener(onVipClick)
+        binding.btnProfileJoinVip.setOnClickListener(onVipClick)
+        binding.cardVipMine.setOnClickListener(onVipClick)
+
+        binding.cardKoinMine.setOnClickListener {
+            showSimpleDialogSheet("Koin Mimo", "Saldo Koin Mimo: 1.250 Koin\n\nKoin didapat dari menonton anime, login harian, dan berinteraksi di Nyamimo. Gunakan koin untuk membuka lencana anime eksklusif!")
         }
 
+        binding.cardDiamondMine.setOnClickListener {
+            showSimpleDialogSheet("Diamond Nyamimo", "Saldo Diamond: 80 💎\n\nGunakan Diamond untuk mendukung konten kreator, request subtitle cepat, dan membeli gift virtual!")
+        }
+
+        // Setup the Menu List in Tab Saya
         binding.menuFavoritSaya.setOnClickListener {
             openFavoritesScreen()
         }
 
-        binding.menuAcara.setOnClickListener {
-            openEventsScreen()
+        binding.menuRiwayatSaya.setOnClickListener {
+            openHistoryScreen()
+        }
+
+        binding.menuUnduhanSaya.setOnClickListener {
+            openDownloadsScreen()
+        }
+
+        binding.menuPointsSaya.setOnClickListener {
+            showSimpleDialogSheet("Pusat Hadiah Mimo", "Selesaikan misi harian untuk mengumpulkan Koin Mimo:\n\n✔️ Nonton Anime 30 Menit (+50 Koin)\n✔️ Tulis Ulasan (+20 Koin)\n✔️ Bagikan Anime ke Teman (+10 Koin)")
+        }
+
+        binding.menuBahasaSaya.setOnClickListener {
+            showSimpleDialogSheet("Pilihan Bahasa", "Bahasa Aplikasi: Bahasa Indonesia (Default)\nSubtitle: Indonesia, English, Romaji.")
+        }
+
+        binding.menuSubtitleSaya.setOnClickListener {
+            showSimpleDialogSheet("Penerjemahan Subtitle", "Nyamimo Fansub Project:\nSemua subtitle diterjemahkan oleh komunitas pecinta anime Nyamimo dengan tata bahasa Indonesia yang rapi dan alami.")
         }
 
         binding.menuPengaturan.setOnClickListener {
             openSettingsScreen()
-        }
-
-        binding.menuPusatBantuan.setOnClickListener {
-            openHelpScreen()
         }
 
         binding.menuFeedback.setOnClickListener {
@@ -605,6 +880,7 @@ class MainActivity : AppCompatActivity() {
         if (show) {
             binding.offlineContainer.visibility = View.VISIBLE
             binding.exploreContainer.visibility = View.GONE
+            binding.koleksiContainer.visibility = View.GONE
             binding.profileContainer.visibility = View.GONE
             binding.reelsContainer.visibility = View.GONE
             binding.mimoNewsContainer.visibility = View.GONE
@@ -614,20 +890,31 @@ class MainActivity : AppCompatActivity() {
             if (currentNav == "saya") {
                 binding.profileContainer.visibility = View.VISIBLE
                 binding.exploreContainer.visibility = View.GONE
+                binding.koleksiContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
                 binding.mimoNewsContainer.visibility = View.GONE
+            } else if (currentNav == "cari") {
+                binding.koleksiContainer.visibility = View.VISIBLE
+                binding.exploreContainer.visibility = View.GONE
+                binding.profileContainer.visibility = View.GONE
+                binding.reelsContainer.visibility = View.GONE
+                binding.mimoNewsContainer.visibility = View.GONE
+                applyKoleksiFilters()
             } else if (currentNav == "reels") {
                 binding.reelsContainer.visibility = View.VISIBLE
                 binding.exploreContainer.visibility = View.GONE
+                binding.koleksiContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
                 binding.mimoNewsContainer.visibility = View.GONE
             } else if (currentNav == "news") {
                 binding.mimoNewsContainer.visibility = View.VISIBLE
                 binding.exploreContainer.visibility = View.GONE
+                binding.koleksiContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
             } else {
                 binding.exploreContainer.visibility = View.VISIBLE
+                binding.koleksiContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
                 binding.mimoNewsContainer.visibility = View.GONE
@@ -638,18 +925,15 @@ class MainActivity : AppCompatActivity() {
     private fun updateProfileUI() {
         val user = SessionManager.getUser(this)
         if (user.isLoggedIn) {
-            binding.tvProfileName.text = "Halo, ${user.name}!"
+            binding.tvProfileName.text = user.name
+            binding.tvProfileVipTitle.text = "Nyamimo VIP Member"
+            binding.tvProfileVipSubtitle.text = "Status: Aktif • Nikmati Streaming Tanpa Iklan"
+            binding.tvProfileJoinVipText.text = "Perpanjang"
         } else {
-            binding.tvProfileName.text = "Tamu (Klik untuk Masuk / Daftar)"
-        }
-
-        val history = SessionManager.getWatchHistory(this)
-        if (history.isNotEmpty()) {
-            historyAdapter.updateData(history)
-        } else {
-            homeData?.let {
-                historyAdapter.updateData(it.ongoing.take(6))
-            }
+            binding.tvProfileName.text = "Login / Daftar"
+            binding.tvProfileVipTitle.text = "Eksklusif untuk pengguna baru"
+            binding.tvProfileVipSubtitle.text = "VIP Standard bebas iklan & server kencang"
+            binding.tvProfileJoinVipText.text = "Gabung VIP"
         }
     }
 
@@ -795,8 +1079,10 @@ class MainActivity : AppCompatActivity() {
                 // showOfflineScreen already restores the correct container per currentNav
                 showOfflineScreen(false)
                 // Only re-apply tab selection when user is on explore/search screens
-                if (currentNav == "home" || currentNav == "cari") {
+                if (currentNav == "home") {
                     selectTab(currentTab)
+                } else if (currentNav == "cari") {
+                    applyKoleksiFilters()
                 }
             }
 
@@ -809,8 +1095,10 @@ class MainActivity : AppCompatActivity() {
                     val fallback = ApiClient.getFallbackHome()
                     homeData = fallback
                     showOfflineScreen(false)
-                    if (currentNav == "home" || currentNav == "cari") {
+                    if (currentNav == "home") {
                         selectTab(currentTab)
+                    } else if (currentNav == "cari") {
+                        applyKoleksiFilters()
                     }
                 }
             }
@@ -849,6 +1137,9 @@ class MainActivity : AppCompatActivity() {
         binding.mimoNewsContainer.visibility = View.GONE
         binding.searchHistorySection.visibility = View.GONE
         binding.trendingSection.visibility = View.GONE
+        binding.continueWatchingSection.visibility = if (tabKey == "untuk_anda") View.VISIBLE else View.GONE
+        val heroEnabled = SessionManager.getAppConfig(this).hero_carousel.enabled
+        binding.heroCarouselSection.visibility = if (tabKey == "untuk_anda" && heroEnabled) View.VISIBLE else View.GONE
         binding.rvSearchResultsList.visibility = View.GONE
         binding.rvPosterGrid.visibility = View.VISIBLE
 
@@ -1057,8 +1348,11 @@ class MainActivity : AppCompatActivity() {
     private fun selectBottomNav(navKey: String) {
         currentNav = navKey
         val activeGold = Color.parseColor("#FFCC00")
+        val activeGreen = Color.parseColor("#00D26A")
         val activeDark = Color.parseColor("#17171B")
         val inactiveGray = Color.parseColor("#8E8E93")
+
+        binding.bottomBarBstation.setBackgroundColor(Color.parseColor("#FFFFFF"))
 
         binding.ivNavHome.setColorFilter(inactiveGray)
         binding.tvNavHome.setTextColor(inactiveGray)
@@ -1074,6 +1368,9 @@ class MainActivity : AppCompatActivity() {
                 binding.ivNavHome.setColorFilter(activeGold)
                 binding.tvNavHome.setTextColor(activeDark)
                 binding.headerContainer.visibility = View.VISIBLE
+                binding.exploreContainer.visibility = View.VISIBLE
+                binding.koleksiContainer.visibility = View.GONE
+                binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
                 binding.mimoNewsContainer.visibility = View.GONE
                 if (!isNetworkAvailable() && homeData == null) {
@@ -1086,21 +1383,19 @@ class MainActivity : AppCompatActivity() {
             "cari" -> {
                 binding.ivNavCari.setColorFilter(activeGold)
                 binding.tvNavCari.setTextColor(activeDark)
-                binding.headerContainer.visibility = View.VISIBLE
-                binding.exploreContainer.visibility = View.VISIBLE
+                binding.headerContainer.visibility = View.GONE
+                binding.exploreContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
                 binding.mimoNewsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
-                loadSearchHistoryUI()
-                binding.trendingSection.visibility = View.VISIBLE
-                binding.rvSearchResultsList.visibility = View.GONE
-                binding.rvPosterGrid.visibility = View.VISIBLE
-                binding.etTopSearch.requestFocus()
+                binding.koleksiContainer.visibility = View.VISIBLE
+                applyKoleksiFilters()
             }
             "reels" -> {
                 binding.headerContainer.visibility = View.GONE
                 binding.exploreContainer.visibility = View.GONE
+                binding.koleksiContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
                 binding.mimoNewsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
@@ -1112,6 +1407,7 @@ class MainActivity : AppCompatActivity() {
                 binding.tvNavNews.setTextColor(activeDark)
                 binding.headerContainer.visibility = View.GONE
                 binding.exploreContainer.visibility = View.GONE
+                binding.koleksiContainer.visibility = View.GONE
                 binding.profileContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
@@ -1125,6 +1421,7 @@ class MainActivity : AppCompatActivity() {
                 binding.tvNavSaya.setTextColor(activeDark)
                 binding.headerContainer.visibility = View.GONE
                 binding.exploreContainer.visibility = View.GONE
+                binding.koleksiContainer.visibility = View.GONE
                 binding.reelsContainer.visibility = View.GONE
                 binding.mimoNewsContainer.visibility = View.GONE
                 binding.offlineContainer.visibility = View.GONE
@@ -1132,6 +1429,214 @@ class MainActivity : AppCompatActivity() {
                 updateProfileUI()
             }
         }
+    }
+
+    private fun setupKoleksiUI() {
+        // Toggle Search Bar
+        binding.btnKoleksiToggleSearch.setOnClickListener {
+            if (binding.layoutKoleksiSearchBar.visibility == View.VISIBLE) {
+                binding.layoutKoleksiSearchBar.visibility = View.GONE
+                binding.etKoleksiSearch.setText("")
+            } else {
+                binding.layoutKoleksiSearchBar.visibility = View.VISIBLE
+                binding.etKoleksiSearch.requestFocus()
+            }
+        }
+
+        binding.btnKoleksiClearSearch.setOnClickListener {
+            binding.etKoleksiSearch.setText("")
+        }
+
+        binding.etKoleksiSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val query = s?.toString()?.trim() ?: ""
+                binding.btnKoleksiClearSearch.visibility = if (query.isNotEmpty()) View.VISIBLE else View.GONE
+                koleksiSearchQuery = query
+                applyKoleksiFilters()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        // Top Primary Category Tabs
+        binding.tabKoleksiDrama.setOnClickListener { setKoleksiTopTab("drama") }
+        binding.tabKoleksiAnimeWrapper.setOnClickListener { setKoleksiTopTab("anime") }
+        binding.tabKoleksiAnime.setOnClickListener { setKoleksiTopTab("anime") }
+        binding.tabKoleksiVariety.setOnClickListener { setKoleksiTopTab("variety") }
+        binding.tabKoleksiFilm.setOnClickListener { setKoleksiTopTab("film") }
+        binding.tabKoleksiDonghua.setOnClickListener { setKoleksiTopTab("donghua") }
+        binding.tabKoleksiShorts.setOnClickListener { setKoleksiTopTab("shorts") }
+
+        // Row 1: Wilayah
+        binding.chipWilayahAll.setOnClickListener { setWilayahFilter("all") }
+        binding.chipWilayahJapan.setOnClickListener { setWilayahFilter("japan") }
+        binding.chipWilayahChina.setOnClickListener { setWilayahFilter("china") }
+        binding.chipWilayahKorea.setOnClickListener { setWilayahFilter("korea") }
+
+        // Row 2: Genre
+        binding.chipGenreAll.setOnClickListener { setGenreFilter("all") }
+        binding.chipGenreAksi.setOnClickListener { setGenreFilter("aksi") }
+        binding.chipGenrePetualangan.setOnClickListener { setGenreFilter("petualangan") }
+        binding.chipGenreKomedi.setOnClickListener { setGenreFilter("komedi") }
+        binding.chipGenreFiksi.setOnClickListener { setGenreFilter("fiksi") }
+        binding.chipGenrePercintaan.setOnClickListener { setGenreFilter("percintaan") }
+        binding.chipGenreBergairah.setOnClickListener { setGenreFilter("bergairah") }
+        binding.chipGenreFantasi.setOnClickListener { setGenreFilter("fantasi") }
+        binding.chipGenreIsekai.setOnClickListener { setGenreFilter("isekai") }
+
+        // Row 3: Subtitle
+        binding.chipSubtitleAll.setOnClickListener { setSubtitleFilter("all") }
+        binding.chipSubtitleManual.setOnClickListener { setSubtitleFilter("manual") }
+        binding.chipSubtitleDub.setOnClickListener { setSubtitleFilter("dub") }
+
+        // Row 4: Akses
+        binding.chipAksesAll.setOnClickListener { setAksesFilter("all") }
+        binding.chipAksesVip.setOnClickListener { setAksesFilter("vip") }
+        binding.chipAksesGratis.setOnClickListener { setAksesFilter("gratis") }
+
+        // Row 5: Sort
+        binding.chipSortPopuler.setOnClickListener { setSortFilter("populer") }
+        binding.chipSortTerbaru.setOnClickListener { setSortFilter("terbaru") }
+        binding.chipSortRating.setOnClickListener { setSortFilter("rating") }
+    }
+
+    private fun setKoleksiTopTab(tab: String) {
+        selectedKoleksiTab = tab
+        val activeDark = Color.parseColor("#17171B")
+        val inactiveGray = Color.parseColor("#757580")
+
+        binding.tabKoleksiDrama.setTextColor(if (tab == "drama") activeDark else inactiveGray)
+        binding.tabKoleksiAnime.setTextColor(if (tab == "anime") activeDark else inactiveGray)
+        binding.indicatorKoleksiAnime.visibility = if (tab == "anime") View.VISIBLE else View.INVISIBLE
+        binding.tabKoleksiVariety.setTextColor(if (tab == "variety") activeDark else inactiveGray)
+        binding.tabKoleksiFilm.setTextColor(if (tab == "film") activeDark else inactiveGray)
+        binding.tabKoleksiDonghua.setTextColor(if (tab == "donghua") activeDark else inactiveGray)
+        binding.tabKoleksiShorts.setTextColor(if (tab == "shorts") activeDark else inactiveGray)
+
+        applyKoleksiFilters()
+    }
+
+    private fun updateFilterChip(chip: TextView, isSelected: Boolean) {
+        if (isSelected) {
+            chip.setBackgroundResource(R.drawable.bg_filter_pill_selected)
+            chip.setTextColor(Color.parseColor("#17171B"))
+            chip.setTypeface(null, android.graphics.Typeface.BOLD)
+        } else {
+            chip.setBackgroundResource(R.drawable.bg_filter_pill_unselected)
+            chip.setTextColor(Color.parseColor("#757580"))
+            chip.setTypeface(null, android.graphics.Typeface.NORMAL)
+        }
+    }
+
+    private fun setWilayahFilter(wilayah: String) {
+        selectedWilayah = wilayah
+        updateFilterChip(binding.chipWilayahAll, wilayah == "all")
+        updateFilterChip(binding.chipWilayahJapan, wilayah == "japan")
+        updateFilterChip(binding.chipWilayahChina, wilayah == "china")
+        updateFilterChip(binding.chipWilayahKorea, wilayah == "korea")
+        applyKoleksiFilters()
+    }
+
+    private fun setGenreFilter(genre: String) {
+        selectedGenre = genre
+        updateFilterChip(binding.chipGenreAll, genre == "all")
+        updateFilterChip(binding.chipGenreAksi, genre == "aksi")
+        updateFilterChip(binding.chipGenrePetualangan, genre == "petualangan")
+        updateFilterChip(binding.chipGenreKomedi, genre == "komedi")
+        updateFilterChip(binding.chipGenreFiksi, genre == "fiksi")
+        updateFilterChip(binding.chipGenrePercintaan, genre == "percintaan")
+        updateFilterChip(binding.chipGenreBergairah, genre == "bergairah")
+        updateFilterChip(binding.chipGenreFantasi, genre == "fantasi")
+        updateFilterChip(binding.chipGenreIsekai, genre == "isekai")
+        applyKoleksiFilters()
+    }
+
+    private fun setSubtitleFilter(sub: String) {
+        selectedSubtitle = sub
+        updateFilterChip(binding.chipSubtitleAll, sub == "all")
+        updateFilterChip(binding.chipSubtitleManual, sub == "manual")
+        updateFilterChip(binding.chipSubtitleDub, sub == "dub")
+        applyKoleksiFilters()
+    }
+
+    private fun setAksesFilter(akses: String) {
+        selectedAkses = akses
+        updateFilterChip(binding.chipAksesAll, akses == "all")
+        updateFilterChip(binding.chipAksesVip, akses == "vip")
+        updateFilterChip(binding.chipAksesGratis, akses == "gratis")
+        applyKoleksiFilters()
+    }
+
+    private fun setSortFilter(sort: String) {
+        selectedSort = sort
+        updateFilterChip(binding.chipSortPopuler, sort == "populer")
+        updateFilterChip(binding.chipSortTerbaru, sort == "terbaru")
+        updateFilterChip(binding.chipSortRating, sort == "rating")
+        applyKoleksiFilters()
+    }
+
+    private fun applyKoleksiFilters() {
+        val data = homeData ?: ApiClient.getFallbackHome()
+        val allAnime = (data.banners + data.popular + data.ongoing + data.completed).distinctBy { it.slug.ifEmpty { it.title.lowercase() } }
+
+        var result = allAnime.filter { item ->
+            // Filter Tab
+            val tabMatch = when (selectedKoleksiTab) {
+                "film" -> item.type.contains("Movie", ignoreCase = true) || item.title.contains("Movie", ignoreCase = true) || item.type.contains("Film", ignoreCase = true)
+                "donghua" -> item.title.contains("Soul Land", ignoreCase = true) || item.title.contains("Gods", ignoreCase = true) || item.synopsis.contains("China", ignoreCase = true) || item.synopsis.contains("Donghua", ignoreCase = true)
+                "drama", "shorts" -> item.type.contains("ONA", ignoreCase = true) || item.type.contains("Special", ignoreCase = true) || item.episode.contains("24") || item.episode.contains("12")
+                "variety" -> true
+                else -> true
+            }
+
+            // Filter Wilayah
+            val wilayahMatch = when (selectedWilayah) {
+                "japan" -> !item.title.contains("Soul Land", ignoreCase = true) && !item.synopsis.contains("Donghua", ignoreCase = true)
+                "china" -> item.title.contains("Soul Land", ignoreCase = true) || item.title.contains("Against", ignoreCase = true) || item.synopsis.contains("China", ignoreCase = true) || item.synopsis.contains("Donghua", ignoreCase = true)
+                "korea" -> item.title.contains("Solo", ignoreCase = true) || item.title.contains("Tower", ignoreCase = true) || item.synopsis.contains("Korea", ignoreCase = true)
+                else -> true
+            }
+
+            // Filter Genre
+            val genreMatch = when (selectedGenre) {
+                "aksi" -> item.title.contains("Hunter", ignoreCase = true) || item.title.contains("Solo", ignoreCase = true) || item.title.contains("Piece", ignoreCase = true) || item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Gachiakuta", ignoreCase = true) || item.synopsis.contains("Aksi", ignoreCase = true) || item.synopsis.contains("Action", ignoreCase = true)
+                "petualangan" -> item.title.contains("Piece", ignoreCase = true) || item.title.contains("Hunter", ignoreCase = true) || item.synopsis.contains("Adventure", ignoreCase = true) || item.synopsis.contains("Petualangan", ignoreCase = true)
+                "komedi" -> item.title.contains("Chiikawa", ignoreCase = true) || item.title.contains("Bocchi", ignoreCase = true) || item.title.contains("Dating", ignoreCase = true) || item.synopsis.contains("Komedi", ignoreCase = true) || item.synopsis.contains("Comedy", ignoreCase = true)
+                "fiksi" -> item.title.contains("86", ignoreCase = true) || item.title.contains("Digimon", ignoreCase = true) || item.synopsis.contains("Sci-Fi", ignoreCase = true)
+                "percintaan" -> item.title.contains("Kanojo", ignoreCase = true) || item.title.contains("Villainess", ignoreCase = true) || item.synopsis.contains("Romance", ignoreCase = true) || item.synopsis.contains("Percintaan", ignoreCase = true)
+                "bergairah" -> item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Boruto", ignoreCase = true) || item.title.contains("Black Clover", ignoreCase = true) || item.synopsis.contains("Shounen", ignoreCase = true)
+                "fantasi" -> item.title.contains("Gods", ignoreCase = true) || item.title.contains("Solo", ignoreCase = true) || item.title.contains("Isekai", ignoreCase = true) || item.synopsis.contains("Fantasy", ignoreCase = true) || item.synopsis.contains("Fantasi", ignoreCase = true)
+                "isekai" -> item.title.contains("Dating Sim", ignoreCase = true) || item.title.contains("Villainess", ignoreCase = true) || item.synopsis.contains("Isekai", ignoreCase = true)
+                else -> true
+            }
+
+            // Filter Subtitle
+            val subMatch = when (selectedSubtitle) {
+                "manual" -> true
+                "dub" -> item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Piece", ignoreCase = true)
+                else -> true
+            }
+
+            // Filter Search Query
+            val qMatch = if (koleksiSearchQuery.isEmpty()) true else {
+                item.title.contains(koleksiSearchQuery, ignoreCase = true) || item.synopsis.contains(koleksiSearchQuery, ignoreCase = true)
+            }
+
+            tabMatch && wilayahMatch && genreMatch && subMatch && qMatch
+        }
+
+        // Apply Sorting
+        val sortedList = when (selectedSort) {
+            "terbaru" -> result.sortedByDescending { it.episode.filter { c -> c.isDigit() }.toIntOrNull() ?: 0 }
+            "rating" -> result.sortedByDescending { it.score.toDoubleOrNull() ?: 0.0 }
+            else -> result
+        }
+
+        if (::koleksiAdapter.isInitialized) {
+            koleksiAdapter.updateData(sortedList)
+        }
+
+        binding.tvKoleksiEmpty.visibility = if (sortedList.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun performSearch(query: String) {
@@ -1193,10 +1698,5 @@ class MainActivity : AppCompatActivity() {
             putExtra("episode", anime.episode)
         }
         startActivity(intent)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        searchRunnable?.let { searchHandler.removeCallbacks(it) }
     }
 }

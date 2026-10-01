@@ -239,6 +239,8 @@ class PlayerActivity : AppCompatActivity() {
             exoPlayer?.stop()
             binding.playerView.visibility = View.GONE
             binding.playerWebView.visibility = View.VISIBLE
+            binding.ivPlayerWatermark.bringToFront()
+            binding.ivPlayerWatermark.visibility = View.VISIBLE
 
             val embedSrc = if (rawIframe.contains("src=\"") || rawIframe.contains("src='")) {
                 val match = Regex("""src=["'](https?://[^"']+)["']""").find(rawIframe)
@@ -247,22 +249,38 @@ class PlayerActivity : AppCompatActivity() {
                 videoUrl
             }
 
-            if (embedSrc.isNotEmpty() && embedSrc.startsWith("http")) {
-                binding.playerWebView.loadUrl(embedSrc)
-            } else if (rawIframe.isNotEmpty()) {
+            if (embedSrc.isNotEmpty() || rawIframe.isNotEmpty()) {
+                val iframeCode = if (rawIframe.isNotEmpty()) {
+                    rawIframe
+                } else {
+                    "<iframe src=\"$embedSrc\" allowfullscreen=\"true\" allow=\"autoplay; fullscreen\"></iframe>"
+                }
+
                 val html = """
                     <!DOCTYPE html>
                     <html>
                     <head>
                         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width:100%; height:100%; background:#000; overflow:hidden; }
-                            iframe, video { width:100vw; height:100vh; border:none; display:block; }
+                            * { margin:0 !important; padding:0 !important; box-sizing:border-box !important; background-color:#000000 !important; }
+                            body, html { width:100% !important; height:100% !important; background:#000000 !important; overflow:hidden !important; }
+                            iframe, video { 
+                                width: 100vw !important; 
+                                height: 100vh !important; 
+                                border: none !important; 
+                                display: block !important; 
+                            }
+                            .vjs-big-play-button, .ytp-cued-thumbnail-overlay, .play-wrapper { display:none !important; }
                         </style>
                     </head>
-                    <body>
-                        $rawIframe
+                    <body style="background-color:#000000; margin:0; padding:0;">
+                        $iframeCode
+                        <script>
+                            window.addEventListener('DOMContentLoaded', function() {
+                                var v = document.querySelector('video');
+                                if (v) { v.play(); }
+                            });
+                        </script>
                     </body>
                     </html>
                 """.trimIndent()

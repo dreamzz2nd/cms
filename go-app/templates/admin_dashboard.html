@@ -1,7 +1,42 @@
 {{define "content"}}
-<div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ activeTab: window.location.hash === '#ads' ? 'ads' : (window.location.hash === '#site' ? 'site' : (window.location.hash === '#gdrive' ? 'gdrive' : 'overview')) }">
+<div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ 
+    activeTab: (window.location.hash && ['overview','users','trending','ads','watermark','player','apps','site','gdrive'].includes(window.location.hash.substring(1))) ? window.location.hash.substring(1) : 'overview',
+    heroSlides: {{if .Config.App.HeroCarousel.Slides}}{{.Config.App.HeroCarousel.Slides | toJson}}{{else}}[]{{end}},
+    previewSlideIdx: 0,
+    addHeroSlide() {
+        this.heroSlides.push({
+            id: 'slide-' + Date.now(),
+            title: 'Judul Anime Baru',
+            subtitle: 'Aksi, Fantasi • Full Episode • Subtitle Indo',
+            badge: 'TOP 1 REKOMENDASI',
+            background_url: 'https://images.alphacoders.com/134/1349544.jpeg',
+            object_url: '',
+            action_type: 'anime',
+            target_slug: 'slug-anime',
+            order: this.heroSlides.length + 1,
+            is_active: true
+        });
+        this.previewSlideIdx = this.heroSlides.length - 1;
+    },
+    removeHeroSlide(idx) {
+        if (confirm('Hapus slide banner ini?')) {
+            this.heroSlides.splice(idx, 1);
+            if (this.previewSlideIdx >= this.heroSlides.length) {
+                this.previewSlideIdx = Math.max(0, this.heroSlides.length - 1);
+            }
+        }
+    }
+}">
     
-    {{if eq .SavedNotice "ads"}}
+    {{if eq .SavedNotice "player"}}
+    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-title flex items-center justify-between shadow-sm animate-fade-in">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
+            <span>Pengaturan offset posisi player Blogger berhasil disimpan dan langsung diterapkan ke video!</span>
+        </div>
+        <button @click="$el.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    {{else if eq .SavedNotice "ads"}}
     <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-title flex items-center justify-between shadow-sm animate-fade-in">
         <div class="flex items-center gap-2.5">
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
@@ -210,6 +245,33 @@
 
         <button 
             type="button" 
+            @click="activeTab = 'watermark'" 
+            :class="activeTab === 'watermark' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+        >
+            <i data-lucide="stamp" class="w-4 h-4 text-[#FFCC00]"></i> Watermark Player (Live Preview)
+        </button>
+
+        <button 
+            type="button" 
+            @click="activeTab = 'player'" 
+            :class="activeTab === 'player' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+        >
+            <i data-lucide="sliders" class="w-4 h-4 text-[#FFCC00]"></i> Posisi Player Blogger (Live Preview)
+        </button>
+
+        <button 
+            type="button" 
+            @click="activeTab = 'apps'" 
+            :class="activeTab === 'apps' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
+        >
+            <i data-lucide="smartphone" class="w-4 h-4 text-[#FFCC00]"></i> Manajemen Apps Android
+        </button>
+
+        <button 
+            type="button" 
             @click="activeTab = 'site'" 
             :class="activeTab === 'site' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
             class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
@@ -224,6 +286,18 @@
             class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer"
         >
             <i data-lucide="hard-drive" class="w-4 h-4 text-[#FFCC00]"></i> Google Drive 5TB & Sync
+        </button>
+
+        <button 
+            type="button" 
+            @click="activeTab = 'scraper'" 
+            :class="activeTab === 'scraper' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'bg-white text-[#55555B] hover:text-[#1A1A1E] border border-[#E2E2DC] font-semibold'"
+            class="px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 font-title shrink-0 cursor-pointer relative"
+        >
+            <i data-lucide="bot" class="w-4 h-4 text-[#FFCC00]"></i> Bot Scraper & Live Logs
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-white shadow-sm animate-pulse">
+                Auto-Sync
+            </span>
         </button>
     </div>
 
@@ -454,6 +528,7 @@
                             <th class="p-4">Username</th>
                             <th class="p-4">Role Akses</th>
                             <th class="p-4">Status & Terakhir Online</th>
+                            <th class="p-4 text-center">Bebas Iklan (VIP)</th>
                             <th class="p-4 text-right">Aksi</th>
                         </tr>
                     </thead>
@@ -534,6 +609,18 @@
                                 </div>
                                 {{end}}
                             </td>
+                            <td class="p-4 text-center">
+                                <form action="/api/admin/user/toggle-adfree" method="POST" class="inline">
+                                    <input type="hidden" name="username" value="{{.Username}}" />
+                                    <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-bold font-title transition-all cursor-pointer {{if .AdFree}}bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm{{else}}bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#55555B] border border-[#E2E2DC]{{end}}" title="Klik untuk ubah status Bebas Iklan (VIP) akun ini">
+                                        {{if .AdFree}}
+                                        <span class="flex items-center gap-1 justify-center"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> VIP Ad-Free</span>
+                                        {{else}}
+                                        <span class="flex items-center gap-1 justify-center"><i data-lucide="shield-off" class="w-3.5 h-3.5"></i> Standar</span>
+                                        {{end}}
+                                    </button>
+                                </form>
+                            </td>
                             <td class="p-4 text-right">
                                 {{if ne .Username "admin"}}
                                 <form action="/api/admin/user/delete" method="POST" class="inline" onsubmit="return confirm('Hapus akun {{$name := .Name}}{{$name}}?');">
@@ -555,7 +642,7 @@
     </div>
 
     <!-- TAB 3: TRENDING & POPULAR ANIME -->
-    <div x-show="activeTab === 'trending'" style="display: none;" class="space-y-6">
+    <div x-show="activeTab === 'trending'" class="space-y-6">
         <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
             <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-4">
                 <div>
@@ -777,8 +864,828 @@
         </form>
     </div>
 
-    <!-- TAB 5: SITE & API CONFIGURATION -->
-    <div x-show="activeTab === 'site'" style="display: none;" class="space-y-6">
+    <!-- TAB 5: WATERMARK PLAYER MANAGER WITH INTERACTIVE LIVE PREVIEW -->
+    <div x-show="activeTab === 'watermark'" class="space-y-6">
+        <form action="/api/admin/watermark/save" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{
+            enabled: {{if .Config.Watermark.Enabled}}true{{else}}false{{end}},
+            type: '{{if .Config.Watermark.Type}}{{.Config.Watermark.Type}}{{else}}text{{end}}',
+            text: '{{if .Config.Watermark.Text}}{{.Config.Watermark.Text}}{{else}}NYAMIMO{{end}}',
+            imageUrl: '{{.Config.Watermark.ImageURL}}',
+            position: '{{if .Config.Watermark.Position}}{{.Config.Watermark.Position}}{{else}}bottom-right{{end}}',
+            opacity: {{if .Config.Watermark.Opacity}}{{.Config.Watermark.Opacity}}{{else}}0.85{{end}},
+            size: '{{if .Config.Watermark.Size}}{{.Config.Watermark.Size}}{{else}}medium{{end}}',
+            applyToWeb: {{if .Config.Watermark.ApplyToWeb}}true{{else}}true{{end}},
+            applyToApp: {{if .Config.Watermark.ApplyToApp}}true{{else}}true{{end}},
+            uploading: false,
+            uploadStatus: '',
+            uploadWatermarkFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                // Instant local live preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.imageUrl = e.target.result;
+                    this.type = 'image';
+                };
+                reader.readAsDataURL(file);
+
+                // Upload to server & Google Drive folder
+                const formData = new FormData();
+                formData.append('watermark_file', file);
+                this.uploading = true;
+                this.uploadStatus = 'Mengunggah ke Server & Google Drive...';
+
+                fetch('/api/admin/watermark/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.uploading = false;
+                    if (data.status === 'ok') {
+                        this.imageUrl = data.url;
+                        this.uploadStatus = '✅ Berhasil disimpan ke Server & Google Drive!';
+                        setTimeout(() => { this.uploadStatus = ''; }, 4000);
+                    } else {
+                        this.uploadStatus = '❌ ' + (data.message || 'Gagal mengunggah watermark');
+                    }
+                })
+                .catch(err => {
+                    this.uploading = false;
+                    this.uploadStatus = '❌ Terjadi kesalahan saat mengunggah';
+                });
+            }
+        }">
+            <input type="hidden" name="watermark_enabled" :value="enabled ? 'true' : 'false'" />
+            <input type="hidden" name="watermark_type" :value="type" />
+            <input type="hidden" name="watermark_position" :value="position" />
+            <input type="hidden" name="watermark_size" :value="size" />
+            <input type="hidden" name="watermark_apply_web" :value="applyToWeb ? 'true' : 'false'" />
+            <input type="hidden" name="watermark_apply_app" :value="applyToApp ? 'true' : 'false'" />
+
+            <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <!-- Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E2DC] pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-lg bg-[#17171B] text-[#FFCC00] font-extrabold text-[10px] uppercase font-title tracking-wider">
+                                BRANDING & WATERMARK
+                            </span>
+                        </div>
+                        <h2 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2 mt-1">
+                            <i data-lucide="stamp" class="w-5 h-5 text-[#FFCC00]"></i> Pengaturan Watermark Player (Web & Android)
+                        </h2>
+                        <p class="text-xs text-[#55555B] mt-0.5">Atur logo / teks watermark di 4 sudut player video dengan preview interaktif langsung dan sinkronisasi Google Drive.</p>
+                    </div>
+
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-all flex items-center gap-2 font-title shadow cursor-pointer">
+                        <i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan Watermark
+                    </button>
+                </div>
+
+                <!-- Main Grid: Settings (Left) & Real-time Live Preview (Right) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- Left Column: Controls (7 cols) -->
+                    <div class="lg:col-span-7 space-y-5">
+                        
+                        <!-- Toggle Enable -->
+                        <div class="p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <label class="text-xs font-extrabold text-[#1A1A1E] font-title">Aktifkan Watermark di Player</label>
+                                <p class="text-[11px] text-[#55555B]">Tampilkan watermark pada pemutaran video anime.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" x-model="enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                            </label>
+                        </div>
+
+                        <!-- Target Platform Sync -->
+                        <div class="p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] space-y-3">
+                            <label class="block text-xs font-extrabold text-[#1A1A1E] font-title">Terapkan Watermark Pada Platform:</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E2E2DC] cursor-pointer hover:border-[#FFCC00] transition">
+                                    <input type="checkbox" x-model="applyToWeb" class="w-4 h-4 text-[#FFCC00] rounded focus:ring-[#FFCC00]">
+                                    <div>
+                                        <div class="text-xs font-bold text-[#1A1A1E] flex items-center gap-1"><i data-lucide="globe" class="w-3.5 h-3.5 text-blue-500"></i> Nyamimo Website</div>
+                                        <div class="text-[10px] text-[#55555B]">Player browser PC & HP</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#E2E2DC] cursor-pointer hover:border-[#FFCC00] transition">
+                                    <input type="checkbox" x-model="applyToApp" class="w-4 h-4 text-[#FFCC00] rounded focus:ring-[#FFCC00]">
+                                    <div>
+                                        <div class="text-xs font-bold text-[#1A1A1E] flex items-center gap-1"><i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-500"></i> Aplikasi Android</div>
+                                        <div class="text-[10px] text-[#55555B]">Player native ExoPlayer APK</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Watermark Type (Text vs Image) -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-[#1A1A1E] font-title">Tipe Watermark</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="type = 'text'" :class="type === 'text' ? 'bg-[#17171B] text-[#FFCC00] border-[#17171B]' : 'bg-white text-[#55555B] border-[#E2E2DC]'" class="p-3 rounded-xl text-xs font-bold font-title border flex items-center justify-center gap-2 cursor-pointer transition">
+                                    <i data-lucide="type" class="w-4 h-4"></i> Teks Tulisan
+                                </button>
+                                <button type="button" @click="type = 'image'" :class="type === 'image' ? 'bg-[#17171B] text-[#FFCC00] border-[#17171B]' : 'bg-white text-[#55555B] border-[#E2E2DC]'" class="p-3 rounded-xl text-xs font-bold font-title border flex items-center justify-center gap-2 cursor-pointer transition">
+                                    <i data-lucide="image" class="w-4 h-4"></i> Logo Gambar (PNG)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Input based on Type -->
+                        <div x-show="type === 'text'" class="space-y-1.5">
+                            <label class="block text-xs font-bold text-[#1A1A1E] font-title">Teks Watermark</label>
+                            <input type="text" name="watermark_text" x-model="text" placeholder="Contoh: NYAMIMO ANIME" class="w-full text-xs font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]" />
+                        </div>
+
+                        <div x-show="type === 'image'" class="space-y-3">
+                            <!-- File Upload Box with Google Drive Sync -->
+                            <div class="p-4 rounded-2xl bg-white border-2 border-dashed border-[#E2E2DC] hover:border-[#FFCC00] transition-colors space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-bold text-[#1A1A1E] font-title flex items-center gap-1.5">
+                                        <i data-lucide="cloud-upload" class="w-4 h-4 text-[#FFCC00]"></i> Upload Logo Watermark (Simpan ke Google Drive)
+                                    </label>
+                                    <span class="text-[10px] text-[#55555B] font-mono font-bold">PNG / JPG / WEBP / SVG</span>
+                                </div>
+                                
+                                <div class="flex flex-col sm:flex-row items-center gap-3">
+                                    <input type="file" id="watermark_file_input" name="watermark_file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" @change="uploadWatermarkFile($event)" />
+                                    <button type="button" onclick="document.getElementById('watermark_file_input').click()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#2B2B32] text-[#FFCC00] font-bold text-xs flex items-center justify-center gap-2 transition font-title shadow cursor-pointer">
+                                        <i data-lucide="upload" class="w-4 h-4"></i> Pilih File Logo Watermark
+                                    </button>
+                                    <div class="text-xs text-[#55555B] flex-1 text-center sm:text-left">
+                                        <span x-show="!uploading && !uploadStatus">Otomatis disimpan & disinkronkan ke Google Drive</span>
+                                        <span x-show="uploading" class="text-amber-600 font-bold flex items-center gap-1">
+                                            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> <span x-text="uploadStatus"></span>
+                                        </span>
+                                        <span x-show="!uploading && uploadStatus" class="font-bold" :class="uploadStatus.startsWith('✅') ? 'text-emerald-600' : 'text-red-600'" x-text="uploadStatus"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Google Drive Target Folder Info -->
+                                <div class="p-2.5 rounded-xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-between text-[11px] flex-wrap gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="folder-symlink" class="w-3.5 h-3.5 text-blue-600"></i>
+                                        <span class="text-[#55555B]">Folder Google Drive:</span>
+                                        <span class="font-mono font-bold text-[#17171B]">1gzdooYCF_ZqPLmNODqNR-IoY8RjNa4BM</span>
+                                    </div>
+                                    <a href="https://drive.google.com/drive/folders/1gzdooYCF_ZqPLmNODqNR-IoY8RjNa4BM?usp=sharing" target="_blank" rel="noopener noreferrer" class="text-[#FFCC00] bg-[#17171B] hover:bg-[#2B2B32] px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 text-[10px] shadow transition">
+                                        Buka Folder Drive <i data-lucide="external-link" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Direct URL Fallback -->
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Path / URL Gambar Watermark</label>
+                                <input type="text" name="watermark_image_url" x-model="imageUrl" placeholder="https://domain.com/watermark.png atau /static/uploads/watermarks/..." class="w-full text-xs font-mono p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]" />
+                            </div>
+                        </div>
+
+                        <!-- 4 Corner Position Selector -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-[#1A1A1E] font-title">Posisi Sudut Watermark (4 Sudut)</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="position = 'top-left'" :class="position === 'top-left' ? 'ring-2 ring-[#FFCC00] bg-amber-50 text-amber-900 border-amber-300 font-bold' : 'bg-white text-[#55555B] border-[#E2E2DC]'" class="p-3 rounded-xl text-xs border flex items-center gap-2 cursor-pointer transition">
+                                    <i data-lucide="arrow-up-left" class="w-4 h-4 text-[#FFCC00]"></i> Atas Pojok Kiri
+                                </button>
+                                <button type="button" @click="position = 'top-right'" :class="position === 'top-right' ? 'ring-2 ring-[#FFCC00] bg-amber-50 text-amber-900 border-amber-300 font-bold' : 'bg-white text-[#55555B] border-[#E2E2DC]'" class="p-3 rounded-xl text-xs border flex items-center justify-end gap-2 cursor-pointer transition">
+                                    Atas Pojok Kanan <i data-lucide="arrow-up-right" class="w-4 h-4 text-[#FFCC00]"></i>
+                                </button>
+                                <button type="button" @click="position = 'bottom-left'" :class="position === 'bottom-left' ? 'ring-2 ring-[#FFCC00] bg-amber-50 text-amber-900 border-amber-300 font-bold' : 'bg-white text-[#55555B] border-[#E2E2DC]'" class="p-3 rounded-xl text-xs border flex items-center gap-2 cursor-pointer transition">
+                                    <i data-lucide="arrow-down-left" class="w-4 h-4 text-[#FFCC00]"></i> Bawah Pojok Kiri
+                                </button>
+                                <button type="button" @click="position = 'bottom-right'" :class="position === 'bottom-right' ? 'ring-2 ring-[#FFCC00] bg-amber-50 text-amber-900 border-amber-300 font-bold' : 'bg-white text-[#55555B] border-[#E2E2DC]'" class="p-3 rounded-xl text-xs border flex items-center justify-end gap-2 cursor-pointer transition">
+                                    Bawah Pojok Kanan <i data-lucide="arrow-down-right" class="w-4 h-4 text-[#FFCC00]"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Opacity Slider & Size -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5 p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC]">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-[#1A1A1E] font-title">Transparansi / Opacity</label>
+                                    <span class="text-xs font-mono font-bold text-[#FFCC00] bg-[#17171B] px-2 py-0.5 rounded" x-text="Math.round(opacity * 100) + '%'"></span>
+                                </div>
+                                <input type="range" min="0.1" max="1.0" step="0.05" name="watermark_opacity" x-model="opacity" class="w-full accent-[#FFCC00] cursor-pointer mt-2" />
+                            </div>
+
+                            <div class="space-y-1.5 p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC]">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Ukuran Watermark</label>
+                                <div class="grid grid-cols-3 gap-2 mt-1">
+                                    <button type="button" @click="size = 'small'" :class="size === 'small' ? 'bg-[#17171B] text-[#FFCC00] font-bold' : 'bg-white text-[#55555B] border border-[#E2E2DC]'" class="py-1.5 rounded-lg text-xs cursor-pointer transition">Kecil</button>
+                                    <button type="button" @click="size = 'medium'" :class="size === 'medium' ? 'bg-[#17171B] text-[#FFCC00] font-bold' : 'bg-white text-[#55555B] border border-[#E2E2DC]'" class="py-1.5 rounded-lg text-xs cursor-pointer transition">Sedang</button>
+                                    <button type="button" @click="size = 'large'" :class="size === 'large' ? 'bg-[#17171B] text-[#FFCC00] font-bold' : 'bg-white text-[#55555B] border border-[#E2E2DC]'" class="py-1.5 rounded-lg text-xs cursor-pointer transition">Besar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column: Interactive Live Video Mockup Preview (5 cols) -->
+                    <div class="lg:col-span-5 space-y-3 sticky top-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-[#1A1A1E] uppercase font-title flex items-center gap-1.5">
+                                <i data-lucide="eye" class="w-4 h-4 text-[#FFCC00]"></i> Live Real-Time Preview
+                            </span>
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Interaktif</span>
+                        </div>
+
+                        <!-- Player Simulation Box -->
+                        <div class="relative w-full aspect-video rounded-2xl bg-gradient-to-br from-[#121215] via-[#1c1c24] to-[#0a0a0d] border-2 border-[#2B2B32] shadow-2xl overflow-hidden flex flex-col justify-between p-4">
+                            <!-- Background Simulation Graphics -->
+                            <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#FFCC00_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                            
+                            <!-- Mock Player Top Bar -->
+                            <div class="relative z-10 flex items-center justify-between text-white/60 text-[10px] font-mono">
+                                <span class="flex items-center gap-1 text-white font-bold"><i data-lucide="play-circle" class="w-3.5 h-3.5 text-[#FFCC00]"></i> Solo Leveling - Ep 12</span>
+                                <span>1080p HD</span>
+                            </div>
+
+                            <!-- Mock Center Play Button -->
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div class="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 shadow-lg">
+                                    <i data-lucide="play" class="w-6 h-6 fill-current"></i>
+                                </div>
+                            </div>
+
+                            <!-- THE DYNAMIC WATERMARK OVERLAY -->
+                            <div x-show="enabled" 
+                                class="absolute z-20 pointer-events-none transition-all duration-200"
+                                :class="{
+                                    'top-3 left-3': position === 'top-left',
+                                    'top-3 right-3': position === 'top-right',
+                                    'bottom-12 left-3': position === 'bottom-left',
+                                    'bottom-12 right-3': position === 'bottom-right'
+                                }"
+                                :style="'opacity: ' + opacity + ';'">
+                                
+                                <template x-if="type === 'image' && imageUrl">
+                                    <img :src="imageUrl" alt="Preview Watermark" 
+                                        :class="{
+                                            'h-5': size === 'small',
+                                            'h-8': size === 'medium',
+                                            'h-12': size === 'large'
+                                        }"
+                                        class="object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" 
+                                        onerror="this.style.display='none'" />
+                                </template>
+
+                                <template x-if="type === 'text' || !imageUrl">
+                                    <div class="font-extrabold uppercase tracking-wider px-2.5 py-1 rounded bg-black/50 backdrop-blur-xs text-white border border-white/20 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] flex items-center gap-1.5"
+                                        :class="{
+                                            'text-[10px]': size === 'small',
+                                            'text-xs': size === 'medium',
+                                            'text-sm': size === 'large'
+                                        }">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#FFCC00]"></span>
+                                        <span x-text="text || 'NYAMIMO'"></span>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Mock Bottom Controls Bar -->
+                            <div class="relative z-10 flex items-center justify-between text-white/70 text-[10px] pt-2 border-t border-white/10">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                                    <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                                    <span class="font-mono">14:20 / 24:00</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                                    <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed flex items-start gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5"></i>
+                            <span>Watermark ini otomatis tersinkronisasi dan tampil di video player Website Nyamimo serta aplikasi Android APK secara otomatis saat disimpan.</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- TAB 6: PENGATURAN POSISI PLAYER BLOGGER & LIVE PREVIEW SUBTITLE -->
+    <div x-show="activeTab === 'player'" class="space-y-6" x-data="{
+        bottomOffset: {{if .Config.BloggerPlayer.BottomOffsetPx}}{{.Config.BloggerPlayer.BottomOffsetPx}}{{else}}45{{end}},
+        fullscreenOffset: {{if .Config.BloggerPlayer.FullscreenOffsetPx}}{{.Config.BloggerPlayer.FullscreenOffsetPx}}{{else}}60{{end}},
+        previewMode: 'normal'
+    }">
+        <form action="/api/admin/blogger-player/save" method="POST" class="space-y-6">
+            <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E2E2DC] gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold font-title text-[#17171B] flex items-center gap-2.5">
+                            <span class="w-2.5 h-6 bg-[#FFCC00] rounded-full"></span>
+                            Pengaturan Posisi Player Blogger & Keamanan Subtitle
+                        </h3>
+                        <p class="text-xs text-[#55555B] mt-1">
+                            Atur seberapa jauh pemutar video Blogger (Google) diturunkan ke bawah untuk menyembunyikan garis merah server tanpa memotong teks subtitle anime.
+                        </p>
+                    </div>
+
+                    <button type="submit"
+                        class="px-6 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#FFCC00] text-white hover:text-[#17171B] font-bold text-xs font-title transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    <!-- Left: Control Sliders (5 Cols) -->
+                    <div class="lg:col-span-5 space-y-6 bg-[#F8F8F6] p-6 rounded-2xl border border-[#E2E2DC]">
+                        
+                        <!-- Normal Mode Offset -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold font-title text-[#17171B]">
+                                    Offset Penurunan Normal Mode (px)
+                                </label>
+                                <span class="px-2.5 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-mono font-extrabold text-xs" x-text="bottomOffset + ' px'"></span>
+                            </div>
+                            <input type="range" min="0" max="120" step="1" x-model.number="bottomOffset" name="bottom_offset_px"
+                                class="w-full accent-[#FFCC00] cursor-pointer" />
+                            <div class="flex justify-between text-[10px] text-[#A0A0A8] font-mono">
+                                <span>0px (Rasio Penuh)</span>
+                                <span>45px (Optimal)</span>
+                                <span>120px (Maksimal)</span>
+                            </div>
+                            <p class="text-[11px] text-[#55555B] leading-relaxed">
+                                Nilai <strong>40px - 50px</strong> adalah nilai rekomendasi optimal agar garis kontrol Blogger terpotong tanpa memakan teks subtitle anime.
+                            </p>
+                        </div>
+
+                        <!-- Fullscreen Mode Offset -->
+                        <div class="space-y-3 pt-4 border-t border-[#E2E2DC]">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold font-title text-[#17171B]">
+                                    Offset Penurunan Fullscreen Mode (px)
+                                </label>
+                                <span class="px-2.5 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-mono font-extrabold text-xs" x-text="fullscreenOffset + ' px'"></span>
+                            </div>
+                            <input type="range" min="0" max="150" step="1" x-model.number="fullscreenOffset" name="fullscreen_offset_px"
+                                class="w-full accent-[#FFCC00] cursor-pointer" />
+                            <div class="flex justify-between text-[10px] text-[#A0A0A8] font-mono">
+                                <span>0px</span>
+                                <span>60px (Optimal)</span>
+                                <span>150px</span>
+                            </div>
+                            <p class="text-[11px] text-[#55555B] leading-relaxed">
+                                Offset yang diterapkan ketika pengguna menonton dalam mode Layar Penuh (Fullscreen).
+                            </p>
+                        </div>
+
+                        <!-- Safety Status Indicator Badge -->
+                        <div class="p-4 rounded-xl border transition-all"
+                            :class="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 55 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : ((previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 80 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-rose-50 border-rose-200 text-rose-800')">
+                            <div class="flex items-center gap-2 font-bold text-xs font-title">
+                                <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 55">
+                                    <span>✅ Status Subtitle: AMAN & TERBACA JELAS</span>
+                                </template>
+                                <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) > 55 && (previewMode === 'normal' ? bottomOffset : fullscreenOffset) <= 80">
+                                    <span>⚠️ Status Subtitle: CUKUP DEKAT DENGAN TEKS</span>
+                                </template>
+                                <template x-if="(previewMode === 'normal' ? bottomOffset : fullscreenOffset) > 80">
+                                    <span>🛑 Status Subtitle: BERISIKO TERPOTONG</span>
+                                </template>
+                            </div>
+                            <p class="text-[11px] mt-1 opacity-90">
+                                Perhatikan tampilan simulasi subtitle di kotak preview sebelah kanan saat menggeser slider.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Right: Real-time Live Interactive Preview Screen (7 Cols) -->
+                    <div class="lg:col-span-7 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-xs font-bold font-title text-[#17171B]">
+                                <i data-lucide="eye" class="w-4 h-4 text-[#FFCC00]"></i> Simulasi Tampilan Real-Time di Browser Pengguna
+                            </div>
+                            <div class="flex items-center gap-1 bg-[#F8F8F6] p-1 rounded-lg border border-[#E2E2DC] text-[11px]">
+                                <button type="button" @click="previewMode = 'normal'"
+                                    :class="previewMode === 'normal' ? 'bg-[#17171B] text-[#FFCC00] font-bold' : 'text-[#55555B]'"
+                                    class="px-2.5 py-1 rounded-md transition-all">Normal</button>
+                                <button type="button" @click="previewMode = 'fullscreen'"
+                                    :class="previewMode === 'fullscreen' ? 'bg-[#17171B] text-[#FFCC00] font-bold' : 'text-[#55555B]'"
+                                    class="px-2.5 py-1 rounded-md transition-all">Fullscreen</button>
+                            </div>
+                        </div>
+
+                        <!-- Preview Player Box Frame -->
+                        <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-[#2B2B32] shadow-xl flex items-center justify-center select-none">
+                            
+                            <!-- Simulated Video Content Background -->
+                            <div class="w-full h-full relative overflow-hidden flex items-center justify-center">
+                                <div class="w-full absolute transition-all duration-150"
+                                    :style="'height: calc(100% + ' + (previewMode === 'normal' ? bottomOffset : fullscreenOffset) + 'px); margin-bottom: -' + (previewMode === 'normal' ? bottomOffset : fullscreenOffset) + 'px;'">
+                                    
+                                    <!-- Background Anime Image -->
+                                    <img src="https://v2.samehadaku.how/wp-content/uploads/2025/10/151242.jpg" class="w-full h-full object-cover brightness-75" />
+                                    
+                                    <!-- Simulated Blogger Server Bar at Bottom of Video -->
+                                    <div class="absolute bottom-0 left-0 right-0 h-10 bg-black/80 flex items-center px-4 justify-between border-t border-red-500/50">
+                                        <div class="flex items-center gap-2 text-white text-[10px]">
+                                            <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                                            <span class="font-mono text-red-400 font-bold">Timeline Server Blogger (Garis Merah)</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-16 h-1 bg-red-600 rounded-full"></div>
+                                            <span class="text-[9px] text-gray-400">03:52 / 24:00</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sample Hardsub Subtitle in Video Frame -->
+                                    <div class="absolute bottom-12 left-0 right-0 text-center px-4 pointer-events-none">
+                                        <span class="font-sans font-bold text-sm sm:text-base text-white tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] px-3 py-1 bg-black/40 rounded border border-white/20">
+                                            Monster yang berevolusi dengan melahap e-Pulse.
+                                        </span>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- Crop Mask Boundary Indicators -->
+                            <div class="absolute inset-0 pointer-events-none border-2 border-dashed border-[#FFCC00]/40 rounded-2xl flex flex-col justify-between p-3">
+                                <div class="flex justify-between items-center text-[10px] bg-black/70 px-2.5 py-1 rounded text-white font-mono self-start border border-white/20">
+                                    <span>Batas Bingkai Nyamimo (16:9)</span>
+                                </div>
+                                <div class="flex justify-between items-center text-[10px] bg-black/70 px-2.5 py-1 rounded text-[#FFCC00] font-mono self-end border border-[#FFCC00]/40">
+                                    <span x-text="'Diturunkan: ' + (previewMode === 'normal' ? bottomOffset : fullscreenOffset) + 'px'"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <p class="text-[11px] text-[#A0A0A8] italic">
+                            * Kotak preview di atas mensimulasikan pemotong video Blogger secara langsung. Pastikan teks subtitle anime tetap berada di atas garis bawah bingkai kuning.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- TAB 7: MANAJEMEN APPS ANDROID -->
+    <div x-show="activeTab === 'apps'" class="space-y-6">
+        <form action="/api/admin/app/save" method="POST" class="space-y-6">
+            <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <!-- Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E2DC] pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-lg bg-[#17171B] text-[#FFCC00] font-extrabold text-[10px] uppercase font-title tracking-wider">
+                                ANDROID MANAGEMENT PANEL
+                            </span>
+                        </div>
+                        <h2 class="text-lg font-extrabold font-title text-[#1A1A1E] flex items-center gap-2 mt-1">
+                            <i data-lucide="smartphone" class="w-5 h-5 text-[#FFCC00]"></i> Manajemen Aplikasi Android Nyamimo
+                        </h2>
+                        <p class="text-xs text-[#55555B] mt-0.5">Kendalikan pengumuman broadcast in-app, rilis versi APK, paksa update, dan cloaking switch langsung dari website.</p>
+                    </div>
+
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-all flex items-center gap-2 font-title shadow cursor-pointer">
+                        <i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan Apps
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Section 1: In-App Broadcast Announcement -->
+                    <div class="md:col-span-2 p-5 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] space-y-4">
+                        <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-3">
+                            <div>
+                                <h3 class="font-extrabold font-title text-sm text-[#1A1A1E] flex items-center gap-2">
+                                    <i data-lucide="bell-ring" class="w-4 h-4 text-[#FFCC00]"></i> In-App Broadcast Notifikasi & Pengumuman
+                                </h3>
+                                <p class="text-[11px] text-[#55555B]">Tampilkan banner pesan atau info darurat di bagian atas beranda aplikasi Android pengunjung.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="announcement_active" value="true" class="sr-only peer" {{if .Config.App.Announcement.Active}}checked{{end}}>
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Judul Pengumuman</label>
+                                <input type="text" name="announcement_title" value="{{.Config.App.Announcement.Title}}" placeholder="Contoh: Pemeliharaan Server / Rilis Fitur Baru" class="w-full text-xs font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Tipe Banner Notifikasi</label>
+                                <select name="announcement_type" class="w-full text-xs font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                                    <option value="info" {{if eq .Config.App.Announcement.Type "info"}}selected{{end}}>🔵 Info Biasa</option>
+                                    <option value="success" {{if eq .Config.App.Announcement.Type "success"}}selected{{end}}>🟢 Sukses / Fitur Baru</option>
+                                    <option value="warning" {{if eq .Config.App.Announcement.Type "warning"}}selected{{end}}>🟡 Peringatan (Kuning)</option>
+                                    <option value="danger" {{if eq .Config.App.Announcement.Type "danger"}}selected{{end}}>🔴 Darurat / Urgent (Merah)</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Isi Pesan / Deskripsi Pengumuman</label>
+                                <textarea name="announcement_message" rows="2" placeholder="Tuliskan pesan lengkap yang akan dibaca pengguna di aplikasi..." class="w-full text-xs font-medium p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">{{.Config.App.Announcement.Message}}</textarea>
+                            </div>
+
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">URL Tindakan / Tombol (Opsional)</label>
+                                <input type="text" name="announcement_action_url" value="{{.Config.App.Announcement.ActionURL}}" placeholder="https://t.me/nyamimo atau https://nyamimo.com/update" class="w-full text-xs font-mono p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Version Control & Force Update -->
+                    <div class="md:col-span-2 p-5 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] space-y-4">
+                        <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-3">
+                            <div>
+                                <h3 class="font-extrabold font-title text-sm text-[#1A1A1E] flex items-center gap-2">
+                                    <i data-lucide="git-branch" class="w-4 h-4 text-[#FFCC00]"></i> Versi Aplikasi Android & Force Update (Paksa Perbarui)
+                                </h3>
+                                <p class="text-[11px] text-[#55555B]">Kontrol rilis versi terbaru APK dan wajibkan pengguna memperbarui aplikasi jika ada perubahan besar.</p>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" name="force_update" value="true" class="w-4 h-4 text-[#FFCC00] rounded focus:ring-[#FFCC00]" {{if .Config.App.ForceUpdate}}checked{{end}}>
+                                <span class="text-xs font-extrabold text-red-600 font-title">Wajibkan Update (Force Update)</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Versi Kode APK (Version Code - Integer)</label>
+                                <input type="number" name="latest_version_code" value="{{if .Config.App.LatestVersionCode}}{{.Config.App.LatestVersionCode}}{{else}}1{{end}}" class="w-full text-xs font-mono font-bold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                                <p class="text-[10px] text-[#55555B]">Contoh: 1, 2, 3 (harus bertambah tiap rilis build APK baru).</p>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Nama Versi (Version Name)</label>
+                                <input type="text" name="latest_version_name" value="{{if .Config.App.LatestVersionName}}{{.Config.App.LatestVersionName}}{{else}}v1.0.0{{end}}" placeholder="Contoh: v1.1.0" class="w-full text-xs font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                                <p class="text-[10px] text-[#55555B]">Ditampilkan pada dialog pop-up pembaharuan aplikasi.</p>
+                            </div>
+
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">URL Unduhan APK Baru / Link Google Play Store</label>
+                                <input type="url" name="apk_download_url" value="{{.Config.App.APKDownloadURL}}" placeholder="https://domain.com/downloads/nyamimo-v2.apk atau link Play Store" class="w-full text-xs font-mono p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                            </div>
+
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Catatan Rilis Pembaruan (Changelog)</label>
+                                <textarea name="update_changelog" rows="2" placeholder="- Perbaikan streaming server&#10;- Fitur sinkronisasi riwayat nonton otomatis 2 arah&#10;- Desain player lebih kencang" class="w-full text-xs font-medium p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">{{.Config.App.UpdateChangelog}}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: App Feature Cloaking & Base API -->
+                    <div class="p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <label class="text-xs font-extrabold text-[#1A1A1E] font-title">Fitur Streaming Anime Aktif</label>
+                            <p class="text-[11px] text-[#55555B]">Bisa dimatikan sementara (Cloaking Switch) saat proses peninjauan Google Play Store.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="streaming_enabled" value="true" class="sr-only peer" {{if .Config.App.StreamingEnabled}}checked{{end}}>
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                        </label>
+                    </div>
+
+                    <!-- Section 4: Halaman Selamat Datang / Welcome Screen (Belum Login) -->
+                    <div class="md:col-span-2 p-5 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] space-y-4">
+                        <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-3">
+                            <div>
+                                <h3 class="font-extrabold font-title text-sm text-[#1A1A1E] flex items-center gap-2">
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-[#FFCC00]"></i> Halaman Selamat Datang / Welcome Screen (Belum Login)
+                                </h3>
+                                <p class="text-[11px] text-[#55555B]">Tampilkan layar sambutan visual (gaya iQiyi/Netflix) saat pengunjung membuka aplikasi tanpa login.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="welcome_screen_enabled" value="true" class="sr-only peer" {{if .Config.App.WelcomeScreen.Enabled}}checked{{end}}>
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Judul Sambutan</label>
+                                <input type="text" name="welcome_screen_title" value="{{if .Config.App.WelcomeScreen.Title}}{{.Config.App.WelcomeScreen.Title}}{{else}}Selamat Datang{{end}}" placeholder="Selamat Datang" class="w-full text-xs font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Teks Tombol Masuk</label>
+                                <input type="text" name="welcome_screen_btn_text" value="{{if .Config.App.WelcomeScreen.ButtonText}}{{.Config.App.WelcomeScreen.ButtonText}}{{else}}MASUK{{end}}" placeholder="MASUK" class="w-full text-xs font-semibold p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                            </div>
+
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Pesan / Deskripsi Sambutan</label>
+                                <textarea name="welcome_screen_desc" rows="2" placeholder="Ingin tahu tentang konten anime paling populer di seluruh dunia? Semuanya ada di Nyamimo, jutaan episode anime luar biasa ada di sini! Ayo masuk dan jadi bagian dari kami!" class="w-full text-xs font-medium p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">{{if .Config.App.WelcomeScreen.Description}}{{.Config.App.WelcomeScreen.Description}}{{else}}Ingin tahu tentang konten anime paling populer di seluruh dunia? Semuanya ada di Nyamimo, jutaan episode anime luar biasa ada di sini! Ayo masuk dan jadi bagian dari kami!{{end}}</textarea>
+                            </div>
+
+                            <div class="space-y-1.5 sm:col-span-2">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">URL Gambar Background Poster Kustom (Bisa Diganti Sendiri)</label>
+                                <input type="text" name="welcome_screen_bg" value="{{.Config.App.WelcomeScreen.BackgroundImage}}" placeholder="/static/welcome_bg.jpg atau https://link-gambar.com/poster-grid.jpg" class="w-full text-xs font-mono p-3 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                                <p class="text-[10px] text-[#55555B]">💡 Masukkan URL gambar background poster anime atau biarkan default (<code>/static/welcome_bg.jpg</code>). Gambar akan tampil di latar belakang dengan efek gradasi gelap elegan.</p>
+                            </div>
+
+                            <div class="sm:col-span-2 flex items-center justify-between p-3 rounded-xl bg-white border border-[#E2E2DC]">
+                                <div>
+                                    <span class="text-xs font-bold text-[#1A1A1E] font-title">Tampilkan Tombol Lewati (LATER / LEWATI)</span>
+                                    <p class="text-[10px] text-[#55555B]">Izinkan pengguna menjelajahi anime sebagai tamu sebelum login.</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="welcome_screen_allow_skip" value="true" class="sr-only peer" {{if .Config.App.WelcomeScreen.AllowSkip}}checked{{end}}>
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Hero Carousel Parallax Banner (3D Layered Object & Background) -->
+                    <div class="md:col-span-2 p-5 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] space-y-5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E2DC] pb-3">
+                            <div>
+                                <h3 class="font-extrabold font-title text-sm text-[#1A1A1E] flex items-center gap-2">
+                                    <i data-lucide="layers" class="w-4 h-4 text-[#FFCC00]"></i> Hero Carousel Parallax Banner Android (3D Layered: Background + Objek Karakter + Pemanis)
+                                </h3>
+                                <p class="text-[11px] text-[#55555B]">Kendalikan banner geser beranda aplikasi Android dengan efek kedalaman 3D Parallax, judul estetik, badge Dolby/TOP, dan tulisan pemanis.</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer select-none">
+                                    <input type="checkbox" name="hero_carousel_enabled" value="true" class="w-4 h-4 text-[#FFCC00] rounded focus:ring-[#FFCC00]" {{if .Config.App.HeroCarousel.Enabled}}checked{{end}}>
+                                    <span class="text-xs font-bold text-[#1A1A1E] font-title">Aktifkan Banner</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- General Carousel Settings -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-white border border-[#E2E2DC]">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-bold text-[#1A1A1E] font-title">Auto Slide Otomatis</span>
+                                    <p class="text-[10px] text-[#55555B]">Otomatis berganti slide saat aplikasi dibuka.</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="hero_carousel_auto_slide" value="true" class="sr-only peer" {{if .Config.App.HeroCarousel.AutoSlide}}checked{{end}}>
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFCC00]"></div>
+                                </label>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-bold text-[#1A1A1E] font-title">Interval Pergantian Slide (Milidetik)</label>
+                                <input type="number" name="hero_carousel_interval_ms" value="{{if .Config.App.HeroCarousel.IntervalMs}}{{.Config.App.HeroCarousel.IntervalMs}}{{else}}5000{{end}}" step="500" min="2000" class="w-full text-xs font-mono font-semibold p-2 rounded-lg border border-[#E2E2DC] bg-[#F8F8F6] focus:outline-none focus:border-[#FFCC00]">
+                            </div>
+                        </div>
+
+                        <!-- Hidden JSON input to submit all slides -->
+                        <input type="hidden" name="hero_carousel_slides_json" :value="JSON.stringify(heroSlides)">
+
+                        <!-- Live Realtime Preview of Selected Slide -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-[#1A1A1E] font-title flex items-center gap-1.5">
+                                    <i data-lucide="eye" class="w-3.5 h-3.5 text-[#FFCC00]"></i> Live Preview Banner Parallax Android (Gaya iQIYI / Netflix)
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <template x-for="(slide, sIdx) in heroSlides" :key="slide.id || sIdx">
+                                        <button type="button" @click="previewSlideIdx = sIdx"
+                                            :class="previewSlideIdx === sIdx ? 'w-6 bg-[#FFCC00]' : 'w-2 bg-gray-300'"
+                                            class="h-2 rounded-full transition-all cursor-pointer" :title="slide.title"></button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Preview Screen Box -->
+                            <template x-if="heroSlides.length > 0 && heroSlides[previewSlideIdx]">
+                                <div class="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-[#111114] border border-[#2B2B32] shadow-xl select-none">
+                                    <!-- Background Layer (Parallax Depth) -->
+                                    <img :src="heroSlides[previewSlideIdx].background_url || '/static/welcome_bg.jpg'" 
+                                        class="absolute inset-0 w-full h-full object-cover brightness-75 scale-105 transition-all duration-500" />
+                                    
+                                    <!-- Top & Bottom Gradient Overlay for readability -->
+                                    <div class="absolute inset-0 bg-gradient-to-t from-[#111114] via-[#111114]/30 to-black/60 pointer-events-none"></div>
+
+                                    <!-- Floating Character / Object PNG Cut-out Layer (Parallax Effect) -->
+                                    <template x-if="heroSlides[previewSlideIdx].object_url">
+                                        <img :src="heroSlides[previewSlideIdx].object_url" 
+                                            class="absolute right-4 sm:right-12 bottom-2 h-44 sm:h-52 object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-all duration-300 hover:scale-105 pointer-events-none" />
+                                    </template>
+
+                                    <!-- Title & Pemanis Metadata Layer (Left Bottom) -->
+                                    <div class="absolute bottom-4 left-4 right-20 sm:left-6 space-y-1.5 pointer-events-none">
+                                        <!-- Badge Pemanis -->
+                                        <div class="flex items-center gap-2">
+                                            <template x-if="heroSlides[previewSlideIdx].badge">
+                                                <span class="px-2 py-0.5 rounded bg-black/60 backdrop-blur-md border border-[#FFCC00]/50 text-[#FFCC00] font-extrabold text-[9px] uppercase tracking-wider font-mono shadow-sm" x-text="heroSlides[previewSlideIdx].badge"></span>
+                                            </template>
+                                            <span class="px-2 py-0.5 rounded bg-emerald-500/90 text-white font-extrabold text-[9px] uppercase tracking-wider font-mono shadow-sm">HD 1080P</span>
+                                        </div>
+
+                                        <!-- Title (Judul Anime) -->
+                                        <h2 class="text-xl sm:text-2xl font-extrabold text-white font-title drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] line-clamp-1" x-text="heroSlides[previewSlideIdx].title || 'Judul Anime'"></h2>
+
+                                        <!-- Subtitle (Tulisan Pemanis) -->
+                                        <p class="text-xs sm:text-sm text-gray-200 font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] line-clamp-1" x-text="heroSlides[previewSlideIdx].subtitle || 'Tulisan pemanis / info episode'"></p>
+                                    </div>
+
+                                    <!-- Floating Play Button (Right Bottom) -->
+                                    <div class="absolute bottom-4 right-4 sm:right-6 w-12 h-12 rounded-full bg-[#FFCC00] hover:bg-[#ffe066] text-[#17171B] flex items-center justify-center shadow-[0_0_15px_rgba(255,204,0,0.5)] cursor-pointer transition-transform hover:scale-110">
+                                        <i data-lucide="play" class="w-6 h-6 fill-current translate-x-0.5"></i>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Slides List & Card Editors -->
+                        <div class="space-y-3 pt-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-[#1A1A1E] font-title">Daftar Slide Banner (Total: <span x-text="heroSlides.length"></span> Slide)</span>
+                                <button type="button" @click="addHeroSlide()" class="px-3.5 py-1.5 rounded-xl bg-[#17171B] hover:bg-[#2B2B32] text-[#FFCC00] font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Slide Baru
+                                </button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <template x-for="(slide, idx) in heroSlides" :key="slide.id || idx">
+                                    <div class="p-4 rounded-xl bg-white border border-[#E2E2DC] space-y-3 hover:border-[#FFCC00] transition-colors shadow-sm">
+                                        <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-5 h-5 rounded-full bg-[#FFCC00] text-[#17171B] font-extrabold text-[10px] flex items-center justify-center font-mono" x-text="idx + 1"></span>
+                                                <span class="text-xs font-bold text-[#1A1A1E] font-title" x-text="slide.title || 'Slide Tanpa Judul'"></span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" @click="previewSlideIdx = idx" class="px-2.5 py-1 rounded-lg bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[11px] font-bold text-[#1A1A1E] transition-all flex items-center gap-1">
+                                                    <i data-lucide="eye" class="w-3 h-3"></i> Preview
+                                                </button>
+                                                <button type="button" @click="removeHeroSlide(idx)" class="p-1 rounded-lg hover:bg-rose-50 text-rose-600 transition-all" title="Hapus Slide">
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                            <!-- Title -->
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-bold text-[#1A1A1E] font-title">Judul Utama Banner</label>
+                                                <input type="text" x-model="slide.title" placeholder="Contoh: Solo Leveling: Arise" class="w-full text-xs font-semibold p-2 rounded-lg border border-[#E2E2DC] bg-[#F8F8F6] focus:outline-none focus:border-[#FFCC00]">
+                                            </div>
+
+                                            <!-- Subtitle / Pemanis -->
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-bold text-[#1A1A1E] font-title">Tulisan Pemanis / Info Subtitle</label>
+                                                <input type="text" x-model="slide.subtitle" placeholder="Contoh: Aksi, Fantasi • 12 Episode • Subtitle Indo" class="w-full text-xs font-semibold p-2 rounded-lg border border-[#E2E2DC] bg-[#F8F8F6] focus:outline-none focus:border-[#FFCC00]">
+                                            </div>
+
+                                            <!-- Badge Pemanis -->
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-bold text-[#1A1A1E] font-title">Teks Badge Pemanis</label>
+                                                <input type="text" x-model="slide.badge" placeholder="Contoh: DOLBY AUDIO, TOP 1, VIP" class="w-full text-xs font-semibold p-2 rounded-lg border border-[#E2E2DC] bg-[#F8F8F6] focus:outline-none focus:border-[#FFCC00]">
+                                            </div>
+
+                                            <!-- Background URL -->
+                                            <div class="space-y-1 sm:col-span-2">
+                                                <label class="block text-[11px] font-bold text-[#1A1A1E] font-title">URL Gambar Background (Latar Belakang Lebar)</label>
+                                                <input type="text" x-model="slide.background_url" placeholder="https://link-gambar.com/wallpaper.jpg" class="w-full text-xs font-mono p-2 rounded-lg border border-[#E2E2DC] bg-[#F8F8F6] focus:outline-none focus:border-[#FFCC00]">
+                                            </div>
+
+                                            <!-- Object PNG Cutout URL -->
+                                            <div class="space-y-1 sm:col-span-2">
+                                                <label class="block text-[11px] font-bold text-[#1A1A1E] font-title">URL Gambar Objek Karakter Cut-out PNG Transparan (Efek 3D Parallax)</label>
+                                                <input type="text" x-model="slide.object_url" placeholder="https://link-gambar.com/karakter_transparent.png (Opsional)" class="w-full text-xs font-mono p-2 rounded-lg border border-[#E2E2DC] bg-[#F8F8F6] focus:outline-none focus:border-[#FFCC00]">
+                                            </div>
+
+                                            <!-- Target Slug -->
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-bold text-[#1A1A1E] font-title">Slug Anime Tujuan (Saat Diklik)</label>
+                                                <input type="text" x-model="slide.target_slug" placeholder="solo-leveling" class="w-full text-xs font-mono font-semibold p-2 rounded-lg border border-[#E2E2DC] bg-[#F8F8F6] focus:outline-none focus:border-[#FFCC00]">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] space-y-1.5">
+                        <label class="block text-xs font-bold text-[#1A1A1E] font-title">Custom Base URL API Khusus Aplikasi (Opsional)</label>
+                        <input type="text" name="app_api_base_url" value="{{.Config.App.APIBaseURL}}" placeholder="Kosongkan untuk menggunakan domain server saat ini" class="w-full text-xs font-mono p-2.5 rounded-xl border border-[#E2E2DC] bg-white focus:outline-none focus:border-[#FFCC00]">
+                        <p class="text-[10px] text-[#55555B]">Jika aplikasi menggunakan subdomain CDN atau reverse proxy khusus.</p>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- TAB 7: SITE & API CONFIGURATION -->
+    <div x-show="activeTab === 'site'" class="space-y-6">
         <form action="/api/admin/site/save" method="POST" class="space-y-6">
             <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E2DC] pb-4">
@@ -1356,8 +2263,209 @@
                     </div>
                 </div>
 
+                <!-- Submit Button -->
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="px-6 py-3 rounded-2xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs font-title shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+                        <i data-lucide="save" class="w-4 h-4"></i> Simpan Konfigurasi Google Drive
+                    </button>
+                </div>
             </div>
         </form>
+    </div>
+
+    <!-- TAB 7: BOT SCRAPER OTOMATIS & LIVE LOGS -->
+    <div x-show="activeTab === 'scraper'" class="space-y-6" x-data="{
+        logs: [],
+        stats: {
+            total_anime: 0,
+            total_ongoing: 0,
+            total_completed: 0,
+            total_episodes: 0,
+            is_running: false,
+            current_task: ''
+        },
+        loadingAction: false,
+        pollInterval: null,
+        init() {
+            this.fetchLogs();
+            this.pollInterval = setInterval(() => {
+                if (this.activeTab === 'scraper' || this.stats.is_running) {
+                    this.fetchLogs();
+                }
+            }, 1200);
+        },
+        fetchLogs() {
+            fetch('/api/admin/scraper/logs')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success) {
+                        this.logs = data.logs || [];
+                        this.stats = data.stats || this.stats;
+                        this.$nextTick(() => {
+                            const box = document.getElementById('scraper-terminal-box');
+                            if (box) box.scrollTop = box.scrollHeight;
+                        });
+                    }
+                })
+                .catch(() => {});
+        },
+        startScraper(mode) {
+            this.loadingAction = true;
+            this.stats.is_running = true;
+            this.stats.current_task = (mode === 'all' || mode === 'full') ? 'Scraping Seluruh Anime (A - Z)...' : 'Scraping Ongoing & Tamat...';
+            fetch('/api/admin/scraper/start?mode=' + mode, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    this.loadingAction = false;
+                    this.fetchLogs();
+                })
+                .catch(err => {
+                    this.loadingAction = false;
+                    alert('Gagal memulai scraper: ' + err.message);
+                });
+        },
+        stopScraper() {
+            fetch('/api/admin/scraper/stop', { method: 'POST' })
+                .then(res => res.json())
+                .then(() => {
+                    this.fetchLogs();
+                })
+                .catch(() => {});
+        }
+    }">
+        <!-- Top Status Hero Banner -->
+        <div class="bg-gradient-to-r from-[#17171B] via-[#212126] to-[#17171B] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-[#FFCC00]/30">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 rounded-lg bg-[#FFCC00] text-[#17171B] font-extrabold text-[11px] uppercase tracking-wider font-title flex items-center gap-1.5 shadow">
+                            <i data-lucide="bot" class="w-3.5 h-3.5 text-[#17171B]"></i> NYAMIMO ENGINE BOT
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold" 
+                            :class="stats.is_running ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse' : 'bg-green-500/20 text-green-400 border border-green-500/30'">
+                            <span x-text="stats.is_running ? '● Sedang Bekerja Scrape Anime' : '● Bot Siaga (Idle)'"></span>
+                        </span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold font-title tracking-tight text-white">
+                        Bot Scraper Mandiri & Database Lokal
+                    </h2>
+                    <p class="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+                        Bot internal cerdas yang mengikis langsung dari sumber anime (Otakudesu/Kuramanime) dan menyimpannya ke <strong>Database Lokal Nyamimo</strong>. Bebas dari ketergantungan API eksternal pihak ketiga, data tersimpan rapi, dan anti-down.
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 flex-wrap">
+                    <button type="button" @click="startScraper('ongoing')" :disabled="stats.is_running || loadingAction"
+                        class="px-5 py-3 rounded-2xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        <span>Scrape Ongoing & Tamat</span>
+                    </button>
+
+                    <button type="button" @click="startScraper('all')" :disabled="stats.is_running || loadingAction"
+                        class="px-5 py-3 rounded-2xl bg-white hover:bg-gray-100 text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50">
+                        <i data-lucide="globe" class="w-4 h-4 text-purple-600"></i>
+                        <span>Scrape Update (A - Z)</span>
+                    </button>
+
+                    <button type="button" @click="if(confirm('Apakah Anda yakin ingin mereset database dan mengikis ulang seluruh anime & episode dari A-Z?')) startScraper('rescrape_all')" :disabled="stats.is_running || loadingAction"
+                        class="px-5 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Scrape Ulang Bersih (A - Z)</span>
+                    </button>
+
+                    <button type="button" @click="stopScraper()" x-show="stats.is_running"
+                        class="px-4 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+                        <i data-lucide="square" class="w-4 h-4"></i>
+                        <span>Stop</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Koleksi Anime</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-[#FFCC00] font-title mt-1" x-text="stats.total_anime + ' Anime'"></div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Tersimpan di Database Lokal</div>
+                </div>
+
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Anime On-Going</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-green-400 font-title mt-1" x-text="stats.total_ongoing + ' Judul'"></div>
+                    <div class="text-[10px] text-green-400 mt-0.5">Update Tiap Minggu</div>
+                </div>
+
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Anime Tamat (Completed)</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-blue-400 font-title mt-1" x-text="stats.total_completed + ' Judul'"></div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Koleksi Lengkap</div>
+                </div>
+
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status & Task Aktif</div>
+                    <div class="text-sm font-extrabold font-title mt-1 truncate" 
+                        :class="stats.is_running ? 'text-amber-400' : 'text-gray-300'"
+                        x-text="stats.is_running ? stats.current_task : 'Siaga'"></div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Multi-Threading Engine</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE TERMINAL CONSOLE -->
+        <div class="bg-[#0E0E12] border border-[#272730] rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 text-white">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+                    </div>
+                    <div>
+                        <h3 class="font-mono text-xs font-bold text-white flex items-center gap-2">
+                            <span>NYAMIMO_SCRAPER_TERMINAL.log</span>
+                            <span class="text-[10px] text-[#FFCC00] bg-[#FFCC00]/10 border border-[#FFCC00]/30 px-2 py-0.5 rounded">STREAM LIVE</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="fetchLogs()"
+                        class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-[10px] flex items-center gap-1.5 transition">
+                        <i data-lucide="refresh-cw" class="w-3 h-3 text-[#FFCC00]"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Terminal Output Window -->
+            <div class="bg-[#050508] border border-white/5 rounded-2xl p-4 font-mono text-[11px] h-80 overflow-y-auto space-y-1.5 custom-scrollbar shadow-inner" id="scraper-terminal-box">
+                <template x-if="logs.length === 0">
+                    <div class="text-gray-500 italic py-16 text-center">
+                        <div class="text-green-500 font-bold">$ nyamimo-scraper --status ready</div>
+                        <div class="text-[10px] mt-1 text-gray-500">Klik tombol "Scrape Ongoing & Tamat" atau "Scrape Semua Anime (A - Z)" di atas untuk memulai.</div>
+                    </div>
+                </template>
+
+                <template x-for="(log, idx) in logs" :key="idx">
+                    <div class="flex items-start gap-2.5 leading-relaxed">
+                        <span class="text-gray-500 select-none shrink-0" x-text="'[' + log.timestamp + ']'"></span>
+                        <span :class="{
+                            'text-cyan-400 font-medium': log.level === 'INFO',
+                            'text-green-400 font-bold': log.level === 'SUCCESS',
+                            'text-yellow-400 font-medium': log.level === 'WARN',
+                            'text-red-400 font-bold': log.level === 'ERROR'
+                        }" x-text="log.message"></span>
+                    </div>
+                </template>
+            </div>
+            
+            <div class="flex items-center justify-between text-[10px] font-mono text-gray-500 pt-1">
+                <span>Auto-refresh: 1.2s • Dedicated Go routine scraper</span>
+                <span>Storage Target: data/anime_database.json</span>
+            </div>
+        </div>
     </div>
 
 </div>

@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-58:12
-INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-58:12
-INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-58:12
-INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-58:12
+ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-64:12
+INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-64:12
+INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-64:12
+INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:2:1-64:12
 MERGED from [androidx.databinding:viewbinding:8.2.2] C:\Users\user\.gradle\caches\transforms-3\82971bb7254d365dc9205add319c81e0\transformed\jetified-viewbinding-8.2.2\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\user\.gradle\caches\transforms-3\84114cdc67145947aeae5617e585aba8\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\user\.gradle\caches\transforms-3\3eaec48e790365cb3ddece1de5aab10f\transformed\jetified-appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
@@ -100,8 +100,8 @@ ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:8:5-10
 	android:name
 		ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:8:22-78
 application
-ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:10:5-56:19
-INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:10:5-56:19
+ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:10:5-62:19
+INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:10:5-62:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\user\.gradle\caches\transforms-3\84114cdc67145947aeae5617e585aba8\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\user\.gradle\caches\transforms-3\84114cdc67145947aeae5617e585aba8\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\user\.gradle\caches\transforms-3\616b5c1498ee4e9e3233a37f549ea7f5\transformed\constraintlayout-2.0.1\AndroidManifest.xml:9:5-20
@@ -212,6 +212,16 @@ ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:50:9-5
 		ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:55:13-60
 	android:name
 		ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:51:13-43
+activity#com.nyamimo.app.WelcomeActivity
+ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:57:9-61:52
+	android:exported
+		ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:59:13-36
+	android:configChanges
+		ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:60:13-87
+	android:theme
+		ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:61:13-49
+	android:name
+		ADDED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml:58:13-44
 uses-sdk
 INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\user\nyamimo\android\app\src\main\AndroidManifest.xml

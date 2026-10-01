@@ -285,6 +285,89 @@
                             android:background="#E5E4DE" />
                     </LinearLayout>
 
+                    <!-- Section: Hero Carousel Parallax Banner (iQIYI / Netflix 3D Layer Style) -->
+                    <RelativeLayout
+                        android:id="@+id/heroCarouselSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="230dp"
+                        android:layout_marginBottom="4dp"
+                        android:background="#111114"
+                        android:visibility="visible">
+
+                        <androidx.viewpager2.widget.ViewPager2
+                            android:id="@+id/vpHeroCarousel"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:clipChildren="false"
+                            android:clipToPadding="false" />
+
+                        <!-- Dynamic Indicator Dots -->
+                        <LinearLayout
+                            android:id="@+id/layoutHeroDots"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_alignParentBottom="true"
+                            android:layout_marginEnd="72dp"
+                            android:layout_marginBottom="14dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal" />
+                    </RelativeLayout>
+
+                    <!-- Section: Lanjutkan Melihat (Continue Watching - iQIYI Style) -->
+                    <LinearLayout
+                        android:id="@+id/continueWatchingSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingTop="12dp"
+                        android:visibility="visible">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="14dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Lanjutkan Melihat"
+                                android:textColor="#17171B"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/btnSeeAllContinue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:padding="4dp"
+                                android:text="Semua >"
+                                android:textColor="#757580"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Horizontal Continue Watching Cards (16:9 Landscape Video Thumbnails with Play Icon & Progress) -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvContinueWatching"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:clipToPadding="false"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="10dp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="14dp"
+                            android:background="#E5E4DE" />
+                    </LinearLayout>
+
                     <!-- Search Result Single List View (Website concept) -->
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvSearchResultsList"
@@ -306,11 +389,12 @@
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
 
-            <!-- VIEW 3: Profile ("Saya" - Screenshot 2) -->
+            <!-- VIEW 2: Koleksi Video / Temukan & Cari (Nyamimo Theme with Multi-Row Filters) -->
             <androidx.core.widget.NestedScrollView
-                android:id="@+id/profileContainer"
+                android:id="@+id/koleksiContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="#FFFFFF"
                 android:fillViewport="true"
                 android:visibility="gone">
 
@@ -318,438 +402,1089 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingBottom="30dp">
+                    android:paddingBottom="40dp">
 
-                    <!-- Profile Header Banner (Golden Yellow Gradient) -->
-                    <RelativeLayout
+                    <!-- Top Bar: Header Title & Search Icon -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="190dp"
-                        android:background="@drawable/banner_profile_bg">
+                        android:layout_height="52dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp"
+                        android:paddingTop="8dp">
+
+                        <TextView
+                            android:id="@+id/tvKoleksiHeaderTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Koleksi Video"
+                            android:textColor="#17171B"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
 
                         <ImageView
-                            android:layout_width="110dp"
-                            android:layout_height="110dp"
-                            android:layout_alignParentEnd="true"
-                            android:layout_margin="16dp"
-                            android:alpha="0.3"
-                            android:src="@drawable/logo_nyamimo" />
+                            android:id="@+id/btnKoleksiToggleSearch"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="2dp"
+                            android:src="@android:drawable/ic_menu_search"
+                            app:tint="#17171B" />
+                    </LinearLayout>
 
-                        <!-- User Info -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentBottom="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:padding="16dp">
+                    <!-- Embedded Search Input Box (Collapsible / Expandable) -->
+                    <LinearLayout
+                        android:id="@+id/layoutKoleksiSearchBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="4dp"
+                        android:background="@drawable/search_pill_bg"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="12dp"
+                        android:visibility="gone">
 
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@android:drawable/ic_menu_search"
+                            app:tint="#757580" />
 
-                                <TextView
-                                    android:id="@+id/tvProfileName"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Nyamimo Otaku"
-                                    android:textColor="#17171B"
-                                    android:textSize="20sp"
-                                    android:textStyle="bold" />
+                        <EditText
+                            android:id="@+id/etKoleksiSearch"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:hint="Ketik nama anime atau kata kunci..."
+                            android:imeOptions="actionSearch"
+                            android:inputType="text"
+                            android:textColor="#17171B"
+                            android:textColorHint="#8E8E93"
+                            android:textSize="13sp" />
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:text="1 Pengikut   •   17 Mengikuti"
-                                    android:textColor="#55555B"
-                                    android:textSize="12sp" />
+                        <ImageView
+                            android:id="@+id/btnKoleksiClearSearch"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@android:drawable/ic_menu_close_clear_cancel"
+                            android:visibility="gone"
+                            app:tint="#757580" />
+                    </LinearLayout>
 
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="6dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:background="#17171B"
-                                        android:paddingHorizontal="8dp"
-                                        android:paddingVertical="3dp"
-                                        android:text="VIP Member"
-                                        android:textColor="#FFCC00"
-                                        android:textSize="10sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:background="#33000000"
-                                        android:paddingHorizontal="6dp"
-                                        android:paddingVertical="3dp"
-                                        android:text="Indonesia"
-                                        android:textColor="#17171B"
-                                        android:textSize="10sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-                            </LinearLayout>
-
-                            <!-- Avatar Circle with Official Nyamimo Logo -->
-                            <ImageView
-                                android:id="@+id/ivProfileAvatar"
-                                android:layout_width="56dp"
-                                android:layout_height="56dp"
-                                android:background="#FFFFFF"
-                                android:padding="6dp"
-                                android:src="@drawable/logo_nyamimo" />
-                        </LinearLayout>
-                    </RelativeLayout>
-
-                    <!-- VIP Card (White & Yellow Theme) -->
-                    <androidx.cardview.widget.CardView
+                    <!-- Top Primary Category Tabs (Drama, Anime, Variety Show, Film, Donghua, Drama singkat) -->
+                    <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="14dp"
-                        android:layout_marginTop="14dp"
-                        app:cardCornerRadius="10dp"
-                        app:cardElevation="2dp"
-                        app:cardBackgroundColor="#FFFFFF">
+                        android:layout_marginTop="6dp"
+                        android:scrollbars="none">
 
                         <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:id="@+id/layoutKoleksiTopTabs"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
-                            android:padding="14dp">
+                            android:paddingHorizontal="14dp">
+
+                            <TextView
+                                android:id="@+id/tabKoleksiDrama"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:paddingHorizontal="10dp"
+                                android:text="Drama"
+                                android:textColor="#757580"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
 
                             <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
+                                android:id="@+id/tabKoleksiAnimeWrapper"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="vertical"
+                                android:paddingHorizontal="10dp">
 
                                 <TextView
+                                    android:id="@+id/tabKoleksiAnime"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Server VIP Nyamimo Aktif"
+                                    android:text="Anime"
                                     android:textColor="#17171B"
                                     android:textSize="14sp"
                                     android:textStyle="bold" />
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="2dp"
-                                    android:text="Streaming HD tanpa buffer 1080p &amp; 4K"
-                                    android:textColor="#757580"
-                                    android:textSize="12sp" />
+                                <View
+                                    android:id="@+id/indicatorKoleksiAnime"
+                                    android:layout_width="20dp"
+                                    android:layout_height="2.5dp"
+                                    android:layout_marginTop="3dp"
+                                    android:background="#FFCC00" />
                             </LinearLayout>
 
                             <TextView
+                                android:id="@+id/tabKoleksiVariety"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="@drawable/badge_gold_bg"
-                                android:paddingHorizontal="14dp"
-                                android:paddingVertical="6dp"
-                                android:text="GO"
-                                android:textColor="#17171B"
-                                android:textSize="12sp"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:paddingHorizontal="10dp"
+                                android:text="Variety Show"
+                                android:textColor="#757580"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tabKoleksiFilm"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:paddingHorizontal="10dp"
+                                android:text="Film"
+                                android:textColor="#757580"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tabKoleksiDonghua"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:paddingHorizontal="10dp"
+                                android:text="Donghua"
+                                android:textColor="#757580"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tabKoleksiShorts"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:paddingHorizontal="10dp"
+                                android:text="Drama singkat"
+                                android:textColor="#757580"
+                                android:textSize="14sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
-                    </androidx.cardview.widget.CardView>
+                    </HorizontalScrollView>
 
-                    <!-- Riwayat Section (Screenshot 2) -->
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.75dp"
+                        android:layout_marginHorizontal="14dp"
+                        android:layout_marginTop="2dp"
+                        android:background="#EFEFEF" />
+
+                    <!-- Filter Section Container -->
+                    <LinearLayout
+                        android:id="@+id/layoutKoleksiFilters"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+
+                        <!-- Row 1: Wilayah (Semua wilayah, Jepang, China Daratan, Korea) -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/filterRowWilayah"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="14dp">
+
+                                <TextView
+                                    android:id="@+id/chipWilayahAll"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_selected"
+                                    android:text="Semua wilayah"
+                                    android:textColor="#17171B"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/chipWilayahJapan"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Jepang"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipWilayahChina"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="China Daratan"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipWilayahKorea"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Korea"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                        </HorizontalScrollView>
+
+                        <!-- Row 2: Kategori / Genre (Semua Kategori, Petualangan, Komedi, Fiksi Ilmiah, Percintaan, Bergairah, Fantasi, Aksi, Isekai) -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/filterRowGenre"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="14dp">
+
+                                <TextView
+                                    android:id="@+id/chipGenreAll"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_selected"
+                                    android:text="Semua Kategori"
+                                    android:textColor="#17171B"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/chipGenrePetualangan"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Petualangan"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipGenreKomedi"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Komedi"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipGenreFiksi"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Fiksi Ilmiah"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipGenrePercintaan"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Percintaan"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipGenreBergairah"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Bergairah"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipGenreFantasi"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Fantasi"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipGenreAksi"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Aksi"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipGenreIsekai"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Isekai"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                        </HorizontalScrollView>
+
+                        <!-- Row 3: Subtitle (Semua Subtitle, Terjemahan Manual, Dub Indo) -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/filterRowSubtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="14dp">
+
+                                <TextView
+                                    android:id="@+id/chipSubtitleAll"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_selected"
+                                    android:text="Semua Subtitle"
+                                    android:textColor="#17171B"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/chipSubtitleManual"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Terjemahan Manual"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipSubtitleDub"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Sulih Suara (Dub Indo)"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                        </HorizontalScrollView>
+
+                        <!-- Row 4: Akses / Berbayar (Semua Kategori Berbayar, VIP, Gratis) -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/filterRowAkses"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="14dp">
+
+                                <TextView
+                                    android:id="@+id/chipAksesAll"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_selected"
+                                    android:text="Semua Kategori Berbayar"
+                                    android:textColor="#17171B"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/chipAksesVip"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="VIP"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipAksesGratis"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Gratis"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                        </HorizontalScrollView>
+
+                        <!-- Row 5: Urutan / Sort (Popularitas, Terbaru, Rating Tertinggi) -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/filterRowSort"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="14dp">
+
+                                <TextView
+                                    android:id="@+id/chipSortPopuler"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_selected"
+                                    android:text="Popularitas"
+                                    android:textColor="#17171B"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/chipSortTerbaru"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Terbaru"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/chipSortRating"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_filter_pill_unselected"
+                                    android:text="Rating Tertinggi"
+                                    android:textColor="#757580"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                        </HorizontalScrollView>
+                    </LinearLayout>
+
+                    <!-- Results Anime Grid (4 Columns on Tablet / 3 on Phone) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvKoleksiGrid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:nestedScrollingEnabled="false"
+                        android:paddingHorizontal="8dp" />
+
+                    <!-- Empty State -->
+                    <TextView
+                        android:id="@+id/tvKoleksiEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="32dp"
+                        android:gravity="center"
+                        android:text="Tidak ada anime yang cocok dengan filter yang dipilih."
+                        android:textColor="#757580"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- VIEW 3: Profile ("Saya" - Nyamimo White & Gold Theme) -->
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/profileContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#FFFFFF"
+                android:fillViewport="true"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="40dp">
+
+                    <!-- Top Profile Header Row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="14dp">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="18dp"
+                        android:paddingTop="26dp"
+                        android:paddingBottom="12dp">
 
+                        <!-- Circular Profile Avatar -->
+                        <FrameLayout
+                            android:layout_width="48dp"
+                            android:layout_height="48dp">
+
+                            <ImageView
+                                android:id="@+id/ivProfileAvatar"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/badge_gold_bg"
+                                android:padding="6dp"
+                                android:src="@drawable/logo_nyamimo" />
+                        </FrameLayout>
+
+                        <!-- Username / Login Action -->
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:id="@+id/layoutProfileHeaderClick"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Riwayat Tontonan"
-                                android:textColor="#17171B"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/btnViewAllHistory"
+                                android:id="@+id/tvProfileName"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Menonton semua ›"
-                                android:textColor="#D99B00"
-                                android:textSize="13sp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="Login / Daftar"
+                                android:textColor="#17171B"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_marginStart="4dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="#17171B" />
+                        </LinearLayout>
+
+                        <!-- Top Right Action Icons: Scan QR & Bell Notifications -->
+                        <ImageView
+                            android:id="@+id/ivProfileScan"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_marginEnd="16dp"
+                            android:src="@drawable/ic_scan_qr"
+                            app:tint="#17171B" />
+
+                        <ImageView
+                            android:id="@+id/ivProfileNotif"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_bell_notif"
+                            app:tint="#17171B" />
+                    </LinearLayout>
+
+                    <!-- VIP Golden Banner -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/bannerVipCard"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="10dp"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="2dp"
+                        app:cardBackgroundColor="@android:color/transparent">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_profile_vip_banner"
+                            android:paddingHorizontal="14dp"
+                            android:paddingVertical="12dp">
+
+                            <!-- Left: Title & Subtitle -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_centerVertical="true"
+                                android:layout_toStartOf="@id/layoutVipBtnGroup"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvProfileVipTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Eksklusif untuk pengguna baru"
+                                    android:textColor="#17171B"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvProfileVipSubtitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="VIP Standard bebas iklan &amp; server kencang"
+                                    android:textColor="#5A4210"
+                                    android:textSize="10.5sp" />
+                            </LinearLayout>
+
+                            <!-- Right: Mini Badge & VIP Button -->
+                            <LinearLayout
+                                android:id="@+id/layoutVipBtnGroup"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:gravity="end"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginBottom="3dp"
+                                    android:background="@drawable/badge_trending_orange"
+                                    android:paddingHorizontal="5dp"
+                                    android:paddingVertical="1.5dp"
+                                    android:text="Nikmati Keuntungan"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="8sp"
+                                    android:textStyle="bold" />
+
+                                <LinearLayout
+                                    android:id="@+id/btnProfileJoinVip"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="28dp"
+                                    android:background="@drawable/badge_dark_circle"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingHorizontal="10dp">
+
+                                    <ImageView
+                                        android:layout_width="14dp"
+                                        android:layout_height="14dp"
+                                        android:src="@drawable/ic_vip_crown"
+                                        app:tint="#FFCC00" />
+
+                                    <TextView
+                                        android:id="@+id/tvProfileJoinVipText"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="5dp"
+                                        android:text="Gabung VIP"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </RelativeLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- 3 Quick Action Cards Row (Kartu VIP, Koin, Diamond) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <!-- Card 1: Kartu VIP Saya -->
+                        <LinearLayout
+                            android:id="@+id/cardVipMine"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_profile_action_card"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="6dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/ic_vip_crown"
+                                app:tint="#EF4444" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="Kartu VIP"
+                                android:textColor="#17171B"
+                                android:textSize="11sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
-                        <!-- Horizontal Riwayat Scroll -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rvProfileHistory"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:clipToPadding="false"
-                            android:orientation="horizontal" />
+                        <!-- Card 2: Miniseri Koin -->
+                        <LinearLayout
+                            android:id="@+id/cardKoinMine"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginHorizontal="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_profile_action_card"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="6dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/ic_coin_mimo" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="Koin Mimo"
+                                android:textColor="#17171B"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Card 3: Diamond Saya -->
+                        <LinearLayout
+                            android:id="@+id/cardDiamondMine"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_profile_action_card"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="6dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/ic_diamond_mimo" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="Diamond"
+                                android:textColor="#17171B"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Menu List Section (Clean White Cards: Unduhan Saya, Favorit Saya, Acara, Pengaturan, Pusat Bantuan, Feedback) -->
-                    <androidx.cardview.widget.CardView
+                    <!-- Clean Vertical Menu List -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="14dp"
-                        android:layout_marginTop="18dp"
-                        app:cardBackgroundColor="#FFFFFF"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="2dp">
+                        android:layout_marginTop="16dp"
+                        android:orientation="vertical">
 
+                        <!-- 1. List Saya (Favorit & Bookmark) -->
                         <LinearLayout
+                            android:id="@+id/menuFavoritSaya"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:paddingVertical="4dp">
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
 
-                            <!-- 1. Unduhan Saya -->
-                            <LinearLayout
-                                android:id="@+id/menuUnduhanSaya"
-                                android:layout_width="match_parent"
-                                android:layout_height="52dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="16dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_list_plus"
+                                app:tint="#17171B" />
 
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:src="@drawable/ic_menu_unduhan"
-                                    app:tint="#F5A623" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:text="List Saya"
+                                android:textColor="#17171B"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
 
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:text="Unduhan Saya"
-                                    android:textColor="#17171B"
-                                    android:textSize="14.5sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:src="@drawable/ic_chevron_right"
-                                    app:tint="#C7C7CC" />
-                            </LinearLayout>
+                            <!-- Red Notification Dot -->
+                            <View
+                                android:layout_width="6dp"
+                                android:layout_height="6dp"
+                                android:layout_marginStart="6dp"
+                                android:background="@drawable/dot_red_badge" />
 
                             <View
-                                android:layout_width="match_parent"
+                                android:layout_width="0dp"
                                 android:layout_height="1dp"
-                                android:layout_marginStart="52dp"
-                                android:background="#F0F0F0" />
+                                android:layout_weight="1" />
 
-                            <!-- 2. Favorit Saya -->
-                            <LinearLayout
-                                android:id="@+id/menuFavoritSaya"
-                                android:layout_width="match_parent"
-                                android:layout_height="52dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="16dp">
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:src="@drawable/ic_menu_favorit"
-                                    app:tint="#F5A623" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:text="Favorit Saya"
-                                    android:textColor="#17171B"
-                                    android:textSize="14.5sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:src="@drawable/ic_chevron_right"
-                                    app:tint="#C7C7CC" />
-                            </LinearLayout>
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="1dp"
-                                android:layout_marginStart="52dp"
-                                android:background="#F0F0F0" />
-
-                            <!-- 3. Acara -->
-                            <LinearLayout
-                                android:id="@+id/menuAcara"
-                                android:layout_width="match_parent"
-                                android:layout_height="52dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="16dp">
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:src="@drawable/ic_menu_acara"
-                                    app:tint="#F5A623" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:text="Acara"
-                                    android:textColor="#17171B"
-                                    android:textSize="14.5sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:src="@drawable/ic_chevron_right"
-                                    app:tint="#C7C7CC" />
-                            </LinearLayout>
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="1dp"
-                                android:layout_marginStart="52dp"
-                                android:background="#F0F0F0" />
-
-                            <!-- 4. Pengaturan -->
-                            <LinearLayout
-                                android:id="@+id/menuPengaturan"
-                                android:layout_width="match_parent"
-                                android:layout_height="52dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="16dp">
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:src="@drawable/ic_menu_pengaturan"
-                                    app:tint="#F5A623" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:text="Pengaturan"
-                                    android:textColor="#17171B"
-                                    android:textSize="14.5sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:src="@drawable/ic_chevron_right"
-                                    app:tint="#C7C7CC" />
-                            </LinearLayout>
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="1dp"
-                                android:layout_marginStart="52dp"
-                                android:background="#F0F0F0" />
-
-                            <!-- 5. Pusat Bantuan -->
-                            <LinearLayout
-                                android:id="@+id/menuPusatBantuan"
-                                android:layout_width="match_parent"
-                                android:layout_height="52dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="16dp">
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:src="@drawable/ic_menu_bantuan"
-                                    app:tint="#F5A623" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:text="Pusat Bantuan"
-                                    android:textColor="#17171B"
-                                    android:textSize="14.5sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:src="@drawable/ic_chevron_right"
-                                    app:tint="#C7C7CC" />
-                            </LinearLayout>
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="1dp"
-                                android:layout_marginStart="52dp"
-                                android:background="#F0F0F0" />
-
-                            <!-- 6. Feedback -->
-                            <LinearLayout
-                                android:id="@+id/menuFeedback"
-                                android:layout_width="match_parent"
-                                android:layout_height="52dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="16dp">
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:src="@drawable/ic_menu_feedback"
-                                    app:tint="#F5A623" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:text="Feedback"
-                                    android:textColor="#17171B"
-                                    android:textSize="14.5sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:src="@drawable/ic_chevron_right"
-                                    app:tint="#C7C7CC" />
-                            </LinearLayout>
-
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="#C7C7CC" />
                         </LinearLayout>
-                    </androidx.cardview.widget.CardView>
+
+                        <!-- 2. Histori Tontonan -->
+                        <LinearLayout
+                            android:id="@+id/menuRiwayatSaya"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_history_clock"
+                                app:tint="#17171B" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:text="Histori Tontonan"
+                                android:textColor="#17171B"
+                                android:textSize="14sp" />
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="#C7C7CC" />
+                        </LinearLayout>
+
+                        <!-- 3. Unduh APP TV / Unduhan -->
+                        <LinearLayout
+                            android:id="@+id/menuUnduhanSaya"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_tv_download"
+                                app:tint="#17171B" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:text="Unduh APP TV"
+                                android:textColor="#17171B"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Coba Sekarang ›"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <!-- 4. Hadiah & Koin Mimo -->
+                        <LinearLayout
+                            android:id="@+id/menuPointsSaya"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_points_bag"
+                                app:tint="#17171B" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:text="Pusat Hadiah Mimo"
+                                android:textColor="#17171B"
+                                android:textSize="14sp" />
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="#C7C7CC" />
+                        </LinearLayout>
+
+                        <!-- 5. Bahasa -->
+                        <LinearLayout
+                            android:id="@+id/menuBahasaSaya"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_language_mimo"
+                                app:tint="#17171B" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:text="Bahasa"
+                                android:textColor="#17171B"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Indonesia ›"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <!-- 6. Penerjemahan Subtitle -->
+                        <LinearLayout
+                            android:id="@+id/menuSubtitleSaya"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_subtitle_mimo"
+                                app:tint="#17171B" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:text="Penerjemahan Subtitle"
+                                android:textColor="#17171B"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Nyamimo Fansub ›"
+                                android:textColor="#757580"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <!-- 7. Pengaturan -->
+                        <LinearLayout
+                            android:id="@+id/menuPengaturan"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_menu_pengaturan"
+                                app:tint="#17171B" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:text="Pengaturan"
+                                android:textColor="#17171B"
+                                android:textSize="14sp" />
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="#C7C7CC" />
+                        </LinearLayout>
+
+                        <!-- 8. Feedback -->
+                        <LinearLayout
+                            android:id="@+id/menuFeedback"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_menu_feedback"
+                                app:tint="#17171B" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:text="Feedback"
+                                android:textColor="#17171B"
+                                android:textSize="14sp" />
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="#C7C7CC" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Footer Version Identifier -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="32dp"
+                        android:gravity="center"
+                        android:letterSpacing="0.05"
+                        android:text="NYAMIMO V1.0.0 (OFFICIAL BUILD)"
+                        android:textColor="#8E8E93"
+                        android:textSize="10.5sp" />
 
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>

@@ -11,7 +11,7 @@
   "google_client_secret": "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",
   "gdrive": {
     "enabled": false,
-    "folder_id": "1-5fg58S1uu9IdGLiTMxzF1hGBPehvxOD",
+    "folder_id": "1gzdooYCF_ZqPLmNODqNR-IoY8RjNa4BM",
     "service_account_json": "",
     "auto_sync_ongoing": false,
     "resolutions": [
@@ -37,12 +37,12 @@
     "popunder": {
       "enabled": true,
       "title": "In-Page Push / Direct Script (Head/Body Script)",
-      "code": "<script>(function(s){s.dataset.zone='11921331',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>"
+      "code": "\u003cscript\u003e(function(s){s.dataset.zone='11921331',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))\u003c/script\u003e"
     },
     "footer_banner": {
       "enabled": false,
       "title": "Footer Sticky / Bottom Banner",
-      "code": "<div class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#E2E2DC] rounded-xl text-center text-xs text-[#55555B]\">📢 Pasang Iklan Footer di Sini</div>"
+      "code": "\u003cdiv class=\"w-full max-w-4xl mx-auto my-2 p-3 bg-[#17171B]/5 border border-dashed border-[#E2E2DC] rounded-xl text-center text-xs text-[#55555B]\"\u003e📢 Pasang Iklan Footer di Sini\u003c/div\u003e"
     },
     "video_preroll": {
       "enabled": false,
@@ -52,5 +52,44 @@
       "duration_seconds": 15,
       "skip_after_seconds": 5
     }
+  },
+  "watermark": {
+    "enabled": true,
+    "type": "image",
+    "text": "NYAMIMO",
+    "image_url": "/static/uploads/watermarks/watermark_1790741682709348300.png",
+    "position": "top-right",
+    "opacity": 0.55,
+    "size": "large",
+    "apply_to_web": true,
+    "apply_to_app": true
+  },
+  "app": {
+    "api_base_url": "https://api.animekudesu.web.id",
+    "latest_version_code": 1,
+    "latest_version_name": "v1.0.0",
+    "apk_download_url": "https://nyamimo.onrender.com",
+    "force_update": false,
+    "update_changelog": "- Streaming server lancar\n- Sinkronisasi riwayat nonton otomatis",
+    "streaming_enabled": true,
+    "announcement": {
+      "active": true,
+      "title": "Selamat Datang di Nyamimo App!",
+      "message": "Nikmati streaming anime kualitas HD tanpa buffering dengan server super cepat!",
+      "type": "info",
+      "action_url": ""
+    },
+    "welcome_screen": {
+      "enabled": true,
+      "title": "Selamat Datang",
+      "description": "Ingin tahu tentang konten anime paling populer di seluruh dunia? Semuanya ada di Nyamimo, jutaan episode anime luar biasa ada di sini! Ayo masuk dan jadi bagian dari kami!",
+      "background_image": "/static/welcome_bg.jpg",
+      "button_text": "MASUK",
+      "allow_skip": true
+    }
+  },
+  "blogger_player": {
+    "bottom_offset_px": 0,
+    "fullscreen_offset_px": 0
   }
 }

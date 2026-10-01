@@ -71,6 +71,11 @@
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.Nyamimo.Fullscreen" />
+        <activity
+            android:name="com.nyamimo.app.WelcomeActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="true"
+            android:theme="@style/Theme.Nyamimo" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

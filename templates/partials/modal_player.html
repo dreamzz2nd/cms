@@ -41,7 +41,7 @@
 
             <!-- Video Player iFrame Container -->
             <div id="player-iframe-container"
-                class="relative aspect-video bg-black flex items-center justify-center border-b border-[#2B2B32]">
+                class="relative aspect-video bg-black flex items-center justify-center border-b border-[#2B2B32] overflow-hidden">
                 {{if .RawIframe}}
                 {{.RawIframe}}
                 {{else if .VideoURL}}
@@ -53,6 +53,27 @@
                     <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-[#FFCC00]"></i>
                     <span class="text-sm font-medium font-title">Memuat pemutar video...</span>
                 </div>
+                {{end}}
+
+                <!-- Watermark Overlay inside Modal Player -->
+                {{$wm := (siteConfig).Watermark}}
+                {{if $wm.Enabled}}
+                {{if $wm.ApplyToWeb}}
+                <div id="modal-watermark-overlay" class="absolute pointer-events-none select-none transition-all
+                    {{if eq $wm.Position "top-left"}}top-4 left-4{{else if eq $wm.Position "top-right"}}top-4 right-4{{else if eq $wm.Position "bottom-left"}}bottom-4 left-4{{else}}bottom-4 right-4{{end}}"
+                    style="z-index: 9999; opacity: {{if $wm.Opacity}}{{$wm.Opacity}}{{else}}0.85{{end}};">
+                    {{if eq $wm.Type "image"}}
+                        {{if $wm.ImageURL}}
+                        <img src="{{$wm.ImageURL}}" alt="Watermark" class="{{if eq $wm.Size "small"}}h-5{{else if eq $wm.Size "large"}}h-10{{else}}h-7{{end}} object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                        {{end}}
+                    {{else}}
+                        <div class="font-extrabold tracking-wider uppercase px-2.5 py-1 rounded bg-black/60 backdrop-blur-xs text-white border border-white/20 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] flex items-center gap-1.5 {{if eq $wm.Size "small"}}text-[10px]{{else if eq $wm.Size "large"}}text-sm{{else}}text-xs{{end}}">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#FFCC00] shadow-[0_0_8px_#FFCC00]"></span>
+                            <span>{{if $wm.Text}}{{$wm.Text}}{{else}}NYAMIMO{{end}}</span>
+                        </div>
+                    {{end}}
+                </div>
+                {{end}}
                 {{end}}
             </div>
 
@@ -134,19 +155,28 @@
     if (window.lucide) lucide.createIcons();
 
     function toggleFullScreenPlayer() {
-        const container = document.getElementById('player-iframe-container');
-        const iframe = container.querySelector('iframe');
-        const target = iframe || container;
-
+        const target = document.getElementById('player-iframe-container');
         if (target) {
-            if (target.requestFullscreen) {
-                target.requestFullscreen();
-            } else if (target.webkitRequestFullscreen) {
-                target.webkitRequestFullscreen();
-            } else if (target.mozRequestFullScreen) {
-                target.mozRequestFullScreen();
-            } else if (target.msRequestFullscreen) {
-                target.msRequestFullscreen();
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+                if (target.requestFullscreen) {
+                    target.requestFullscreen();
+                } else if (target.webkitRequestFullscreen) {
+                    target.webkitRequestFullscreen();
+                } else if (target.mozRequestFullScreen) {
+                    target.mozRequestFullScreen();
+                } else if (target.msRequestFullscreen) {
+                    target.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
             }
         }
     }

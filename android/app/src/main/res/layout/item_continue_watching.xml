@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="180dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="10dp"
+    android:orientation="vertical">
+
+    <!-- 16:9 Landscape Card -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="180dp"
+        android:layout_height="102dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="#17171B">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Video / Anime Thumbnail -->
+            <ImageView
+                android:id="@+id/ivContinuePoster"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/logo_nyamimo" />
+
+            <!-- Dark Gradient Overlay for bottom text legibility -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/banner_gradient_overlay" />
+
+            <!-- Centered Play Circle Icon -->
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/bg_play_circle">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_play_arrow"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
+
+            <!-- Top Right Badge: Gratis / HD -->
+            <TextView
+                android:id="@+id/tvContinueBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/badge_green_gratis"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:text="Gratis"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <!-- Bottom Left Info: Tonton sampai episode X -->
+            <TextView
+                android:id="@+id/tvContinueEpProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_above="@id/pbContinueProgress"
+                android:layout_marginHorizontal="6dp"
+                android:layout_marginBottom="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Tonton sampai episode 1"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <!-- Watched Timeline Progress Bar -->
+            <ProgressBar
+                android:id="@+id/pbContinueProgress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:layout_alignParentBottom="true"
+                android:max="100"
+                android:progress="60"
+                android:progressDrawable="@drawable/progress_bar_gold" />
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Anime Title Below Card -->
+    <TextView
+        android:id="@+id/tvContinueTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Judul Anime"
+        android:textColor="#17171B"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

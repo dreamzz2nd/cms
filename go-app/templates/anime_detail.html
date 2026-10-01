@@ -394,7 +394,83 @@
     }
     .art-video-player .art-setting-item.art-current .art-setting-item-right {
         color: #FFCC00 !important;
-    <!-- Video Player Box Container (Black Background Neutral) -->
+    }
+
+    /* Fullscreen Wrapper & Watermark Visibility Enforcement */
+    #nyamimo-player-wrapper:fullscreen,
+    #nyamimo-player-wrapper:-webkit-full-screen,
+    #nyamimo-player-wrapper:-moz-full-screen,
+    #nyamimo-player-wrapper.is-fullscreen {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        border: none !important;
+        background-color: #000 !important;
+        z-index: 2147483640 !important;
+    }
+
+    #player-watermark-overlay {
+        z-index: 2147483647 !important;
+        pointer-events: none !important;
+        display: flex !important;
+        visibility: visible !important;
+    }
+
+    {{$bOffset := 45}}
+    {{$bFsOffset := 60}}
+    {{if (siteConfig).BloggerPlayer.BottomOffsetPx}}
+        {{$bOffset = (siteConfig).BloggerPlayer.BottomOffsetPx}}
+    {{end}}
+    {{if (siteConfig).BloggerPlayer.FullscreenOffsetPx}}
+        {{$bFsOffset = (siteConfig).BloggerPlayer.FullscreenOffsetPx}}
+    {{end}}
+
+    #player-iframe, #player-iframe-container iframe {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+        pointer-events: auto !important;
+    }
+
+    #player-iframe[src*="blogger.com"],
+    #player-iframe-container iframe[src*="blogger.com"] {
+        width: 100% !important;
+        height: calc(100% + {{$bOffset}}px) !important;
+        margin-bottom: -{{$bOffset}}px !important;
+    }
+
+    #nyamimo-player-wrapper:fullscreen #player-iframe[src*="blogger.com"],
+    #nyamimo-player-wrapper:-webkit-full-screen #player-iframe[src*="blogger.com"],
+    #nyamimo-player-wrapper:-moz-full-screen #player-iframe[src*="blogger.com"],
+    #nyamimo-player-wrapper.is-fullscreen #player-iframe[src*="blogger.com"],
+    #nyamimo-player-wrapper:fullscreen #player-iframe-container iframe[src*="blogger.com"],
+    #nyamimo-player-wrapper:-webkit-full-screen #player-iframe-container iframe[src*="blogger.com"],
+    #nyamimo-player-wrapper:-moz-full-screen #player-iframe-container iframe[src*="blogger.com"],
+    #nyamimo-player-wrapper.is-fullscreen #player-iframe-container iframe[src*="blogger.com"],
+    :fullscreen #player-iframe[src*="blogger.com"],
+    :-webkit-full-screen #player-iframe[src*="blogger.com"],
+    :-moz-full-screen #player-iframe[src*="blogger.com"] {
+        width: 100% !important;
+        height: calc(100% + {{$bFsOffset}}px) !important;
+        margin-bottom: -{{$bFsOffset}}px !important;
+    }
+
+    #nyamimo-player-wrapper:fullscreen #player-watermark-overlay,
+    #nyamimo-player-wrapper:-webkit-full-screen #player-watermark-overlay,
+    #nyamimo-player-wrapper:-moz-full-screen #player-watermark-overlay,
+    #nyamimo-player-wrapper.is-fullscreen #player-watermark-overlay,
+    :fullscreen #player-watermark-overlay,
+    :-webkit-full-screen #player-watermark-overlay,
+    :-moz-full-screen #player-watermark-overlay {
+        z-index: 2147483647 !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 0.9 !important;
+    }
+</style>
+<!-- Video Player Box Container (Black Background Neutral) -->
 <div id="nyamimo-player-wrapper"
     class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-[#2B2B32] shadow-2xl select-none group flex flex-col justify-between cursor-pointer"
     onmousemove="onPlayerMouseMove()"
@@ -406,8 +482,7 @@
         {{if .RawIframe}}
         {{.RawIframe}}
         {{else if .VideoURL}}
-        <iframe id="player-iframe" src="{{.VideoURL}}" class="w-full border-0"
-            style="height: calc(100% + 52px); margin-bottom: -52px;"
+        <iframe id="player-iframe" src="{{.VideoURL}}" class="w-full border-0 pointer-events-auto"
             allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()"
             onerror="onPlayerIframeError()"
             allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>
@@ -433,8 +508,29 @@
         +10s <i data-lucide="rotate-cw" class="w-4 h-4"></i>
     </div>
 
-    <!-- Transparent Click Interceptor to Toggle Play/Pause on whole screen -->
-    <div id="player-click-surface" class="absolute inset-0 z-20 cursor-pointer" onclick="onPlayerSurfaceClick(event)" ondblclick="onPlayerSurfaceDblClick(event)"></div>
+    <!-- Transparent Click Surface to pass interactions to video -->
+    <div id="player-click-surface" class="absolute inset-0 z-20 pointer-events-none"></div>
+
+    <!-- Video Player Watermark Overlay (Positioned in 4 Corners with Fullscreen Support) -->
+    {{$wm := (siteConfig).Watermark}}
+    {{if $wm.Enabled}}
+    {{if $wm.ApplyToWeb}}
+    <div id="player-watermark-overlay" class="absolute pointer-events-none select-none transition-all
+        {{if eq $wm.Position "top-left"}}top-4 sm:top-6 left-4 sm:left-6{{else if eq $wm.Position "top-right"}}top-4 sm:top-6 right-4 sm:right-6{{else if eq $wm.Position "bottom-left"}}bottom-14 sm:bottom-16 left-4 sm:left-6{{else}}bottom-14 sm:bottom-16 right-4 sm:right-6{{end}}"
+        style="z-index: 9999; opacity: {{if $wm.Opacity}}{{$wm.Opacity}}{{else}}0.85{{end}};">
+        {{if eq $wm.Type "image"}}
+            {{if $wm.ImageURL}}
+            <img src="{{$wm.ImageURL}}" alt="Watermark" class="{{if eq $wm.Size "small"}}h-5 sm:h-7{{else if eq $wm.Size "large"}}h-10 sm:h-14{{else}}h-7 sm:h-10{{end}} object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+            {{end}}
+        {{else}}
+            <div class="font-extrabold tracking-wider uppercase px-2.5 py-1 rounded bg-black/60 backdrop-blur-xs text-white border border-white/20 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] flex items-center gap-1.5 {{if eq $wm.Size "small"}}text-[10px] sm:text-xs{{else if eq $wm.Size "large"}}text-sm sm:text-base{{else}}text-xs sm:text-sm{{end}}">
+                <span class="w-2 h-2 rounded-full bg-[#FFCC00] shadow-[0_0_8px_#FFCC00]"></span>
+                <span>{{if $wm.Text}}{{$wm.Text}}{{else}}NYAMIMO{{end}}</span>
+            </div>
+        {{end}}
+    </div>
+    {{end}}
+    {{end}}
 
     <!-- ===== NYAMIMO CINEMATIC OVERLAY UI (Matches Screenshot 2) ===== -->
     <div id="nyamimo-cinema-overlay"
@@ -523,29 +619,8 @@
             </div>
         </div>
 
-        <!-- Center Floating Action Controls (Big Circular Glass Buttons) -->
-        <div class="flex items-center justify-center gap-4 sm:gap-6 pointer-events-auto my-auto">
-            <!-- Rewind 10s Button -->
-            <button onclick="seekVideo(-10)"
-                class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-[#FFCC00] text-white hover:text-[#17171B] border border-white/20 hover:border-[#FFCC00] flex items-center justify-center transition-all shadow-xl backdrop-blur-md active:scale-90"
-                title="Mundur 10 Detik [Panah Kiri / J]">
-                <i data-lucide="skip-back" class="w-5 h-5"></i>
-            </button>
-
-            <!-- Big Central Play / Pause Button -->
-            <button id="overlay-center-play-btn" onclick="togglePlayPause()"
-                class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/75 hover:bg-[#FFCC00] text-white hover:text-[#17171B] border border-white/25 hover:border-[#FFCC00] flex items-center justify-center transition-all shadow-2xl backdrop-blur-lg scale-100 hover:scale-105 active:scale-95 group"
-                title="Putar / Jeda Video [Spasi / K]">
-                <i id="overlay-play-icon" data-lucide="pause" class="w-7 h-7 fill-current"></i>
-            </button>
-
-            <!-- Forward 10s Button -->
-            <button onclick="seekVideo(10)"
-                class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-[#FFCC00] text-white hover:text-[#17171B] border border-white/20 hover:border-[#FFCC00] flex items-center justify-center transition-all shadow-xl backdrop-blur-md active:scale-90"
-                title="Maju 10 Detik [Panah Kanan / L]">
-                <i data-lucide="skip-forward" class="w-5 h-5"></i>
-            </button>
-        </div>
+        <!-- Center Floating Action Area -->
+        <div class="pointer-events-none my-auto h-20"></div>
 
         <!-- Bottom Control Bar (Timeline + Quick Bar) -->
         <div class="pointer-events-auto bg-gradient-to-t from-black/95 via-black/60 to-transparent -mx-3 -mb-3 sm:-mx-5 sm:-mb-5 p-3 sm:p-4 rounded-b-2xl space-y-2">
@@ -761,6 +836,14 @@
     }, 3000);
 
     function fallbackToIframe(container, videoUrl, rawHtml) {
+        var overlay = document.getElementById('nyamimo-cinema-overlay');
+        var clickSurface = document.getElementById('player-click-surface');
+        if (clickSurface) clickSurface.style.display = 'block';
+        if (overlay) {
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+        }
+
         var existingIframe = container.querySelector('iframe');
         if (existingIframe && videoUrl && existingIframe.src === videoUrl) {
             if (window.lucide) lucide.createIcons();
@@ -770,7 +853,11 @@
         if (rawHtml && rawHtml.trim() !== '' && rawHtml.includes('<iframe')) {
             container.innerHTML = rawHtml;
         } else if (videoUrl && videoUrl.trim() !== '') {
-            container.innerHTML = '<iframe id="player-iframe" src="' + videoUrl + '" class="w-full h-full border-0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>';
+            var iframeStyle = 'height: 100%; width: 100%;';
+            if (videoUrl.includes('blogger.com')) {
+                iframeStyle = 'height: calc(100% + 95px); margin-bottom: -95px;';
+            }
+            container.innerHTML = '<iframe id="player-iframe" src="' + videoUrl + '" class="w-full h-full border-0 pointer-events-auto" style="' + iframeStyle + '" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>';
         } else {
             container.innerHTML = '<div class="flex flex-col items-center justify-center p-8 text-center space-y-4 max-w-lg mx-auto"><div class="w-14 h-14 rounded-2xl bg-[#212126] border border-[#2B2B32] flex items-center justify-center text-[#FFCC00] shadow-md"><i data-lucide="tv" class="w-7 h-7"></i></div><div class="space-y-1"><h3 class="text-base sm:text-lg font-bold font-title text-white">Video Sedang Diproses</h3><p class="text-xs text-[#A0A0A8]">Silakan pilih server alternatif di bawah.</p></div></div>';
         }
@@ -914,19 +1001,17 @@
         var directUrl = '';
 
         if (!isEmbedWrapper) {
-            if (combined.includes('pixeldrain.com/api/file/')) {
-                var pdMatch = (videoUrl || rawHtml || '').match(/pixeldrain\.com\/api\/file\/([a-zA-Z0-9]+)/i) || (videoUrl || rawHtml || '').match(/pixeldrain\.com\/u\/([a-zA-Z0-9]+)/i);
-                if (pdMatch && pdMatch[1]) {
-                    directUrl = 'https://pixeldrain.com/api/file/' + pdMatch[1];
-                    isDirect = true;
-                }
-            } else if (combined.includes('.m3u8') || (videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('googlevideo.com')))) {
+            if (combined.includes('.m3u8') || (videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('googlevideo.com')))) {
                 directUrl = videoUrl;
                 isDirect = true;
             }
         }
 
         if (isDirect && directUrl && window.Artplayer) {
+            var overlay = document.getElementById('nyamimo-cinema-overlay');
+            var clickSurface = document.getElementById('player-click-surface');
+            if (overlay) overlay.style.display = 'none';
+            if (clickSurface) clickSurface.style.display = 'none';
 
             // Build dynamic Quality Menu matching screenshot
             var qualityList = [];
@@ -998,11 +1083,27 @@
                     fullscreenWeb: true,
                     hotkey: true,
                     quality: qualityList,
+                    {{$wm := (siteConfig).Watermark}}
+                    {{if and $wm.Enabled $wm.ApplyToWeb}}
+                    layers: [
+                        {
+                            name: 'nyamimo-watermark',
+                            html: `{{if eq $wm.Type "image"}}{{if $wm.ImageURL}}<img src="{{$wm.ImageURL}}" alt="Watermark" style="{{if eq $wm.Size "small"}}height:22px;{{else if eq $wm.Size "large"}}height:48px;{{else}}height:34px;{{end}} max-width:180px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.9));" />{{end}}{{else}}<div style="font-weight:800;letter-spacing:0.05em;text-transform:uppercase;padding:4px 10px;border-radius:6px;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);color:#fff;border:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;gap:6px;font-size:{{if eq $wm.Size "small"}}11px{{else if eq $wm.Size "large"}}15px{{else}}13px{{end}};box-shadow:0 2px 8px rgba(0,0,0,0.8);"><span style="width:8px;height:8px;border-radius:50%;background:#FFCC00;box-shadow:0 0 8px #FFCC00;display:inline-block;"></span><span>{{if $wm.Text}}{{$wm.Text}}{{else}}NYAMIMO{{end}}</span></div>{{end}}`,
+                            style: {
+                                position: 'absolute',
+                                {{if eq $wm.Position "top-left"}}top: '20px', left: '20px'{{else if eq $wm.Position "top-right"}}top: '20px', right: '20px'{{else if eq $wm.Position "bottom-left"}}bottom: '55px', left: '20px'{{else}}bottom: '55px', right: '20px'{{end}},
+                                opacity: '{{if $wm.Opacity}}{{$wm.Opacity}}{{else}}0.85{{end}}',
+                                pointerEvents: 'none',
+                                zIndex: '999999'
+                            }
+                        }
+                    ],
+                    {{end}}
                     controls: [
                         {
                             name: 'skip-intro-art',
                             position: 'right',
-                            html: '<button class="px-2.5 py-1 rounded bg-[#FFCC00] text-[#17171B] font-extrabold text-xs font-title flex items-center gap-1 shadow hover:brightness-110">⏩ +85s</button>',
+                            html: '<button class="px-2.5 py-1 rounded bg-[#FFCC00] text-[#17171B] font-extrabold text-xs font-title flex items-center gap-1 shadow hover:brightness-110 cursor-pointer">⏩ +85s</button>',
                             tooltip: 'Lewati Intro (+85s)',
                             click: function (art) {
                                 art.currentTime += 85;
@@ -1057,22 +1158,83 @@
             }
         }
 
-        // Non-direct embed fallback
+        // Non-direct embed fallback / Proxied Player
+        var overlay = document.getElementById('nyamimo-cinema-overlay');
+        var clickSurface = document.getElementById('player-click-surface');
+        if (clickSurface) clickSurface.style.display = 'block';
+        if (overlay) {
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+        }
         fallbackToIframe(container, videoUrl, rawHtml);
     }
 
-    // Listen for progress and ready events from iframe proxy player
     // ===== NYAMIMO CINEMA OVERLAY INTERACTION CONTROLLER =====
     var playerHideControlsTimer = null;
     var isVideoPaused = false;
     var currentPlayTime = 0;
-    var currentTotalDuration = 1440; // Default 24 mins if not yet available
+    var currentTotalDuration = 1440; // Default 24 mins
     var lastSurfaceClickTime = 0;
+    var isScrubDragging = false;
+
+    function getIframeVideo() {
+        try {
+            var ifr = document.querySelector('#player-iframe-container iframe');
+            if (ifr && ifr.contentDocument) {
+                var v = ifr.contentDocument.querySelector('video');
+                if (v) return v;
+            }
+        } catch(e) {}
+        return document.querySelector('#player-iframe-container video');
+    }
+
+    function sendIframeCommand(cmd, arg) {
+        var vid = getIframeVideo();
+        if (vid) {
+            try {
+                if (cmd === 'play') {
+                    vid.play().catch(function(){});
+                } else if (cmd === 'pause') {
+                    vid.pause();
+                } else if (cmd === 'toggle') {
+                    if (vid.paused) vid.play().catch(function(){}); else vid.pause();
+                } else if (cmd === 'seek') {
+                    vid.currentTime = Math.max(0, Math.min(vid.duration || currentTotalDuration, arg));
+                } else if (cmd === 'rate') {
+                    vid.playbackRate = arg;
+                }
+            } catch(e) {}
+        }
+        if (window.activeArtplayerInstance) {
+            try {
+                if (cmd === 'play') window.activeArtplayerInstance.play();
+                else if (cmd === 'pause') window.activeArtplayerInstance.pause();
+                else if (cmd === 'toggle') window.activeArtplayerInstance.toggle();
+                else if (cmd === 'seek') window.activeArtplayerInstance.currentTime = arg;
+                else if (cmd === 'rate') window.activeArtplayerInstance.playbackRate = arg;
+            } catch(e) {}
+        }
+        try {
+            var ifr = document.querySelector('#player-iframe-container iframe');
+            if (ifr && ifr.contentWindow) {
+                if (cmd === 'play') ifr.contentWindow.postMessage({ type: 'nyamimo-play' }, '*');
+                else if (cmd === 'pause') ifr.contentWindow.postMessage({ type: 'nyamimo-pause' }, '*');
+                else if (cmd === 'toggle') ifr.contentWindow.postMessage({ type: 'nyamimo-toggle' }, '*');
+                else if (cmd === 'seek') ifr.contentWindow.postMessage({ type: 'nyamimo-seek', time: arg }, '*');
+                else if (cmd === 'rate') ifr.contentWindow.postMessage({ type: 'nyamimo-rate', speed: arg }, '*');
+            }
+        } catch(e) {}
+    }
 
     function formatTimeDisplay(sec) {
         if (isNaN(sec) || sec < 0) sec = 0;
-        var m = Math.floor(sec / 60);
+        sec = Math.floor(sec);
+        var h = Math.floor(sec / 3600);
+        var m = Math.floor((sec % 3600) / 60);
         var s = Math.floor(sec % 60);
+        if (h > 0) {
+            return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
         return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
     }
 
@@ -1093,37 +1255,51 @@
         if (scrubThumb) scrubThumb.style.left = pct + '%';
     }
 
-    function onScrubBarClick(e) {
+    function handleScrubAtPoint(clientX) {
         var container = document.getElementById('nyamimo-scrub-container');
         if (!container) return;
         var rect = container.getBoundingClientRect();
-        var clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        var clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
         var pct = clickX / rect.width;
-        var targetSec = pct * currentTotalDuration;
-
+        var targetSec = Math.max(0, Math.min(currentTotalDuration, pct * currentTotalDuration));
         currentPlayTime = targetSec;
         updateTimelineUI(targetSec, currentTotalDuration);
+        sendIframeCommand('seek', targetSec);
+    }
 
-        if (window.activeArtplayerInstance) {
-            window.activeArtplayerInstance.currentTime = targetSec;
-        }
-        var vid = document.querySelector('#player-iframe-container video');
-        if (vid) {
-            vid.currentTime = targetSec;
-        }
-        var ifr = document.querySelector('#player-iframe-container iframe');
-        if (ifr && ifr.contentWindow) {
-            ifr.contentWindow.postMessage({ type: 'nyamimo-seek', time: targetSec }, '*');
-        }
-        showServerToast('⏩ Loncat ke ' + formatTimeDisplay(targetSec));
+    function onScrubBarClick(e) {
+        handleScrubAtPoint(e.clientX);
+        showServerToast('⏩ Loncat ke ' + formatTimeDisplay(currentPlayTime));
         setTimeout(hideServerToast, 1200);
     }
+
+    // Initialize Interactive Scrub Dragging
+    (function initScrubberDrag() {
+        window.addEventListener('mousemove', function(e) {
+            if (isScrubDragging) {
+                handleScrubAtPoint(e.clientX);
+            }
+        });
+        window.addEventListener('mouseup', function(e) {
+            if (isScrubDragging) {
+                isScrubDragging = false;
+                handleScrubAtPoint(e.clientX);
+            }
+        });
+        window.addEventListener('touchmove', function(e) {
+            if (isScrubDragging && e.touches && e.touches[0]) {
+                handleScrubAtPoint(e.touches[0].clientX);
+            }
+        }, { passive: true });
+        window.addEventListener('touchend', function() {
+            isScrubDragging = false;
+        });
+    })();
 
     function onPlayerMouseMove() {
         var overlay = document.getElementById('nyamimo-cinema-overlay');
         if (!overlay) return;
         overlay.style.opacity = '1';
-        overlay.style.pointerEvents = 'auto';
         var wrapper = document.getElementById('nyamimo-player-wrapper');
         if (wrapper) wrapper.style.cursor = 'default';
 
@@ -1132,7 +1308,6 @@
             playerHideControlsTimer = setTimeout(function() {
                 if (!isVideoPaused) {
                     overlay.style.opacity = '0';
-                    overlay.style.pointerEvents = 'none';
                     if (wrapper) wrapper.style.cursor = 'none';
                 }
             }, 2800);
@@ -1144,7 +1319,6 @@
             var overlay = document.getElementById('nyamimo-cinema-overlay');
             if (overlay) {
                 overlay.style.opacity = '0';
-                overlay.style.pointerEvents = 'none';
             }
         }
     }
@@ -1194,42 +1368,32 @@
             iconEl.setAttribute('data-lucide', paused ? 'play' : 'pause');
             if (window.lucide) lucide.createIcons();
         }
-        if (paused) {
-            var overlay = document.getElementById('nyamimo-cinema-overlay');
-            if (overlay) {
-                overlay.style.opacity = '1';
-                overlay.style.pointerEvents = 'auto';
-            }
+        var overlay = document.getElementById('nyamimo-cinema-overlay');
+        if (paused && overlay) {
+            overlay.style.opacity = '1';
         }
     }
 
     function togglePlayPause() {
-        if (window.activeArtplayerInstance) {
-            window.activeArtplayerInstance.toggle();
-            updatePlayPauseIcon(!window.activeArtplayerInstance.playing);
-            return;
-        }
-        var vid = document.querySelector('#player-iframe-container video');
+        var vid = getIframeVideo();
+        var isCurrentlyPaused = true;
         if (vid) {
-            if (vid.paused) {
-                vid.play();
-                updatePlayPauseIcon(false);
-                showServerToast('▶ Diputar');
-            } else {
-                vid.pause();
-                updatePlayPauseIcon(true);
-                showServerToast('⏸ Dijeda');
-            }
-            setTimeout(hideServerToast, 1200);
-            return;
+            isCurrentlyPaused = vid.paused;
+        } else if (window.activeArtplayerInstance) {
+            isCurrentlyPaused = !window.activeArtplayerInstance.playing;
+        } else {
+            isCurrentlyPaused = isVideoPaused;
         }
-        var ifr = document.querySelector('#player-iframe-container iframe');
-        if (ifr && ifr.contentWindow) {
-            ifr.contentWindow.postMessage({ type: 'nyamimo-toggle' }, '*');
+
+        if (isCurrentlyPaused) {
+            sendIframeCommand('play');
+            updatePlayPauseIcon(false);
+            showServerToast('▶ Diputar');
+        } else {
+            sendIframeCommand('pause');
+            updatePlayPauseIcon(true);
+            showServerToast('⏸ Dijeda');
         }
-        isVideoPaused = !isVideoPaused;
-        updatePlayPauseIcon(isVideoPaused);
-        showServerToast(isVideoPaused ? '⏸ Dijeda' : '▶ Diputar');
         setTimeout(hideServerToast, 1200);
     }
 
@@ -1241,24 +1405,83 @@
         setTimeout(hideServerToast, 2000);
     }
 
+    // Continuous 250ms State Sync Poller
+    if (window.nyamimoStatePollInterval) clearInterval(window.nyamimoStatePollInterval);
+    window.nyamimoStatePollInterval = setInterval(function() {
+        var vid = getIframeVideo();
+        if (vid) {
+            if (!isScrubDragging) {
+                currentPlayTime = vid.currentTime || 0;
+            }
+            if (vid.duration && vid.duration > 5 && !isNaN(vid.duration)) {
+                currentTotalDuration = vid.duration;
+            }
+            updateTimelineUI(currentPlayTime, currentTotalDuration);
+            updatePlayPauseIcon(vid.paused);
+            if (!vid.paused && currentPlayTime > 2) {
+                savePlaybackProgress(currentPlayTime, currentTotalDuration);
+            }
+            try {
+                if (vid.buffered && vid.buffered.length > 0) {
+                    var bufEnd = vid.buffered.end(vid.buffered.length - 1);
+                    var bufPct = Math.min(100, Math.max(0, (bufEnd / currentTotalDuration) * 100));
+                    var bufEl = document.getElementById('overlay-buffer-bar');
+                    if (bufEl) bufEl.style.width = bufPct + '%';
+                }
+            } catch(e) {}
+        } else if (window.activeArtplayerInstance) {
+            if (!isScrubDragging) {
+                currentPlayTime = window.activeArtplayerInstance.currentTime || 0;
+            }
+            if (window.activeArtplayerInstance.duration && window.activeArtplayerInstance.duration > 5) {
+                currentTotalDuration = window.activeArtplayerInstance.duration;
+            }
+            updateTimelineUI(currentPlayTime, currentTotalDuration);
+            updatePlayPauseIcon(!window.activeArtplayerInstance.playing);
+        }
+    }, 250);
+
     // Listen for progress and ready events from iframe proxy player
     window.addEventListener('message', function(evt) {
         if (!evt.data) return;
         if (evt.data.type === 'nyamimo-video-progress' && typeof evt.data.currentTime === 'number') {
             savePlaybackProgress(evt.data.currentTime, evt.data.duration);
-            updateTimelineUI(evt.data.currentTime, evt.data.duration);
+            if (!isScrubDragging) {
+                updateTimelineUI(evt.data.currentTime, evt.data.duration);
+            }
+            if (typeof evt.data.paused === 'boolean') {
+                updatePlayPauseIcon(evt.data.paused);
+            }
         } else if (evt.data.type === 'nyamimo-player-ready') {
+            if (typeof evt.data.duration === 'number' && evt.data.duration > 10) {
+                currentTotalDuration = evt.data.duration;
+                updateTimelineUI(currentPlayTime, currentTotalDuration);
+            }
             var urlParams = new URLSearchParams(window.location.search);
             var targetSeek = urlParams.has('t') ? (parseFloat(urlParams.get('t')) || 0) : 0;
             if (targetSeek > 5) {
-                var ifr = document.querySelector('#player-iframe-container iframe');
-                if (ifr && ifr.contentWindow) {
-                    ifr.contentWindow.postMessage({ type: 'nyamimo-seek', time: targetSeek }, '*');
-                    var formattedTime = window.formatWatchTime ? formatWatchTime(targetSeek) : (targetSeek + 's');
-                    showServerToast('⏩ Melanjutkan dari menit ' + formattedTime);
-                    setTimeout(hideServerToast, 2500);
-                }
+                sendIframeCommand('seek', targetSeek);
+                var formattedTime = window.formatWatchTime ? formatWatchTime(targetSeek) : (targetSeek + 's');
+                showServerToast('⏩ Melanjutkan dari menit ' + formattedTime);
+                setTimeout(hideServerToast, 2500);
             }
+        }
+    });
+
+    // Listen for window blur when user clicks into the video iframe
+    var iframePlaybackTimer = null;
+    window.addEventListener('blur', function() {
+        var ifr = document.querySelector('#player-iframe-container iframe');
+        if (ifr && document.activeElement === ifr) {
+            if (iframePlaybackTimer) clearInterval(iframePlaybackTimer);
+            iframePlaybackTimer = setInterval(function() {
+                if (!isVideoPaused && !isScrubDragging) {
+                    currentPlayTime += 1;
+                    if (currentPlayTime > currentTotalDuration) currentPlayTime = currentTotalDuration;
+                    updateTimelineUI(currentPlayTime, currentTotalDuration);
+                    savePlaybackProgress(currentPlayTime, currentTotalDuration);
+                }
+            }, 1000);
         }
     });
 
@@ -1275,13 +1498,10 @@
         }
         if (targetSeek > 5) {
             setTimeout(function() {
-                var ifr = document.querySelector('#player-iframe-container iframe');
-                if (ifr && ifr.contentWindow) {
-                    ifr.contentWindow.postMessage({ type: 'nyamimo-seek', time: targetSeek }, '*');
-                    var formattedTime = window.formatWatchTime ? formatWatchTime(targetSeek) : (targetSeek + 's');
-                    showServerToast('⏩ Melanjutkan dari menit ' + formattedTime);
-                    setTimeout(hideServerToast, 2500);
-                }
+                sendIframeCommand('seek', targetSeek);
+                var formattedTime = window.formatWatchTime ? formatWatchTime(targetSeek) : (targetSeek + 's');
+                showServerToast('⏩ Melanjutkan dari menit ' + formattedTime);
+                setTimeout(hideServerToast, 2500);
             }, 800);
         }
     }
@@ -1299,35 +1519,16 @@
     }
 
     function seekVideo(seconds) {
-        currentPlayTime = Math.max(0, currentPlayTime + seconds);
-        updateTimelineUI(currentPlayTime, currentTotalDuration);
-
-        if (window.activeArtplayerInstance) {
-            window.activeArtplayerInstance.currentTime += seconds;
-            return;
-        }
-        const vid = document.querySelector('#player-iframe-container video');
-        if (vid) {
-            vid.currentTime += seconds;
-            return;
-        }
-        var ifr = document.querySelector('#player-iframe-container iframe');
-        if (ifr && ifr.contentWindow) {
-            ifr.contentWindow.postMessage({ type: 'nyamimo-seek', time: currentPlayTime }, '*');
-        }
+        var targetTime = Math.max(0, Math.min(currentTotalDuration, currentPlayTime + seconds));
+        currentPlayTime = targetTime;
+        updateTimelineUI(targetTime, currentTotalDuration);
+        sendIframeCommand('seek', targetTime);
     }
 
     function setPlayerSpeed(speed) {
         const lbl = document.getElementById('active-speed-label');
         if (lbl) lbl.textContent = speed + 'x';
-        if (window.activeArtplayerInstance) {
-            window.activeArtplayerInstance.playbackRate = speed;
-            window.activeArtplayerInstance.notice.show = 'Kecepatan: ' + speed + 'x';
-        }
-        const vid = document.querySelector('#player-iframe-container video');
-        if (vid) {
-            vid.playbackRate = speed;
-        }
+        sendIframeCommand('rate', speed);
         showServerToast('Kecepatan video: ' + speed + 'x');
         setTimeout(hideServerToast, 2000);
     }
@@ -1457,11 +1658,9 @@
 
     function startServerHealthWatchdog() {
         clearAllServerTimers();
-        if (!window.autoSwitchServerEnabled) return;
         if (!window.currentEpisodeServers || window.currentEpisodeServers.length <= 1) return;
 
         window.serverWatchdogTimer = setTimeout(function () {
-            if (!window.autoSwitchServerEnabled) return;
             if (!window.currentEpisodeServers || window.currentEpisodeServers.length <= 1) return;
 
             if (window.activeServerIdx + 1 < window.currentEpisodeServers.length) {
@@ -1469,21 +1668,20 @@
                 const currentName = window.currentEpisodeServers[window.activeServerIdx] ? window.currentEpisodeServers[window.activeServerIdx].title : "Server";
                 const nextServer = window.currentEpisodeServers[nextIdx];
 
-                showServerToast("⚠️ " + currentName + " bermasalah. Mengalihkan otomatis ke " + nextServer.title + "...");
+                showServerToast("⚠️ " + currentName + " tidak merespon. Otomatis beralih ke " + nextServer.title + "...");
                 window.activeServerIdx = nextIdx;
                 setActiveServerByIdx(nextIdx);
 
                 window.serverSwitchPendingTimer = setTimeout(function () {
-                    if (!window.autoSwitchServerEnabled) return;
                     htmx.ajax('GET', '/api/video-url?path=' + encodeURIComponent(nextServer.videoPath), {
                         target: '#player-iframe-container',
                         swap: 'innerHTML'
                     });
-                }, 1000);
+                }, 800);
             } else {
                 showAllServersFailedState();
             }
-        }, 7000);
+        }, 3500);
     }
 
     function onPlayerIframeLoad() {
@@ -1493,11 +1691,11 @@
 
     function onPlayerIframeError() {
         clearAllServerTimers();
-        if (!window.autoSwitchServerEnabled) return;
+        if (!window.currentEpisodeServers || window.currentEpisodeServers.length <= 1) return;
         if (window.activeServerIdx + 1 < window.currentEpisodeServers.length) {
             const nextIdx = window.activeServerIdx + 1;
             const nextServer = window.currentEpisodeServers[nextIdx];
-            showServerToast("⚠️ Server bermasalah. Mengalihkan otomatis ke " + nextServer.title + "...");
+            showServerToast("⚠️ Kualitas bermasalah. Otomatis beralih ke " + nextServer.title + "...");
             window.activeServerIdx = nextIdx;
             setActiveServerByIdx(nextIdx);
             htmx.ajax('GET', '/api/video-url?path=' + encodeURIComponent(nextServer.videoPath), {
@@ -1549,18 +1747,49 @@
     }
 
     function toggleFullScreenPlayer() {
-        const target = document.getElementById('nyamimo-player-wrapper') || document.getElementById('player-iframe-container');
-        if (target) {
-            if (!document.fullscreenElement) {
-                if (target.requestFullscreen) target.requestFullscreen();
-                else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
-                else if (target.mozRequestFullScreen) target.mozRequestFullScreen();
-                else if (target.msRequestFullscreen) target.msRequestFullscreen();
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+        const wrapper = document.getElementById('nyamimo-player-wrapper') || document.getElementById('player-iframe-container');
+        if (!wrapper) return;
+        
+        const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        if (!isFS) {
+            if (wrapper.requestFullscreen) {
+                wrapper.requestFullscreen();
+            } else if (wrapper.webkitRequestFullscreen) {
+                wrapper.webkitRequestFullscreen();
+            } else if (wrapper.mozRequestFullScreen) {
+                wrapper.mozRequestFullScreen();
+            } else if (wrapper.msRequestFullscreen) {
+                wrapper.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
             }
         }
     }
+
+    function handleFullscreenChange() {
+        const wrapper = document.getElementById('nyamimo-player-wrapper');
+        const fsElem = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+        if (wrapper) {
+            if (fsElem) {
+                wrapper.classList.add('is-fullscreen');
+            } else {
+                wrapper.classList.remove('is-fullscreen');
+            }
+        }
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 
     // Global keyboard hotkeys
     document.addEventListener('keydown', function (e) {

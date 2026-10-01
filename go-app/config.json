@@ -11,7 +11,7 @@
   "google_client_secret": "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",
   "gdrive": {
     "enabled": true,
-    "folder_id": "1-5fg58S1uu9IdGLiTMxzF1hGBPehvxOD",
+    "folder_id": "1gzdooYCF_ZqPLmNODqNR-IoY8RjNa4BM",
     "service_account_json": "",
     "auto_sync_ongoing": true,
     "resolutions": [
@@ -50,6 +50,33 @@
       "target_link": "https://monetag.com",
       "duration_seconds": 15,
       "skip_after_seconds": 5
+    }
+  },
+  "watermark": {
+    "enabled": true,
+    "type": "text",
+    "text": "NYAMIMO",
+    "image_url": "/static/logo.png",
+    "position": "bottom-right",
+    "opacity": 0.85,
+    "size": "medium",
+    "apply_to_web": true,
+    "apply_to_app": true
+  },
+  "app": {
+    "api_base_url": "https://api.animekudesu.web.id",
+    "latest_version_code": 1,
+    "latest_version_name": "v1.0.0",
+    "apk_download_url": "https://nyamimo.onrender.com",
+    "force_update": false,
+    "update_changelog": "- Streaming server lancar\n- Sinkronisasi riwayat nonton otomatis",
+    "streaming_enabled": true,
+    "announcement": {
+      "active": true,
+      "title": "Selamat Datang di Nyamimo App!",
+      "message": "Nikmati streaming anime kualitas HD tanpa buffering dengan server super cepat!",
+      "type": "info",
+      "action_url": ""
     }
   }
 }

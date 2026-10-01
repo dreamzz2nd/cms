@@ -1,12 +1,17 @@
 package com.nyamimo.app.api
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.nyamimo.app.model.*
+import com.nyamimo.app.util.AppConfigData
+import com.nyamimo.app.util.SessionManager
 import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
@@ -15,6 +20,28 @@ object ApiClient {
 
     private const val BASE_UPSTREAM = "https://api.animekudesu.web.id"
     private const val BASE_RENDER = "https://nyamimo.onrender.com"
+
+    fun fetchAppConfig(context: Context) {
+        val req = Request.Builder()
+            .url("$BASE_RENDER/api/app/config")
+            .get()
+            .build()
+
+        client.newCall(req).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {}
+            override fun onResponse(call: Call, response: Response) {
+                val respBody = response.body?.string() ?: ""
+                if (response.isSuccessful && respBody.isNotEmpty()) {
+                    try {
+                        val parsed = gson.fromJson(respBody, AppConfigData::class.java)
+                        if (parsed != null) {
+                            SessionManager.saveAppConfig(context, parsed)
+                        }
+                    } catch (e: Exception) {}
+                }
+            }
+        })
+    }
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -451,7 +478,7 @@ object ApiClient {
     ) {
         if (option.video.startsWith("http")) {
             val (parsedUrl, parsedIframe) = formatStreamPayload("", option.video)
-            val isDirect = parsedUrl.endsWith(".mp4") || parsedUrl.endsWith(".m3u8")
+            val isDirect = parsedUrl.contains(".mp4") || parsedUrl.contains(".m3u8") || parsedUrl.contains("googlevideo.com") || parsedUrl.contains("pixeldrain.com/api/file") || parsedUrl.contains("storage.googleapis.com") || (parsedIframe.isEmpty() && parsedUrl.startsWith("http") && !parsedUrl.contains("blogger.com") && !parsedUrl.contains("/embed"))
             val res = EpisodeDataResponse("ok", ep, title, parsedUrl.ifEmpty { option.video }, parsedIframe, isDirect, allOptions, option.title)
             mainHandler.post { callback.onSuccess(res) }
             return
@@ -479,7 +506,7 @@ object ApiClient {
                         val rawUrl = json.get("url")?.asString ?: ""
 
                         val (finalUrl, finalIframe) = formatStreamPayload(rawIframe, rawUrl)
-                        val isDirect = finalUrl.endsWith(".mp4") || finalUrl.endsWith(".m3u8")
+                        val isDirect = finalUrl.contains(".mp4") || finalUrl.contains(".m3u8") || finalUrl.contains("googlevideo.com") || finalUrl.contains("pixeldrain.com/api/file") || finalUrl.contains("storage.googleapis.com") || (finalIframe.isEmpty() && finalUrl.startsWith("http") && !finalUrl.contains("blogger.com") && !finalUrl.contains("/embed"))
 
                         if (finalUrl.isEmpty() && finalIframe.isEmpty()) {
                             mainHandler.post { callback.onError("Link video tidak tersedia di server ini") }
@@ -513,7 +540,7 @@ object ApiClient {
         val option = options[index]
         if (option.video.startsWith("http")) {
             val (parsedUrl, parsedIframe) = formatStreamPayload("", option.video)
-            val isDirect = parsedUrl.endsWith(".mp4") || parsedUrl.endsWith(".m3u8")
+            val isDirect = parsedUrl.contains(".mp4") || parsedUrl.contains(".m3u8") || parsedUrl.contains("googlevideo.com") || parsedUrl.contains("pixeldrain.com/api/file") || parsedUrl.contains("storage.googleapis.com") || (parsedIframe.isEmpty() && parsedUrl.startsWith("http") && !parsedUrl.contains("blogger.com") && !parsedUrl.contains("/embed"))
             val res = EpisodeDataResponse("ok", ep, title, parsedUrl.ifEmpty { option.video }, parsedIframe, isDirect, options, option.title)
             mainHandler.post { callback.onSuccess(res) }
             return
@@ -541,7 +568,7 @@ object ApiClient {
                         val rawUrl = json.get("url")?.asString ?: ""
 
                         val (finalUrl, finalIframe) = formatStreamPayload(rawIframe, rawUrl)
-                        val isDirect = finalUrl.endsWith(".mp4") || finalUrl.endsWith(".m3u8")
+                        val isDirect = finalUrl.contains(".mp4") || finalUrl.contains(".m3u8") || finalUrl.contains("googlevideo.com") || finalUrl.contains("pixeldrain.com/api/file") || finalUrl.contains("storage.googleapis.com") || (finalIframe.isEmpty() && finalUrl.startsWith("http") && !finalUrl.contains("blogger.com") && !finalUrl.contains("/embed"))
 
                         if (finalUrl.isNotEmpty() || finalIframe.isNotEmpty()) {
                             val res = EpisodeDataResponse("ok", ep, title, finalUrl, finalIframe, isDirect, options, option.title)
@@ -763,6 +790,69 @@ object ApiClient {
                     fallbackJson.addProperty("role", "VIP Member")
                     mainHandler.post { callback.onSuccess(fallbackJson) }
                 }
+            }
+        })
+    }
+
+    fun fetchAppConfig(callback: Callback<JsonObject>) {
+        val request = Request.Builder()
+            .url("$BASE_RENDER/api/v1/app-config")
+            .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                mainHandler.post { callback.onError(e.message ?: "Failed to load config") }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: ""
+                try {
+                    val json = gson.fromJson(body, JsonObject::class.java)
+                    mainHandler.post { callback.onSuccess(json) }
+                } catch (e: Exception) {
+                    mainHandler.post { callback.onError(e.message ?: "Parse error") }
+                }
+            }
+        })
+    }
+
+    fun syncWatchHistory(username: String, localHistory: List<AnimeItem>, callback: Callback<List<AnimeItem>>) {
+        if (username.isEmpty()) {
+            callback.onSuccess(localHistory)
+            return
+        }
+        val jsonPayload = gson.toJson(localHistory)
+        val body = jsonPayload.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+
+        val request = Request.Builder()
+            .url("$BASE_RENDER/api/v1/history/sync?user=${URLEncoder.encode(username, "UTF-8")}")
+            .header("X-Nyamimo-User", username)
+            .post(body)
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                mainHandler.post { callback.onSuccess(localHistory) }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val respBody = response.body?.string() ?: ""
+                if (response.isSuccessful && respBody.isNotEmpty()) {
+                    try {
+                        val json = gson.fromJson(respBody, JsonObject::class.java)
+                        val historyArr = json.getAsJsonArray("history")
+                        if (historyArr != null) {
+                            val type = object : com.google.gson.reflect.TypeToken<List<AnimeItem>>() {}.type
+                            val syncedList: List<AnimeItem> = gson.fromJson(historyArr, type) ?: localHistory
+                            mainHandler.post { callback.onSuccess(syncedList) }
+                            return
+                        }
+                    } catch (e: Exception) {
+                        // ignore and return local
+                    }
+                }
+                mainHandler.post { callback.onSuccess(localHistory) }
             }
         })
     }

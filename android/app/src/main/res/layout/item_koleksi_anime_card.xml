@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="5dp">
+
+    <!-- Poster Card Container -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="170dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="#F0F2F5">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Poster Image -->
+            <ImageView
+                android:id="@+id/ivKoleksiPoster"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/bg_placeholder_koleksi_dark" />
+
+            <!-- Bottom Gradient for Episode Text Readability -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/gradient_hero_bottom_dark" />
+
+            <!-- Top Left Badge: Dolby / HD (Optional) -->
+            <LinearLayout
+                android:id="@+id/layoutKoleksiDolbyBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/badge_dolby_mini"
+                android:gravity="center"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="2dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvKoleksiDolbyText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DOLBY"
+                    android:textColor="#FFFFFF"
+                    android:textSize="8sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Top Right Badge: Gratis / TOP 10 / VIP -->
+            <TextView
+                android:id="@+id/tvKoleksiTopRightBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:background="@drawable/badge_green_gratis"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:text="Gratis"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <!-- Bottom Left: Episode Count Info -->
+            <TextView
+                android:id="@+id/tvKoleksiEpisodeInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:paddingHorizontal="6dp"
+                android:paddingBottom="5dp"
+                android:text="Full 24 Episode"
+                android:textColor="#F0F0F5"
+                android:textSize="10.5sp"
+                android:textStyle="bold" />
+
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Anime Title Below Poster -->
+    <TextView
+        android:id="@+id/tvKoleksiTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="Judul Anime"
+        android:textColor="#17171B"
+        android:textStyle="bold"
+        android:textSize="12sp"
+        android:lineSpacingExtra="1dp" />
+
+</LinearLayout>

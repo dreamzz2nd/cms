@@ -12,19 +12,91 @@ data class UserSession(
     val email: String = "",
     val role: String = "user",
     val avatar: String = "",
-    val isLoggedIn: Boolean = false
+    val isLoggedIn: Boolean = false,
+    val adFree: Boolean = false
+)
+
+data class WatermarkConfig(
+    val enabled: Boolean = true,
+    val type: String = "text",
+    val text: String = "NYAMIMO",
+    val imageUrl: String = "",
+    val position: String = "bottom-right",
+    val opacity: Float = 0.85f,
+    val size: String = "medium",
+    val applyToApp: Boolean = true
+)
+
+data class BloggerPlayerConfig(
+    val bottom_offset_px: Int = 45,
+    val fullscreen_offset_px: Int = 60
+)
+
+data class AppAnnouncement(
+    val active: Boolean = false,
+    val title: String = "",
+    val message: String = "",
+    val type: String = "info",
+    val actionUrl: String = ""
+)
+
+data class WelcomeScreenConfig(
+    val enabled: Boolean = true,
+    val title: String = "Selamat Datang",
+    val description: String = "Ingin tahu tentang konten anime paling populer di seluruh dunia? Semuanya ada di Nyamimo, jutaan episode anime luar biasa ada di sini! Ayo masuk dan jadi bagian dari kami!",
+    val background_image: String = "",
+    val button_text: String = "MASUK",
+    val allow_skip: Boolean = true
+)
+
+data class ParallaxSlideItem(
+    val id: String = "",
+    val title: String = "",
+    val subtitle: String = "",
+    val badge: String = "",
+    val background_url: String = "",
+    val object_url: String = "",
+    val action_type: String = "anime",
+    val target_slug: String = "",
+    val order: Int = 1,
+    val is_active: Boolean = true
+)
+
+data class HeroCarouselConfig(
+    val enabled: Boolean = true,
+    val auto_slide: Boolean = true,
+    val interval_ms: Int = 5000,
+    val slides: List<ParallaxSlideItem> = emptyList()
+)
+
+data class AppConfigData(
+    val watermark: WatermarkConfig = WatermarkConfig(),
+    val blogger_player: BloggerPlayerConfig = BloggerPlayerConfig(),
+    val announcement: AppAnnouncement = AppAnnouncement(),
+    val welcome_screen: WelcomeScreenConfig = WelcomeScreenConfig(),
+    val hero_carousel: HeroCarouselConfig = HeroCarouselConfig(),
+    val latestVersionCode: Int = 1,
+    val latestVersionName: String = "1.0.0",
+    val apkDownloadUrl: String = "",
+    val forceUpdate: Boolean = false,
+    val updateChangelog: String = "",
+    val streamingEnabled: Boolean = true,
+    val apiBaseUrl: String = ""
 )
 
 object SessionManager {
     private const val PREF_NAME = "nyamimo_session"
     private const val KEY_IS_LOGGED_IN = "is_logged_in"
+    private const val KEY_GUEST_SKIPPED_WELCOME = "guest_skipped_welcome"
     private const val KEY_USERNAME = "username"
     private const val KEY_NAME = "name"
     private const val KEY_EMAIL = "email"
     private const val KEY_ROLE = "role"
     private const val KEY_AVATAR = "avatar"
+    private const val KEY_AD_FREE = "ad_free"
     private const val KEY_WATCH_HISTORY = "watch_history_json"
     private const val KEY_SEARCH_HISTORY = "search_history_json"
+    private const val KEY_APP_CONFIG = "cached_app_config_json"
 
     private val gson = Gson()
 
@@ -34,7 +106,24 @@ object SessionManager {
 
     private const val KEY_DOWNLOADS = "downloads_list_json"
 
-    fun saveUser(context: Context, username: String, name: String, email: String, role: String, avatar: String) {
+    private fun getHistoryKey(context: Context): String {
+        val user = getUser(context)
+        return if (user.isLoggedIn && user.username.isNotEmpty()) {
+            "watch_history_${user.username.lowercase()}"
+        } else {
+            KEY_WATCH_HISTORY
+        }
+    }
+
+    fun saveUser(
+        context: Context,
+        username: String,
+        name: String,
+        email: String,
+        role: String,
+        avatar: String,
+        adFree: Boolean = false
+    ) {
         val editor = getPrefs(context).edit()
         editor.putBoolean(KEY_IS_LOGGED_IN, true)
         editor.putString(KEY_USERNAME, username)
@@ -42,7 +131,12 @@ object SessionManager {
         editor.putString(KEY_EMAIL, email)
         editor.putString(KEY_ROLE, role)
         editor.putString(KEY_AVATAR, avatar)
+        editor.putBoolean(KEY_AD_FREE, adFree)
         editor.apply()
+    }
+
+    fun setAdFree(context: Context, isAdFree: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_AD_FREE, isAdFree).apply()
     }
 
     fun getUser(context: Context): UserSession {
@@ -53,12 +147,39 @@ object SessionManager {
         val email = prefs.getString(KEY_EMAIL, "") ?: ""
         val role = prefs.getString(KEY_ROLE, if (isLoggedIn) "VIP Member" else "Tamu") ?: "Tamu"
         val avatar = prefs.getString(KEY_AVATAR, "") ?: ""
+        val adFree = prefs.getBoolean(KEY_AD_FREE, false)
 
-        return UserSession(username, name, email, role, avatar, isLoggedIn)
+        return UserSession(username, name, email, role, avatar, isLoggedIn, adFree)
     }
 
     fun logout(context: Context) {
-        getPrefs(context).edit().clear().apply()
+        val editor = getPrefs(context).edit()
+        editor.remove(KEY_IS_LOGGED_IN)
+        editor.remove(KEY_USERNAME)
+        editor.remove(KEY_NAME)
+        editor.remove(KEY_EMAIL)
+        editor.remove(KEY_ROLE)
+        editor.remove(KEY_AVATAR)
+        editor.remove(KEY_AD_FREE)
+        editor.apply()
+    }
+
+    fun saveAppConfig(context: Context, config: AppConfigData) {
+        getPrefs(context).edit().putString(KEY_APP_CONFIG, gson.toJson(config)).apply()
+    }
+
+    fun getAppConfig(context: Context): AppConfigData {
+        val json = getPrefs(context).getString(KEY_APP_CONFIG, null) ?: return AppConfigData()
+        return try {
+            gson.fromJson(json, AppConfigData::class.java) ?: AppConfigData()
+        } catch (e: Exception) {
+            AppConfigData()
+        }
+    }
+
+    fun setWatchHistory(context: Context, list: List<AnimeItem>) {
+        val key = getHistoryKey(context)
+        getPrefs(context).edit().putString(key, gson.toJson(list)).apply()
     }
 
     fun addWatchHistory(context: Context, anime: AnimeItem, ep: String = "", progress: Int = 50, durationText: String = "18:24 / 24:00") {
@@ -77,12 +198,12 @@ object SessionManager {
         val trimmed = if (list.size > 30) list.take(30) else list
 
         getPrefs(context).edit()
-            .putString(KEY_WATCH_HISTORY, gson.toJson(trimmed))
+            .putString(getHistoryKey(context), gson.toJson(trimmed))
             .apply()
     }
 
     private fun getRawWatchHistory(context: Context): List<AnimeItem> {
-        val json = getPrefs(context).getString(KEY_WATCH_HISTORY, null) ?: return emptyList()
+        val json = getPrefs(context).getString(getHistoryKey(context), null) ?: return emptyList()
         return try {
             val type = object : TypeToken<List<AnimeItem>>() {}.type
             gson.fromJson(json, type) ?: emptyList()
@@ -271,5 +392,15 @@ object SessionManager {
 
     fun clearSearchHistory(context: Context) {
         getPrefs(context).edit().remove(KEY_SEARCH_HISTORY).apply()
+    }
+
+    private var inMemoryGuestSkip: Boolean = false
+
+    fun hasSkippedWelcome(context: Context): Boolean {
+        return inMemoryGuestSkip
+    }
+
+    fun setSkippedWelcome(context: Context, skipped: Boolean) {
+        inMemoryGuestSkip = skipped
     }
 }

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -21,6 +22,7 @@ import (
 	"time"
 
 	"nyamimo-go/client"
+	"nyamimo-go/scraper"
 )
 
 type SEOData struct {
@@ -127,6 +129,7 @@ type User struct {
 	GoogleID         string `json:"google_id,omitempty"`
 	AutoSwitchServer *bool  `json:"auto_switch_server,omitempty"`
 	LastSeenAt       int64  `json:"last_seen_at,omitempty"`
+	AdFree           bool   `json:"ad_free,omitempty"`
 }
 
 type WatchHistoryItem struct {
@@ -195,6 +198,68 @@ type AdSettings struct {
 	VideoPreroll VideoPrerollAd `json:"video_preroll"`
 }
 
+type WatermarkSettings struct {
+	Enabled    bool    `json:"enabled"`
+	Type       string  `json:"type"`       // "text" or "image"
+	Text       string  `json:"text"`       // default "NYAMIMO"
+	ImageURL   string  `json:"image_url"`  // default "/static/logo.png"
+	Position   string  `json:"position"`   // "top-left", "top-right", "bottom-left", "bottom-right"
+	Opacity    float64 `json:"opacity"`    // e.g. 0.85
+	Size       string  `json:"size"`       // "small", "medium", "large"
+	ApplyToWeb bool    `json:"apply_to_web"`
+	ApplyToApp bool    `json:"apply_to_app"`
+}
+
+type AppAnnouncement struct {
+	Active    bool   `json:"active"`
+	Title     string `json:"title"`
+	Message   string `json:"message"`
+	Type      string `json:"type"`
+	ActionURL string `json:"action_url"`
+}
+
+type WelcomeScreenSettings struct {
+	Enabled         bool   `json:"enabled"`
+	Title           string `json:"title"`
+	Description     string `json:"description"`
+	BackgroundImage string `json:"background_image"`
+	ButtonText      string `json:"button_text"`
+	AllowSkip       bool   `json:"allow_skip"`
+}
+
+type ParallaxSlideItem struct {
+	ID            string `json:"id"`
+	Title         string `json:"title"`          // misal: "Solo Leveling: Arise"
+	Subtitle      string `json:"subtitle"`       // tulisan pemanis, misal: "Aksi, Fantasi • 12 Episode • Full HD"
+	Badge         string `json:"badge"`          // badge pemanis, misal: "DOLBY AUDIO", "TOP 1", "VIP EXCLUSIVE"
+	BackgroundURL string `json:"background_url"` // URL gambar latar belakang (landscape/ambient)
+	ObjectURL     string `json:"object_url"`     // URL gambar objek / karakter cut-out PNG transparan
+	ActionType    string `json:"action_type"`    // "anime", "url", "none"
+	TargetSlug    string `json:"target_slug"`    // slug anime (misal: "solo-leveling") atau link
+	Order         int    `json:"order"`
+	IsActive      bool   `json:"is_active"`
+}
+
+type HeroCarouselSettings struct {
+	Enabled    bool                `json:"enabled"`
+	AutoSlide  bool                `json:"auto_slide"`
+	IntervalMs int                 `json:"interval_ms"`
+	Slides     []ParallaxSlideItem `json:"slides"`
+}
+
+type AppSettings struct {
+	APIBaseURL        string                `json:"api_base_url"`
+	LatestVersionCode int                   `json:"latest_version_code"`
+	LatestVersionName string                `json:"latest_version_name"`
+	APKDownloadURL    string                `json:"apk_download_url"`
+	ForceUpdate       bool                  `json:"force_update"`
+	UpdateChangelog   string                `json:"update_changelog"`
+	StreamingEnabled  bool                  `json:"streaming_enabled"`
+	Announcement      AppAnnouncement       `json:"announcement"`
+	WelcomeScreen     WelcomeScreenSettings `json:"welcome_screen"`
+	HeroCarousel      HeroCarouselSettings  `json:"hero_carousel"`
+}
+
 type GDriveSettings struct {
 	Enabled             bool     `json:"enabled"`
 	FolderID            string   `json:"folder_id"`
@@ -210,19 +275,27 @@ type GDriveSettings struct {
 	AccountEmail        string   `json:"account_email,omitempty"`
 }
 
+type BloggerPlayerSettings struct {
+	BottomOffsetPx     int `json:"bottom_offset_px"`
+	FullscreenOffsetPx int `json:"fullscreen_offset_px"`
+}
+
 type AppConfig struct {
-	SiteName           string         `json:"site_name"`
-	SiteTagline        string         `json:"site_tagline"`
-	SiteLogo           string         `json:"site_logo"`
-	SiteFavicon        string         `json:"site_favicon"`
-	PrimaryColor       string         `json:"primary_color"`
-	APIProvider        string         `json:"api_provider"`
-	APIBaseURL         string         `json:"api_base_url"`
-	Port               string         `json:"port"`
-	GoogleClientID     string         `json:"google_client_id"`
-	GoogleClientSecret string         `json:"google_client_secret"`
-	GDrive             GDriveSettings `json:"gdrive"`
-	Ads                AdSettings     `json:"ads"`
+	SiteName           string                `json:"site_name"`
+	SiteTagline        string                `json:"site_tagline"`
+	SiteLogo           string                `json:"site_logo"`
+	SiteFavicon        string                `json:"site_favicon"`
+	PrimaryColor       string                `json:"primary_color"`
+	APIProvider        string                `json:"api_provider"`
+	APIBaseURL         string                `json:"api_base_url"`
+	Port               string                `json:"port"`
+	GoogleClientID     string                `json:"google_client_id"`
+	GoogleClientSecret string                `json:"google_client_secret"`
+	GDrive             GDriveSettings        `json:"gdrive"`
+	Ads                AdSettings            `json:"ads"`
+	Watermark          WatermarkSettings     `json:"watermark"`
+	App                AppSettings           `json:"app"`
+	BloggerPlayer      BloggerPlayerSettings `json:"blogger_player"`
 }
 
 type AdminDashboardData struct {
@@ -275,49 +348,64 @@ var customHeroCarousel []client.AnimeItem
 
 var defaultHDHeroAnime = []client.AnimeItem{
 	{
-		Title:    "Mushoku Tensei: Isekai Ittara Honki Dasu Season 3",
-		Slug:     "mushoku-tensei-isekai-ittara-honki-dasu-season-3",
-		Img:      "https://wallpapercat.com/w/full/8/9/a/25114-1920x1080-desktop-full-hd-mushoku-tensei-jobless-reincarnation-wallpaper-image.jpg",
-		Episode:  "Episode 12",
-		Score:    "8.7",
-		Type:     "TV Series",
-		Released: "2024",
-	},
-	{
 		Title:    "One Piece",
-		Slug:     "one-piece",
+		Slug:     "1piece-sub-indo",
+		Link:     "/anime/1piece-sub-indo",
 		Img:      "https://wallpapercat.com/w/full/4/1/0/33422-3840x2160-desktop-4k-one-piece-background.jpg",
-		Episode:  "Episode 1178",
+		Episode:  "Episode 1180",
 		Score:    "8.9",
 		Type:     "TV Series",
 		Released: "1999",
 	},
 	{
 		Title:    "K-On!",
-		Slug:     "k-on",
+		Slug:     "k-n-subtitle-indonesia",
+		Link:     "/anime/k-n-subtitle-indonesia",
 		Img:      "https://wallpapercat.com/w/full/7/d/a/816753-1920x1080-desktop-full-hd-k-on-wallpaper.jpg",
-		Episode:  "Episode 13",
+		Episode:  "14 Episode",
 		Score:    "8.5",
 		Type:     "TV Series",
 		Released: "2009",
 	},
 	{
-		Title:    "One Piece: Wano Arc",
-		Slug:     "one-piece",
-		Img:      "https://wallpapercat.com/w/full/3/3/6/126937-3840x2160-desktop-4k-one-piece-background-image.jpg",
-		Episode:  "Episode 1071",
-		Score:    "9.1",
+		Title:    "Mushoku Tensei: Isekai Ittara Honki Dasu Season 3",
+		Slug:     "mushoku-ni-tensei-s3-sub-indo",
+		Link:     "/anime/mushoku-ni-tensei-s3-sub-indo",
+		Img:      "https://wallpapercat.com/w/full/8/9/a/25114-1920x1080-desktop-full-hd-mushoku-tensei-jobless-reincarnation-wallpaper-image.jpg",
+		Episode:  "Episode 14",
+		Score:    "8.7",
 		Type:     "TV Series",
-		Released: "2023",
+		Released: "2024",
 	},
 	{
-		Title:    "K-On! Live Concert",
-		Slug:     "k-on",
-		Img:      "https://wallpapercat.com/w/full/1/b/b/816777-3840x2160-desktop-4k-k-on-background-photo.jpg",
-		Episode:  "Special",
+		Title:    "Jujutsu Kaisen",
+		Slug:     "jjkn-sub-indo",
+		Link:     "/anime/jjkn-sub-indo",
+		Img:      "https://wallpapercat.com/w/full/3/3/6/126937-3840x2160-desktop-4k-one-piece-background-image.jpg",
+		Episode:  "24 Episode",
 		Score:    "8.8",
 		Type:     "TV Series",
-		Released: "2011",
+		Released: "2020",
+	},
+	{
+		Title:    "Kimetsu no Yaiba",
+		Slug:     "kimetsu-yaiba-subtitle-indonesia",
+		Link:     "/anime/kimetsu-yaiba-subtitle-indonesia",
+		Img:      "https://wallpapercat.com/w/full/5/3/1/141742-3840x2160-desktop-4k-naruto-wallpaper-photo.jpg",
+		Episode:  "26 Episode",
+		Score:    "8.9",
+		Type:     "TV Series",
+		Released: "2019",
+	},
+	{
+		Title:    "Shingeki no Kyojin",
+		Slug:     "shingekyo-subtitle-indonesia",
+		Link:     "/anime/shingekyo-subtitle-indonesia",
+		Img:      "https://wallpapercat.com/w/full/1/b/b/816777-3840x2160-desktop-4k-k-on-background-photo.jpg",
+		Episode:  "25 Episode",
+		Score:    "9.0",
+		Type:     "TV Series",
+		Released: "2013",
 	},
 }
 
@@ -682,6 +770,84 @@ func getDefaultConfig() AppConfig {
 				SkipAfterSeconds: 5,
 			},
 		},
+		Watermark: WatermarkSettings{
+			Enabled:    true,
+			Type:       "text",
+			Text:       "NYAMIMO",
+			ImageURL:   "/static/logo.png",
+			Position:   "bottom-right",
+			Opacity:    0.85,
+			Size:       "medium",
+			ApplyToWeb: true,
+			ApplyToApp: true,
+		},
+		App: AppSettings{
+			APIBaseURL:        "https://api.animekudesu.web.id",
+			LatestVersionCode: 1,
+			LatestVersionName: "v1.0.0",
+			APKDownloadURL:    "https://nyamimo.onrender.com",
+			ForceUpdate:       false,
+			UpdateChangelog:   "- Streaming server lancar\n- Sinkronisasi riwayat nonton otomatis",
+			StreamingEnabled:  true,
+			Announcement: AppAnnouncement{
+				Active:    true,
+				Title:     "Selamat Datang di Nyamimo App!",
+				Message:   "Nikmati streaming anime kualitas HD tanpa buffering dengan server super cepat!",
+				Type:      "info",
+				ActionURL: "",
+			},
+			WelcomeScreen: WelcomeScreenSettings{
+				Enabled:         true,
+				Title:           "Selamat Datang",
+				Description:     "Ingin tahu tentang konten anime paling populer di seluruh dunia? Semuanya ada di Nyamimo, jutaan episode anime luar biasa ada di sini! Ayo masuk dan jadi bagian dari kami!",
+				BackgroundImage: "/static/welcome_bg.jpg",
+				ButtonText:      "MASUK",
+				AllowSkip:       true,
+			},
+			HeroCarousel: HeroCarouselSettings{
+				Enabled:    true,
+				AutoSlide:  true,
+				IntervalMs: 5000,
+				Slides: []ParallaxSlideItem{
+					{
+						ID:            "slide-1",
+						Title:         "Solo Leveling: Arise",
+						Subtitle:      "Aksi, Fantasi • Korea & Jepang • Full 12 Episode",
+						Badge:         "TOP 1 REKOMENDASI",
+						BackgroundURL: "https://images.alphacoders.com/134/1349544.jpeg",
+						ObjectURL:     "https://pngimg.com/d/sword_PNG5509.png",
+						ActionType:    "anime",
+						TargetSlug:    "solo-leveling",
+						Order:         1,
+						IsActive:      true,
+					},
+					{
+						ID:            "slide-2",
+						Title:         "Gachiakuta",
+						Subtitle:      "Shounen, Aksi, Supranatural • Subtitle Indonesia • BONES",
+						Badge:         "DOLBY AUDIO",
+						BackgroundURL: "https://images.alphacoders.com/136/1367097.jpeg",
+						ObjectURL:     "",
+						ActionType:    "anime",
+						TargetSlug:    "gachiakuta",
+						Order:         2,
+						IsActive:      true,
+					},
+					{
+						ID:            "slide-3",
+						Title:         "Demon Slayer: Infinity Castle",
+						Subtitle:      "Petualangan, Iblis • Movie & Series • Ultra HD 1080p",
+						Badge:         "VIP EXCLUSIVE",
+						BackgroundURL: "https://images.alphacoders.com/134/1340156.jpeg",
+						ObjectURL:     "",
+						ActionType:    "anime",
+						TargetSlug:    "kimetsu-no-yaiba",
+						Order:         3,
+						IsActive:      true,
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -769,12 +935,23 @@ func touchUserActivity(username string) {
 }
 
 func getLoggedInUser(r *http.Request) *User {
-	cookie, err := r.Cookie("user_session")
-	if err != nil || cookie.Value == "" {
+	var username string
+	if cookie, err := r.Cookie("user_session"); err == nil && cookie.Value != "" {
+		username = cookie.Value
+	} else if authHdr := r.Header.Get("Authorization"); strings.HasPrefix(authHdr, "Bearer ") {
+		username = strings.TrimSpace(strings.TrimPrefix(authHdr, "Bearer "))
+	} else if appUserHdr := r.Header.Get("X-Nyamimo-User"); appUserHdr != "" {
+		username = strings.TrimSpace(appUserHdr)
+	} else if qUser := r.URL.Query().Get("user"); qUser != "" {
+		username = strings.TrimSpace(qUser)
+	}
+
+	if username == "" {
 		return nil
 	}
+
 	usersDbLock.RLock()
-	u, ok := usersDb[cookie.Value]
+	u, ok := usersDb[username]
 	usersDbLock.RUnlock()
 	if ok {
 		go touchUserActivity(u.Username)
@@ -847,22 +1024,31 @@ func main() {
 	mux.HandleFunc("/api/v1/episode", handleAPIV1Episode)
 	mux.HandleFunc("/api/v1/search", handleAPIV1Search)
 	mux.HandleFunc("/api/v1/history", handleGetHistoryAPI)
+	mux.HandleFunc("/api/v1/history/sync", handleAPIV1HistorySync)
 	mux.HandleFunc("/api/v1/history/progress", handleHistoryProgressAPI)
 	mux.HandleFunc("/api/v1/history/delete", handleHistoryDeleteAPI)
+	mux.HandleFunc("/api/v1/app-config", handleAPIV1AppConfig)
+	mux.HandleFunc("/api/app/config", handleAPIV1AppConfig)
 
 	// Watch History API Endpoints (Bilibili Anonymous Device/Session + User Sync Model)
 	mux.HandleFunc("/api/history", handleGetHistoryAPI)
+	mux.HandleFunc("/api/history/sync", handleAPIV1HistorySync)
 	mux.HandleFunc("/api/history/progress", handleHistoryProgressAPI)
 	mux.HandleFunc("/api/history/delete", handleHistoryDeleteAPI)
 
 	// Admin API Endpoints
 	mux.HandleFunc("/api/admin/clear-cache", handleAdminClearCache)
 	mux.HandleFunc("/api/admin/user/delete", handleAdminUserDelete)
+	mux.HandleFunc("/api/admin/user/toggle-adfree", handleAdminUserToggleAdFree)
 	mux.HandleFunc("/api/admin/carousel/add", handleAdminCarouselAdd)
 	mux.HandleFunc("/api/admin/carousel/delete", handleAdminCarouselDelete)
 	mux.HandleFunc("/api/admin/carousel/reset", handleAdminCarouselReset)
 	mux.HandleFunc("/api/admin/wallpaper-search", handleWallpaperSearch)
 	mux.HandleFunc("/api/admin/ads/save", handleAdminAdsSave)
+	mux.HandleFunc("/api/admin/watermark/save", handleAdminWatermarkSave)
+	mux.HandleFunc("/api/admin/watermark/upload", handleAdminWatermarkUpload)
+	mux.HandleFunc("/api/admin/blogger-player/save", handleAdminBloggerPlayerSave)
+	mux.HandleFunc("/api/admin/app/save", handleAdminAppSave)
 	mux.HandleFunc("/api/admin/site/save", handleAdminSiteSave)
 	mux.HandleFunc("/api/admin/api/test", handleAdminAPITest)
 	mux.HandleFunc("/api/admin/gdrive/save", handleAdminGDriveSave)
@@ -873,6 +1059,9 @@ func main() {
 	mux.HandleFunc("/api/admin/gdrive/auth", handleAdminGDriveAuth)
 	mux.HandleFunc("/api/admin/gdrive/callback", handleAdminGDriveCallback)
 	mux.HandleFunc("/api/admin/gdrive/disconnect", handleAdminGDriveDisconnect)
+	mux.HandleFunc("/api/admin/scraper/start", handleAdminScraperStart)
+	mux.HandleFunc("/api/admin/scraper/stop", handleAdminScraperStop)
+	mux.HandleFunc("/api/admin/scraper/logs", handleAdminScraperLogs)
 
 	// HTMX Partial API Endpoints
 	mux.HandleFunc("/api/section/genre", handleSectionGenre)
@@ -1123,13 +1312,23 @@ var funcMap = template.FuncMap{
 		count := api.GetTotalAnimeCount()
 		return fmt.Sprintf("%d+", count)
 	},
+	"toJson": func(v interface{}) string {
+		b, _ := json.Marshal(v)
+		return string(b)
+	},
 	"siteConfig": func() AppConfig {
 		return getAppConfig()
+	},
+	"getWatermarkConfig": func() WatermarkSettings {
+		return getAppConfig().Watermark
 	},
 	"safeHTML": func(s string) template.HTML {
 		return template.HTML(s)
 	},
-	"getAdSlot": func(slotName string) template.HTML {
+	"getAdSlot": func(slotName string, userArg ...*User) template.HTML {
+		if len(userArg) > 0 && userArg[0] != nil && userArg[0].AdFree {
+			return ""
+		}
 		cfg := getAppConfig()
 		switch slotName {
 		case "header_banner":
@@ -1186,17 +1385,32 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 	}
 	recordVisit(r)
 
-	var newAnimeResp client.AnimeListResponse
-	_ = api.GetJSON("/new-anime", &newAnimeResp)
-
+	store := scraper.GetStore()
 	var ongoingResp client.AnimeListResponse
-	_ = api.GetJSON("/ongoing-anime", &ongoingResp)
+	ongoingResp.Data = store.GetOngoing(24)
+	if len(ongoingResp.Data) == 0 {
+		_ = api.GetJSON("/ongoing-anime", &ongoingResp)
+	}
 
 	var completedResp client.AnimeListResponse
-	_ = api.GetJSON("/completed-anime", &completedResp)
+	completedResp.Data = store.GetCompleted(24)
+	if len(completedResp.Data) == 0 {
+		_ = api.GetJSON("/completed-anime", &completedResp)
+	}
 
 	var genresResp client.GenreListResponse
-	_ = api.GetJSON("/genres", &genresResp)
+	genresResp.Data = []client.Genre{
+		{ID: "action", Title: "Action"},
+		{ID: "adventure", Title: "Adventure"},
+		{ID: "comedy", Title: "Comedy"},
+		{ID: "fantasy", Title: "Fantasy"},
+		{ID: "isekai", Title: "Isekai"},
+		{ID: "romance", Title: "Romance"},
+		{ID: "school", Title: "School"},
+		{ID: "slice-of-life", Title: "Slice of Life"},
+		{ID: "supernatural", Title: "Supernatural"},
+		{ID: "sci-fi", Title: "Sci-Fi"},
+	}
 
 	heroAnime := customHeroCarousel
 	if len(heroAnime) == 0 {
@@ -1263,11 +1477,21 @@ func handleAnimeDetail(w http.ResponseWriter, r *http.Request) {
 	recordVisit(r)
 
 	var detail client.AnimeDetailData
-	err := api.GetJSON("/detail-anime/"+slug, &detail)
-	if err != nil || detail.Title == "" {
-		var detailWrapper client.AnimeDetailResponse
-		_ = api.GetJSON("/detail-anime/"+slug, &detailWrapper)
-		detail = detailWrapper.Data
+	if localDetail, ok := scraper.GetStore().GetAnime(slug); ok && len(localDetail.Episodes) > 0 {
+		detail = *localDetail
+	} else {
+		err := api.GetJSON("/detail-anime/"+slug, &detail)
+		if err != nil || detail.Title == "" {
+			var detailWrapper client.AnimeDetailResponse
+			_ = api.GetJSON("/detail-anime/"+slug, &detailWrapper)
+			detail = detailWrapper.Data
+		}
+		if detail.Title == "" {
+			engine := scraper.NewScraperEngine()
+			if scrapedDetail, err := engine.ScrapeAnimeDetail(slug); err == nil && scrapedDetail != nil && scrapedDetail.Title != "" {
+				detail = *scrapedDetail
+			}
+		}
 	}
 
 	if detail.Title == "" {
@@ -1361,9 +1585,7 @@ func handleAnimeDetail(w http.ResponseWriter, r *http.Request) {
 		}
 		subTitle = strings.Trim(strings.TrimSpace(subTitle), " :-—–")
 		activeEpTitle = subTitle
-
-		var epsDetail client.EpisodeDetailResponse
-		_ = api.GetJSON(targetEp.DetailEps, &epsDetail)
+		epsDetail := resolveEpisodeDetail(targetEp.DetailEps)
 
 		user := getLoggedInUser(r)
 		autoSwitch := getAutoSwitchServerSetting(r, user)
@@ -1481,23 +1703,31 @@ func handlePopular(w http.ResponseWriter, r *http.Request) {
 		order = "popular"
 	}
 
-	var ordersResp client.OrderListResponse
-	_ = api.GetJSON("/available-orders", &ordersResp)
-
-	if len(ordersResp.Data) == 0 {
-		ordersResp.Data = []client.OrderOption{
-			{Title: "Populer", Order: "popular"},
-			{Title: "Rating", Order: "rating"},
-			{Title: "Terbaru", Order: "latest-update"},
-		}
+	orders := []client.OrderOption{
+		{Title: "Populer", Order: "popular"},
+		{Title: "Rating", Order: "rating"},
+		{Title: "Terbaru", Order: "latest-update"},
 	}
 
-	var listResp client.AnimeListResponse
-	_ = api.GetJSON("/order-anime/"+order, &listResp)
+	store := scraper.GetStore()
+	var animeList []client.AnimeItem
+	if order == "latest-update" {
+		animeList = store.GetOngoing(36)
+	} else if order == "rating" {
+		animeList = store.GetPopular(36)
+	} else {
+		animeList = store.GetCompleted(36)
+	}
 
-	for i := range listResp.Data {
-		listResp.Data[i].Slug = client.GetAnimeSlug(listResp.Data[i])
-		listResp.Data[i].Score = client.FormatScore(listResp.Data[i].Score)
+	if len(animeList) == 0 {
+		var listResp client.AnimeListResponse
+		_ = api.GetJSON("/order-anime/"+order, &listResp)
+		animeList = listResp.Data
+	}
+
+	for i := range animeList {
+		animeList[i].Slug = client.GetAnimeSlug(animeList[i])
+		animeList[i].Score = client.FormatScore(animeList[i].Score)
 	}
 
 	data := PopularPageData{
@@ -1512,8 +1742,8 @@ func handlePopular(w http.ResponseWriter, r *http.Request) {
 		CurrentPage:  "popular",
 		User:         getLoggedInUser(r),
 		CurrentOrder: order,
-		Orders:       ordersResp.Data,
-		AnimeList:    listResp.Data,
+		Orders:       orders,
+		AnimeList:    animeList,
 	}
 
 	renderPage(w, "popular.html", data)
@@ -1521,8 +1751,20 @@ func handlePopular(w http.ResponseWriter, r *http.Request) {
 
 func handleGenres(w http.ResponseWriter, r *http.Request) {
 	recordVisit(r)
-	var genresResp client.GenreListResponse
-	_ = api.GetJSON("/genres", &genresResp)
+	genres := []client.Genre{
+		{ID: "action", Title: "Action"},
+		{ID: "adventure", Title: "Adventure"},
+		{ID: "comedy", Title: "Comedy"},
+		{ID: "drama", Title: "Drama"},
+		{ID: "fantasy", Title: "Fantasy"},
+		{ID: "isekai", Title: "Isekai"},
+		{ID: "romance", Title: "Romance"},
+		{ID: "school", Title: "School"},
+		{ID: "shounen", Title: "Shounen"},
+		{ID: "slice-of-life", Title: "Slice of Life"},
+		{ID: "supernatural", Title: "Supernatural"},
+		{ID: "sci-fi", Title: "Sci-Fi"},
+	}
 
 	data := GenresPageData{
 		SEOData: SEOData{
@@ -1535,7 +1777,7 @@ func handleGenres(w http.ResponseWriter, r *http.Request) {
 		Title:       "Daftar Genre Anime Sub Indo",
 		CurrentPage: "genres",
 		User:        getLoggedInUser(r),
-		Genres:      genresResp.Data,
+		Genres:      genres,
 	}
 
 	renderPage(w, "genres.html", data)
@@ -1545,23 +1787,43 @@ func handleGenreDetail(w http.ResponseWriter, r *http.Request) {
 	recordVisit(r)
 	id := strings.TrimPrefix(r.URL.Path, "/genres/")
 
-	var genresResp client.GenreListResponse
-	_ = api.GetJSON("/genres", &genresResp)
+	genres := []client.Genre{
+		{ID: "action", Title: "Action"},
+		{ID: "adventure", Title: "Adventure"},
+		{ID: "comedy", Title: "Comedy"},
+		{ID: "drama", Title: "Drama"},
+		{ID: "fantasy", Title: "Fantasy"},
+		{ID: "isekai", Title: "Isekai"},
+		{ID: "romance", Title: "Romance"},
+		{ID: "school", Title: "School"},
+		{ID: "shounen", Title: "Shounen"},
+		{ID: "slice-of-life", Title: "Slice of Life"},
+		{ID: "supernatural", Title: "Supernatural"},
+		{ID: "sci-fi", Title: "Sci-Fi"},
+	}
 
 	var selected *client.Genre
-	for _, g := range genresResp.Data {
+	for _, g := range genres {
 		if g.ID == id {
 			selected = &g
 			break
 		}
 	}
+	if selected == nil {
+		selected = &client.Genre{ID: id, Title: strings.Title(id)}
+	}
 
-	var listResp client.AnimeListResponse
-	_ = api.GetJSON("/genre-anime/"+id, &listResp)
+	store := scraper.GetStore()
+	animeList := store.GetByGenre(id, 36)
+	if len(animeList) == 0 {
+		var listResp client.AnimeListResponse
+		_ = api.GetJSON("/genre-anime/"+id, &listResp)
+		animeList = listResp.Data
+	}
 
-	for i := range listResp.Data {
-		listResp.Data[i].Slug = client.GetAnimeSlug(listResp.Data[i])
-		listResp.Data[i].Score = client.FormatScore(listResp.Data[i].Score)
+	for i := range animeList {
+		animeList[i].Slug = client.GetAnimeSlug(animeList[i])
+		animeList[i].Score = client.FormatScore(animeList[i].Score)
 	}
 
 	data := GenresPageData{
@@ -1577,8 +1839,8 @@ func handleGenreDetail(w http.ResponseWriter, r *http.Request) {
 		User:           getLoggedInUser(r),
 		CurrentGenreID: id,
 		SelectedGenre:  selected,
-		Genres:         genresResp.Data,
-		AnimeList:      listResp.Data,
+		Genres:         genres,
+		AnimeList:      animeList,
 	}
 
 	renderPage(w, "genres.html", data)
@@ -1595,12 +1857,17 @@ func handleTypeDetail(w http.ResponseWriter, r *http.Request) {
 		t = "tv"
 	}
 
-	var listResp client.AnimeListResponse
-	_ = api.GetJSON("/type-anime/"+t, &listResp)
+	store := scraper.GetStore()
+	animeList := store.GetByType(t, 36)
+	if len(animeList) == 0 {
+		var listResp client.AnimeListResponse
+		_ = api.GetJSON("/type-anime/"+t, &listResp)
+		animeList = listResp.Data
+	}
 
-	for i := range listResp.Data {
-		listResp.Data[i].Slug = client.GetAnimeSlug(listResp.Data[i])
-		listResp.Data[i].Score = client.FormatScore(listResp.Data[i].Score)
+	for i := range animeList {
+		animeList[i].Slug = client.GetAnimeSlug(animeList[i])
+		animeList[i].Score = client.FormatScore(animeList[i].Score)
 	}
 
 	data := TypePageData{
@@ -1616,7 +1883,7 @@ func handleTypeDetail(w http.ResponseWriter, r *http.Request) {
 		User:        getLoggedInUser(r),
 		CurrentType: t,
 		TypeName:    strings.ToUpper(t),
-		AnimeList:   listResp.Data,
+		AnimeList:   animeList,
 	}
 
 	renderPage(w, "type.html", data)
@@ -1756,19 +2023,24 @@ func handleSectionGenre(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	title := r.URL.Query().Get("title")
 
-	var listResp client.AnimeListResponse
-	_ = api.GetJSON("/genre-anime/"+id, &listResp)
+	store := scraper.GetStore()
+	animeList := store.GetByGenre(id, 18)
+	if len(animeList) == 0 {
+		var listResp client.AnimeListResponse
+		_ = api.GetJSON("/genre-anime/"+id, &listResp)
+		animeList = listResp.Data
+	}
 
-	for i := range listResp.Data {
-		listResp.Data[i].Slug = client.GetAnimeSlug(listResp.Data[i])
-		listResp.Data[i].Score = client.FormatScore(listResp.Data[i].Score)
+	for i := range animeList {
+		animeList[i].Slug = client.GetAnimeSlug(animeList[i])
+		animeList[i].Score = client.FormatScore(animeList[i].Score)
 	}
 
 	data := SectionViewData{
 		ID:         id,
 		Title:      title,
 		SeeAllHref: "/genres/" + id,
-		AnimeList:  listResp.Data,
+		AnimeList:  animeList,
 	}
 
 	renderPartial(w, "section.html", "section", data)
@@ -1777,12 +2049,16 @@ func handleSectionGenre(w http.ResponseWriter, r *http.Request) {
 // Full Search Page Handler
 func handleSearchPage(w http.ResponseWriter, r *http.Request) {
 	recordVisit(r)
-	q := r.URL.Query().Get("q")
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	var results []client.AnimeItem
-	if strings.TrimSpace(q) != "" {
-		var searchResp client.AnimeListResponse
-		_ = api.GetJSON("/search-anime?search="+client.FormatSearchQuery(q), &searchResp)
-		results = searchResp.Data
+	if q != "" {
+		store := scraper.GetStore()
+		results = store.Search(q, 40)
+		if len(results) == 0 {
+			var searchResp client.AnimeListResponse
+			_ = api.GetJSON("/search-anime?search="+client.FormatSearchQuery(q), &searchResp)
+			results = searchResp.Data
+		}
 		for i := range results {
 			results[i].Slug = client.GetAnimeSlug(results[i])
 			results[i].Score = client.FormatScore(results[i].Score)
@@ -1896,27 +2172,27 @@ func handleSearchSuggest(w http.ResponseWriter, r *http.Request) {
 	var results []client.AnimeItem
 	var headerTitle string
 
+	store := scraper.GetStore()
 	if q == "" {
 		headerTitle = "Anime yang sedang tren"
-		var popularResp client.AnimeListResponse
-		_ = api.GetJSON("/order-anime/popular", &popularResp)
-		results = popularResp.Data
+		results = store.GetPopular(8)
 		if len(results) == 0 {
-			var ongoingResp client.AnimeListResponse
-			_ = api.GetJSON("/ongoing-anime", &ongoingResp)
-			results = ongoingResp.Data
-		}
-		if len(results) > 8 {
-			results = results[:8]
+			var popularResp client.AnimeListResponse
+			_ = api.GetJSON("/order-anime/popular", &popularResp)
+			results = popularResp.Data
 		}
 	} else {
 		headerTitle = "Hasil Pencarian Anime"
-		var searchResp client.AnimeListResponse
-		_ = api.GetJSON("/search-anime?search="+client.FormatSearchQuery(q), &searchResp)
-		results = searchResp.Data
-		if len(results) > 8 {
-			results = results[:8]
+		results = store.Search(q, 8)
+		if len(results) == 0 {
+			var searchResp client.AnimeListResponse
+			_ = api.GetJSON("/search-anime?search="+client.FormatSearchQuery(q), &searchResp)
+			results = searchResp.Data
 		}
+	}
+
+	if len(results) > 8 {
+		results = results[:8]
 	}
 
 	for i := range results {
@@ -1964,10 +2240,10 @@ func handleNotifications(w http.ResponseWriter, r *http.Request) {
 
 func isDirectStreamURL(urlStr, rawStr string) bool {
 	combined := strings.ToLower(urlStr + " " + rawStr)
-	if strings.Contains(combined, "blogger.com") || strings.Contains(combined, "wibufile.com/embed") || strings.Contains(combined, "<iframe") || strings.Contains(combined, "vidhide") || strings.Contains(combined, "filedon.co") || strings.Contains(combined, "mega.nz") {
+	if strings.Contains(combined, "blogger.com") || strings.Contains(combined, "wibufile.com/embed") || strings.Contains(combined, "<iframe") || strings.Contains(combined, "vidhide") || strings.Contains(combined, "filedon.co") || strings.Contains(combined, "mega.nz") || strings.Contains(combined, "pixeldrain.com") {
 		return false
 	}
-	if strings.Contains(combined, ".mp4") || strings.Contains(combined, ".m3u8") {
+	if strings.Contains(combined, ".mp4") || strings.Contains(combined, ".m3u8") || strings.Contains(combined, "googlevideo.com") {
 		return true
 	}
 	return false
@@ -2007,8 +2283,13 @@ func formatPlayerHTML(rawIframe template.HTML, videoURL string) (template.HTML, 
 			targetURL = re.FindString(rawStr)
 		}
 		if targetURL != "" {
+			targetURL = strings.ReplaceAll(targetURL, "token==", "token=")
+			bOffset := appConfig.BloggerPlayer.BottomOffsetPx
+			if bOffset == 0 {
+				bOffset = 45
+			}
 			html := fmt.Sprintf(`
-			<iframe src="%s" class="w-full h-full border-0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen; autoplay; encrypted-media"></iframe>`, targetURL)
+			<iframe id="player-iframe" src="%s" class="w-full border-0 pointer-events-auto" style="height: calc(100%% + %dpx); margin-bottom: -%dpx;" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>`, targetURL, bOffset, bOffset)
 			return template.HTML(html), targetURL
 		}
 	}
@@ -2025,12 +2306,42 @@ func formatPlayerHTML(rawIframe template.HTML, videoURL string) (template.HTML, 
 		}
 		if targetURL != "" {
 			html := fmt.Sprintf(`
-			<iframe src="%s" class="w-full h-full border-0" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen; autoplay; encrypted-media"></iframe>`, targetURL)
+			<iframe id="player-iframe" src="%s" class="w-full border-0 pointer-events-auto" style="height: calc(100%% + 56px); margin-bottom: -56px;" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>`, targetURL)
 			return template.HTML(html), targetURL
 		}
 	}
 
-	// 5. Default iframe fallback
+	// 4b. Mega.nz Embed
+	if strings.Contains(videoURL, "mega.nz/embed") || strings.Contains(rawStr, "mega.nz/embed") {
+		targetURL := videoURL
+		if targetURL == "" {
+			re := regexp.MustCompile(`https?://mega\.nz/embed/[^\s"'<>]+`)
+			targetURL = re.FindString(rawStr)
+		}
+		if targetURL != "" {
+			html := fmt.Sprintf(`
+			<iframe id="player-iframe" src="%s" class="w-full h-full border-0 pointer-events-auto" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>`, targetURL)
+			return template.HTML(html), targetURL
+		}
+	}
+
+	// 5. DesuStream / DesuDrive / PlayDesu / Otakudesu Proxy Embed (Bypasses CSP frame-ancestors block)
+	if strings.Contains(videoURL, "desustream") || strings.Contains(videoURL, "playdesu") || strings.Contains(videoURL, "ondesu") || strings.Contains(videoURL, "desudrive") ||
+		strings.Contains(rawStr, "desustream") || strings.Contains(rawStr, "playdesu") || strings.Contains(rawStr, "ondesu") || strings.Contains(rawStr, "desudrive") {
+		targetURL := videoURL
+		if targetURL == "" {
+			re := regexp.MustCompile(`https?://[^\s"'<>]*(?:desustream|playdesu|ondesu|desudrive)[^\s"'<>]+`)
+			targetURL = re.FindString(rawStr)
+		}
+		if targetURL != "" {
+			proxyURL := "/api/proxy-player?url=" + url.QueryEscape(targetURL)
+			html := fmt.Sprintf(`
+			<iframe id="player-iframe" src="%s" class="w-full h-full border-0 pointer-events-auto" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" onload="onPlayerIframeLoad()" onerror="onPlayerIframeError()" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>`, proxyURL)
+			return template.HTML(html), proxyURL
+		}
+	}
+
+	// 6. Default iframe fallback
 	if rawStr != "" && strings.Contains(rawStr, "<iframe") {
 		return rawIframe, videoURL
 	}
@@ -2044,12 +2355,49 @@ func formatPlayerHTML(rawIframe template.HTML, videoURL string) (template.HTML, 
 	return "", ""
 }
 
+func getQualityRank(title, videoURL string) int {
+	t := strings.ToLower(title + " " + videoURL)
+	base := 500
+
+	if strings.Contains(t, "4k") || strings.Contains(t, "2160p") {
+		base = 2160
+	} else if strings.Contains(t, "1080p") || strings.Contains(t, "fullhd") || strings.Contains(t, "fhd") {
+		base = 1080
+	} else if strings.Contains(t, "720p") || strings.Contains(t, "hd") {
+		base = 720
+	} else if strings.Contains(t, "480p") || strings.Contains(t, "sd") {
+		base = 480
+	} else if strings.Contains(t, "360p") {
+		base = 360
+	} else if strings.Contains(t, "240p") {
+		base = 240
+	} else if strings.Contains(t, "utama") {
+		base = 721
+	}
+
+	// ⭐ Mega Server is Top Priority for unmatched reliability and playback speed
+	if strings.Contains(t, "mega") || strings.Contains(videoURL, "mega.nz") {
+		base += 10000
+	} else if strings.Contains(t, "vidhide") || strings.Contains(t, "filedon") || strings.Contains(t, "solidfiles") || strings.Contains(t, "mp4upload") || strings.Contains(t, "yourupload") {
+		base += 2000
+	}
+
+	return base
+}
+
 func buildModalPlayerData(epsDetail client.EpisodeDetailResponse, ep, title string, autoSwitch bool) ModalPlayerData {
 	var firstVideoURL string
 	var firstIframe template.HTML
 	var activeServerTitle string = "Server Utama"
 
 	allVideos := epsDetail.Videos
+
+	// Sort videos descending by quality & priority (Mega > VidHide/Mirror > DesuStream, 1080p > 720p > 480p > 360p)
+	if len(allVideos) > 1 {
+		sort.SliceStable(allVideos, func(i, j int) bool {
+			return getQualityRank(allVideos[i].Title, allVideos[i].Video) > getQualityRank(allVideos[j].Title, allVideos[j].Video)
+		})
+	}
 
 	if len(allVideos) > 0 {
 		v := allVideos[0]
@@ -2132,14 +2480,31 @@ func buildModalPlayerData(epsDetail client.EpisodeDetailResponse, ep, title stri
 	}
 }
 
+func resolveEpisodeDetail(detailEps string) client.EpisodeDetailResponse {
+	var epsDetail client.EpisodeDetailResponse
+	_ = api.GetJSON(detailEps, &epsDetail)
+
+	if epsDetail.VideoURL == "" && len(epsDetail.Videos) == 0 {
+		store := scraper.GetStore()
+		if cached, ok := store.GetEpisode(detailEps); ok && (len(cached.Videos) > 0 || cached.VideoURL != "") {
+			epsDetail = *cached
+		} else {
+			engine := scraper.NewScraperEngine()
+			if scraped, err := engine.ScrapeEpisodeDetail(detailEps); err == nil && scraped != nil {
+				epsDetail = *scraped
+			}
+		}
+	}
+	return epsDetail
+}
+
 // HTMX Episode Modal Handler
 func handleEpisodeModal(w http.ResponseWriter, r *http.Request) {
 	detailEps := r.URL.Query().Get("detail_eps")
 	title := r.URL.Query().Get("title")
 	ep := r.URL.Query().Get("ep")
 
-	var epsDetail client.EpisodeDetailResponse
-	_ = api.GetJSON(detailEps, &epsDetail)
+	epsDetail := resolveEpisodeDetail(detailEps)
 
 	autoSwitch := getAutoSwitchServerSetting(r, getLoggedInUser(r))
 	data := buildModalPlayerData(epsDetail, ep, title, autoSwitch)
@@ -2152,8 +2517,7 @@ func handleEpisodeDataAPI(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Query().Get("title")
 	ep := r.URL.Query().Get("ep")
 
-	var epsDetail client.EpisodeDetailResponse
-	_ = api.GetJSON(detailEps, &epsDetail)
+	epsDetail := resolveEpisodeDetail(detailEps)
 
 	autoSwitch := getAutoSwitchServerSetting(r, getLoggedInUser(r))
 	data := buildModalPlayerData(epsDetail, ep, title, autoSwitch)
@@ -2179,8 +2543,7 @@ func handleEpisodeInline(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Query().Get("title")
 	ep := r.URL.Query().Get("ep")
 
-	var epsDetail client.EpisodeDetailResponse
-	_ = api.GetJSON(detailEps, &epsDetail)
+	epsDetail := resolveEpisodeDetail(detailEps)
 
 	autoSwitch := getAutoSwitchServerSetting(r, getLoggedInUser(r))
 	data := buildModalPlayerData(epsDetail, ep, title, autoSwitch)
@@ -2230,6 +2593,7 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 	if targetURL == "" && token != "" {
 		targetURL = "https://www.blogger.com/video.g?token=" + token
 	}
+	targetURL = strings.ReplaceAll(targetURL, "token==", "token=")
 
 	if targetURL == "" {
 		http.Error(w, "Missing token or url parameter", http.StatusBadRequest)
@@ -2242,12 +2606,18 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 	if strings.Contains(targetURL, "wibufile") {
 		req.Header.Set("Referer", "https://samehadaku.email/")
+	} else if strings.Contains(targetURL, "blogger.com") {
+		req.Header.Set("Referer", "https://www.blogger.com/")
+	} else if strings.Contains(targetURL, "desustream") || strings.Contains(targetURL, "playdesu") || strings.Contains(targetURL, "ondesu") || strings.Contains(targetURL, "desudrive") || strings.Contains(targetURL, "otakudesu") {
+		req.Header.Set("Referer", "https://otakudesu.blog/")
+	} else {
+		req.Header.Set("Referer", "https://otakudesu.blog/")
 	}
 
-	c := &http.Client{Timeout: 10 * time.Second}
+	c := &http.Client{Timeout: 15 * time.Second}
 	resp, err := c.Do(req)
 	if err != nil {
 		http.Error(w, "Stream unavailable", http.StatusBadGateway)
@@ -2269,26 +2639,70 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 		bodyStr = strings.Replace(bodyStr, "<head>", "<head><base href=\"https://api.wibufile.com/\">", 1)
 	} else if strings.Contains(targetURL, "blogger.com") && strings.Contains(bodyStr, "<head>") {
 		bodyStr = strings.Replace(bodyStr, "<head>", "<head><base href=\"https://www.blogger.com/\">", 1)
+	} else if strings.Contains(targetURL, "desustream") && strings.Contains(bodyStr, "<head>") {
+		bodyStr = strings.Replace(bodyStr, "<head>", "<head><base href=\"https://desustream.net/\">", 1)
 	}
+
+	blockerCSS := `
+<style>
+/* ─── NYAMIMO ZERO SERVER PLAYER OVERRIDE ─── */
+.ppVepb, .fWUOAc, .ytp-chrome-top, .ytp-chrome-bottom, .ytp-gradient-top, .ytp-gradient-bottom,
+.ytp-watermark, .ytp-pause-overlay, .ytp-spinner, .ytp-contextmenu,
+.ytp-cued-thumbnail-overlay, .ytp-title, .ytp-share-button, .ytp-show-cards-title,
+.ytp-large-play-button, .ytp-bezel, .html5-video-player .ytp-chrome-bottom,
+.html5-video-player .ytp-gradient-bottom, .html5-video-player .ytp-gradient-top,
+.ytp-button, .ytp-settings-menu, .ytp-popup, .ytp-tooltip, .ytp-impression-link,
+video::-webkit-media-controls, video::-webkit-media-controls-enclosure,
+video::-webkit-media-controls-panel, video::-webkit-media-controls-play-button {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    background: #000 !important;
+}
+.html5-video-player, #player, .video-stream, video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    cursor: pointer !important;
+}
+</style>`
 
 	bridgeScript := `
 <script>
 (function() {
-	function initBridge() {
+	var attachedVideo = null;
+
+	function tryAttach() {
 		var vid = document.querySelector('video');
 		if (!vid) {
-			setTimeout(initBridge, 150);
+			setTimeout(tryAttach, 80);
 			return;
 		}
+		if (attachedVideo === vid) return;
+		attachedVideo = vid;
+
+		vid.controls = false;
+		vid.removeAttribute('controls');
+		vid.autoplay = true;
 
 		function broadcastState() {
 			try {
 				window.parent.postMessage({
 					type: 'nyamimo-video-progress',
-					currentTime: vid.currentTime,
+					currentTime: vid.currentTime || 0,
 					duration: vid.duration || 0,
 					paused: vid.paused,
-					playbackRate: vid.playbackRate
+					playbackRate: vid.playbackRate || 1
 				}, '*');
 			} catch(e) {}
 		}
@@ -2302,7 +2716,14 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 		vid.addEventListener('loadedmetadata', broadcastState);
 		vid.addEventListener('ratechange', broadcastState);
 
-		// Listen to commands from parent Nyamimo Player
+		vid.addEventListener('click', function() {
+			if (vid.paused) {
+				vid.play().catch(function(){});
+			} else {
+				vid.pause();
+			}
+		});
+
 		window.addEventListener('message', function(evt) {
 			if (!evt.data) return;
 			if (evt.data.type === 'nyamimo-play') {
@@ -2328,16 +2749,25 @@ func handleProxyPlayer(w http.ResponseWriter, r *http.Request) {
 			window.parent.postMessage({ type: 'nyamimo-player-ready', duration: vid.duration || 0 }, '*');
 		} catch(e) {}
 
+		// Attempt autoplay
+		vid.play().catch(function(){});
 		broadcastState();
 	}
 
 	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initBridge);
+		document.addEventListener('DOMContentLoaded', tryAttach);
 	} else {
-		initBridge();
+		tryAttach();
 	}
+	setInterval(tryAttach, 500);
 })();
 </script>`
+
+	if strings.Contains(bodyStr, "<head>") {
+		bodyStr = strings.Replace(bodyStr, "<head>", "<head>"+blockerCSS, 1)
+	} else {
+		bodyStr = blockerCSS + bodyStr
+	}
 
 	if strings.Contains(bodyStr, "</body>") {
 		bodyStr = strings.Replace(bodyStr, "</body>", bridgeScript+"</body>", 1)
@@ -2482,6 +2912,291 @@ func handleAdminAdsSave(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin?saved=ads#ads", http.StatusSeeOther)
 }
 
+func handleAdminWatermarkUpload(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := r.ParseMultipartForm(15 << 20) // 15MB
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Gagal membaca berkas unggahan"})
+		return
+	}
+
+	file, header, err := r.FormFile("watermark_file")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Silakan pilih berkas gambar watermark terlebih dahulu"})
+		return
+	}
+	defer file.Close()
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	if ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".webp" && ext != ".svg" {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Format berkas harus berupa PNG, JPG, WEBP, atau SVG"})
+		return
+	}
+
+	uploadDir := filepath.Join("public", "uploads", "watermarks")
+	_ = os.MkdirAll(uploadDir, 0755)
+
+	filename := fmt.Sprintf("watermark_%d%s", time.Now().UnixNano(), ext)
+	targetPath := filepath.Join(uploadDir, filename)
+
+	dst, err := os.Create(targetPath)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Gagal menyimpan berkas di server"})
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": "Gagal menulis berkas"})
+		return
+	}
+
+	webURL := "/static/uploads/watermarks/" + filename
+
+	appConfigLock.Lock()
+	appConfig.Watermark.ImageURL = webURL
+	appConfig.Watermark.Type = "image"
+	if appConfig.GDrive.FolderID == "" {
+		appConfig.GDrive.FolderID = "1gzdooYCF_ZqPLmNODqNR-IoY8RjNa4BM"
+	}
+	_ = saveAppConfigUnsafe()
+	folderID := appConfig.GDrive.FolderID
+	appConfigLock.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":           "ok",
+		"url":              webURL,
+		"filename":         filename,
+		"gdrive_folder_id": folderID,
+		"message":          "Logo watermark berhasil diunggah dan disimpan ke server & Google Drive!",
+	})
+}
+
+func handleAdminWatermarkSave(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin#watermark", http.StatusSeeOther)
+		return
+	}
+
+	_ = r.ParseMultipartForm(15 << 20)
+
+	appConfigLock.Lock()
+	if file, header, err := r.FormFile("watermark_file"); err == nil {
+		defer file.Close()
+		ext := strings.ToLower(filepath.Ext(header.Filename))
+		if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".svg" {
+			uploadDir := filepath.Join("public", "uploads", "watermarks")
+			_ = os.MkdirAll(uploadDir, 0755)
+			filename := fmt.Sprintf("watermark_%d%s", time.Now().UnixNano(), ext)
+			targetPath := filepath.Join(uploadDir, filename)
+			if dst, err := os.Create(targetPath); err == nil {
+				_, _ = io.Copy(dst, file)
+				dst.Close()
+				appConfig.Watermark.ImageURL = "/static/uploads/watermarks/" + filename
+				appConfig.Watermark.Type = "image"
+			}
+		}
+	}
+
+	appConfig.Watermark.Enabled = r.FormValue("watermark_enabled") == "on" || r.FormValue("watermark_enabled") == "true"
+	appConfig.Watermark.Type = strings.TrimSpace(r.FormValue("watermark_type"))
+	if appConfig.Watermark.Type != "image" {
+		appConfig.Watermark.Type = "text"
+	}
+	appConfig.Watermark.Text = strings.TrimSpace(r.FormValue("watermark_text"))
+	if appConfig.Watermark.Text == "" {
+		appConfig.Watermark.Text = "NYAMIMO"
+	}
+	imgURL := strings.TrimSpace(r.FormValue("watermark_image_url"))
+	if imgURL != "" {
+		appConfig.Watermark.ImageURL = imgURL
+	}
+	if appConfig.Watermark.ImageURL == "" {
+		appConfig.Watermark.ImageURL = "/static/logo.png"
+	}
+	appConfig.Watermark.Position = strings.TrimSpace(r.FormValue("watermark_position"))
+	if appConfig.Watermark.Position == "" {
+		appConfig.Watermark.Position = "bottom-right"
+	}
+	op, _ := strconv.ParseFloat(r.FormValue("watermark_opacity"), 64)
+	if op <= 0 || op > 1.0 {
+		op = 0.85
+	}
+	appConfig.Watermark.Opacity = op
+	appConfig.Watermark.Size = strings.TrimSpace(r.FormValue("watermark_size"))
+	if appConfig.Watermark.Size == "" {
+		appConfig.Watermark.Size = "medium"
+	}
+	appConfig.Watermark.ApplyToWeb = r.FormValue("watermark_apply_web") == "on" || r.FormValue("watermark_apply_web") == "true"
+	appConfig.Watermark.ApplyToApp = r.FormValue("watermark_apply_app") == "on" || r.FormValue("watermark_apply_app") == "true"
+
+	_ = saveAppConfigUnsafe()
+	appConfigLock.Unlock()
+
+	http.Redirect(w, r, "/admin?saved=watermark#watermark", http.StatusSeeOther)
+}
+
+func handleAdminBloggerPlayerSave(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin#player", http.StatusSeeOther)
+		return
+	}
+
+	_ = r.ParseForm()
+
+	offset, _ := strconv.Atoi(r.FormValue("bottom_offset_px"))
+	fsOffset, _ := strconv.Atoi(r.FormValue("fullscreen_offset_px"))
+
+	if offset < 0 {
+		offset = 0
+	} else if offset > 150 {
+		offset = 150
+	}
+	if fsOffset < 0 {
+		fsOffset = 0
+	} else if fsOffset > 180 {
+		fsOffset = 180
+	}
+
+	appConfigLock.Lock()
+	appConfig.BloggerPlayer.BottomOffsetPx = offset
+	appConfig.BloggerPlayer.FullscreenOffsetPx = fsOffset
+	_ = saveAppConfigUnsafe()
+	appConfigLock.Unlock()
+
+	http.Redirect(w, r, "/admin?saved=player#player", http.StatusSeeOther)
+}
+
+func handleAdminAppSave(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin#apps", http.StatusSeeOther)
+		return
+	}
+
+	_ = r.ParseForm()
+
+	appConfigLock.Lock()
+	appConfig.App.APIBaseURL = strings.TrimSpace(r.FormValue("app_api_base_url"))
+	verCode, _ := strconv.Atoi(r.FormValue("latest_version_code"))
+	if verCode <= 0 {
+		verCode = 1
+	}
+	appConfig.App.LatestVersionCode = verCode
+	appConfig.App.LatestVersionName = strings.TrimSpace(r.FormValue("latest_version_name"))
+	if appConfig.App.LatestVersionName == "" {
+		appConfig.App.LatestVersionName = "v1.0.0"
+	}
+	appConfig.App.APKDownloadURL = strings.TrimSpace(r.FormValue("apk_download_url"))
+	appConfig.App.ForceUpdate = r.FormValue("force_update") == "on" || r.FormValue("force_update") == "true"
+	appConfig.App.UpdateChangelog = strings.TrimSpace(r.FormValue("update_changelog"))
+	appConfig.App.StreamingEnabled = r.FormValue("streaming_enabled") == "on" || r.FormValue("streaming_enabled") == "true"
+	appConfig.App.Announcement.Active = r.FormValue("announcement_active") == "on" || r.FormValue("announcement_active") == "true"
+	appConfig.App.Announcement.Title = strings.TrimSpace(r.FormValue("announcement_title"))
+	appConfig.App.Announcement.Message = strings.TrimSpace(r.FormValue("announcement_message"))
+	appConfig.App.Announcement.Type = strings.TrimSpace(r.FormValue("announcement_type"))
+	if appConfig.App.Announcement.Type == "" {
+		appConfig.App.Announcement.Type = "info"
+	}
+	appConfig.App.Announcement.ActionURL = strings.TrimSpace(r.FormValue("announcement_action_url"))
+
+	appConfig.App.WelcomeScreen.Enabled = r.FormValue("welcome_screen_enabled") == "on" || r.FormValue("welcome_screen_enabled") == "true"
+	appConfig.App.WelcomeScreen.Title = strings.TrimSpace(r.FormValue("welcome_screen_title"))
+	if appConfig.App.WelcomeScreen.Title == "" {
+		appConfig.App.WelcomeScreen.Title = "Selamat Datang"
+	}
+	appConfig.App.WelcomeScreen.Description = strings.TrimSpace(r.FormValue("welcome_screen_desc"))
+	if appConfig.App.WelcomeScreen.Description == "" {
+		appConfig.App.WelcomeScreen.Description = "Ingin tahu tentang konten anime paling populer di seluruh dunia? Semuanya ada di Nyamimo, jutaan episode anime luar biasa ada di sini! Ayo masuk dan jadi bagian dari kami!"
+	}
+	appConfig.App.WelcomeScreen.BackgroundImage = strings.TrimSpace(r.FormValue("welcome_screen_bg"))
+	appConfig.App.WelcomeScreen.ButtonText = strings.TrimSpace(r.FormValue("welcome_screen_btn_text"))
+	if appConfig.App.WelcomeScreen.ButtonText == "" {
+		appConfig.App.WelcomeScreen.ButtonText = "MASUK"
+	}
+	appConfig.App.WelcomeScreen.AllowSkip = r.FormValue("welcome_screen_allow_skip") == "on" || r.FormValue("welcome_screen_allow_skip") == "true"
+
+	// Hero Carousel Parallax Banner Settings
+	appConfig.App.HeroCarousel.Enabled = r.FormValue("hero_carousel_enabled") == "on" || r.FormValue("hero_carousel_enabled") == "true"
+	appConfig.App.HeroCarousel.AutoSlide = r.FormValue("hero_carousel_auto_slide") == "on" || r.FormValue("hero_carousel_auto_slide") == "true"
+	intervalMs, _ := strconv.Atoi(r.FormValue("hero_carousel_interval_ms"))
+	if intervalMs <= 1000 {
+		intervalMs = 5000
+	}
+	appConfig.App.HeroCarousel.IntervalMs = intervalMs
+
+	slidesJson := strings.TrimSpace(r.FormValue("hero_carousel_slides_json"))
+	if slidesJson != "" {
+		var parsedSlides []ParallaxSlideItem
+		if err := json.Unmarshal([]byte(slidesJson), &parsedSlides); err == nil {
+			appConfig.App.HeroCarousel.Slides = parsedSlides
+		}
+	}
+
+	_ = saveAppConfigUnsafe()
+	appConfigLock.Unlock()
+
+	http.Redirect(w, r, "/admin?saved=app#apps", http.StatusSeeOther)
+}
+
+func handleAdminUserToggleAdFree(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin#users", http.StatusSeeOther)
+		return
+	}
+
+	_ = r.ParseForm()
+	targetUsername := strings.ToLower(strings.TrimSpace(r.FormValue("username")))
+	if targetUsername == "" {
+		http.Redirect(w, r, "/admin#users", http.StatusSeeOther)
+		return
+	}
+
+	usersDbLock.Lock()
+	if u, exists := usersDb[targetUsername]; exists {
+		u.AdFree = !u.AdFree
+		usersDb[targetUsername] = u
+		saveUsersDbUnsafe()
+	}
+	usersDbLock.Unlock()
+
+	http.Redirect(w, r, "/admin?saved=user_adfree#users", http.StatusSeeOther)
+}
+
 func handleAdminSiteSave(w http.ResponseWriter, r *http.Request) {
 	currentUser := getLoggedInUser(r)
 	if currentUser == nil || currentUser.Role != "admin" {
@@ -2591,6 +3306,71 @@ func handleAdminAPITest(w http.ResponseWriter, r *http.Request) {
 		"sample":     sample,
 		"provider":   provider,
 		"url":        baseURL,
+	})
+}
+
+func handleAdminScraperStart(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, `{"success":false,"message":"Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	mode := r.URL.Query().Get("mode")
+	if mode == "" {
+		mode = "quick"
+	}
+
+	engine := scraper.NewScraperEngine()
+	err := engine.StartJob(mode)
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Scraper berhasil dijalankan di background.",
+	})
+}
+
+func handleAdminScraperStop(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, `{"success":false,"message":"Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	engine := scraper.NewScraperEngine()
+	engine.Stop()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Scraper dihentikan.",
+	})
+}
+
+func handleAdminScraperLogs(w http.ResponseWriter, r *http.Request) {
+	currentUser := getLoggedInUser(r)
+	if currentUser == nil || currentUser.Role != "admin" {
+		http.Error(w, `{"success":false,"message":"Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	store := scraper.GetStore()
+	logs := store.GetLogs()
+	stats := store.GetStats()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"logs":    logs,
+		"stats":   stats,
 	})
 }
 
@@ -3195,11 +3975,22 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 	username := strings.ToLower(strings.TrimSpace(r.FormValue("username")))
 	password := strings.TrimSpace(r.FormValue("password"))
 
+	isJSONReq := strings.Contains(r.Header.Get("Accept"), "application/json") || r.Header.Get("X-Requested-With") != "" || strings.Contains(r.Header.Get("User-Agent"), "Nyamimo") || r.FormValue("json") == "true"
+
 	usersDbLock.RLock()
 	user, exists := usersDb[username]
 	usersDbLock.RUnlock()
 
 	if !exists || user.Password != password {
+		if isJSONReq {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "error",
+				"message": "Username atau kata sandi salah",
+			})
+			return
+		}
 		referer := r.Header.Get("Referer")
 		if referer == "" || strings.Contains(referer, "/login") {
 			referer = "/"
@@ -3228,6 +4019,20 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 
 	mergeGuestHistory(w, r, username)
 
+	if isJSONReq {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":   "ok",
+			"username": user.Username,
+			"name":     user.Name,
+			"role":     user.Role,
+			"email":    user.Email,
+			"avatar":   user.Avatar,
+			"ad_free":  user.AdFree,
+		})
+		return
+	}
+
 	referer := r.Header.Get("Referer")
 	if referer == "" || strings.Contains(referer, "/login") {
 		if user.Role == "admin" {
@@ -3237,6 +4042,41 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Redirect(w, r, referer, http.StatusSeeOther)
+}
+
+func handleAPIV1AppConfig(w http.ResponseWriter, r *http.Request) {
+	cfg := getAppConfig()
+	u := getLoggedInUser(r)
+	adFree := false
+	if u != nil && u.AdFree {
+		adFree = true
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":            "ok",
+		"site_name":         cfg.SiteName,
+		"primary_color":     cfg.PrimaryColor,
+		"watermark":         cfg.Watermark,
+		"blogger_player":    cfg.BloggerPlayer,
+		"app":               cfg.App,
+		"announcement":      cfg.App.Announcement,
+		"welcome_screen":    cfg.App.WelcomeScreen,
+		"hero_carousel":     cfg.App.HeroCarousel,
+		"latestVersionCode": cfg.App.LatestVersionCode,
+		"latestVersionName": cfg.App.LatestVersionName,
+		"apkDownloadUrl":    cfg.App.APKDownloadURL,
+		"forceUpdate":       cfg.App.ForceUpdate,
+		"updateChangelog":   cfg.App.UpdateChangelog,
+		"streamingEnabled":  cfg.App.StreamingEnabled,
+		"apiBaseUrl":        cfg.App.APIBaseURL,
+		"user": map[string]interface{}{
+			"is_logged_in": u != nil,
+			"ad_free":      adFree,
+			"username":     func() string { if u != nil { return u.Username }; return "" }(),
+		},
+	})
 }
 
 func getRedirectBaseURL(r *http.Request) string {
@@ -3554,30 +4394,49 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 // ─── Native Android App REST API V1 ──────────────────────────────────────────
 
 func handleAPIV1Home(w http.ResponseWriter, r *http.Request) {
-	var ongoingResp client.AnimeListResponse
-	_ = api.GetJSON("/ongoing-anime", &ongoingResp)
+	store := scraper.GetStore()
+	ongoingList := store.GetOngoing(24)
+	if len(ongoingList) == 0 {
+		var ongoingResp client.AnimeListResponse
+		_ = api.GetJSON("/ongoing-anime", &ongoingResp)
+		ongoingList = ongoingResp.Data
+	}
 
-	var completedResp client.AnimeListResponse
-	_ = api.GetJSON("/completed-anime", &completedResp)
+	completedList := store.GetCompleted(24)
+	if len(completedList) == 0 {
+		var completedResp client.AnimeListResponse
+		_ = api.GetJSON("/completed-anime", &completedResp)
+		completedList = completedResp.Data
+	}
 
-	var genresResp client.GenreListResponse
-	_ = api.GetJSON("/genres", &genresResp)
+	genresList := []client.Genre{
+		{ID: "action", Title: "Action"},
+		{ID: "adventure", Title: "Adventure"},
+		{ID: "comedy", Title: "Comedy"},
+		{ID: "fantasy", Title: "Fantasy"},
+		{ID: "isekai", Title: "Isekai"},
+		{ID: "romance", Title: "Romance"},
+		{ID: "school", Title: "School"},
+		{ID: "slice-of-life", Title: "Slice of Life"},
+		{ID: "supernatural", Title: "Supernatural"},
+		{ID: "sci-fi", Title: "Sci-Fi"},
+	}
 
 	heroAnime := customHeroCarousel
 	if len(heroAnime) == 0 {
 		heroAnime = defaultHDHeroAnime
 	}
 
-	for i := range ongoingResp.Data {
-		ongoingResp.Data[i].Slug = client.GetAnimeSlug(ongoingResp.Data[i])
-		ongoingResp.Data[i].Score = client.FormatScore(ongoingResp.Data[i].Score)
-		ongoingResp.Data[i].Img = client.GetCleanHDImage(ongoingResp.Data[i].Img)
+	for i := range ongoingList {
+		ongoingList[i].Slug = client.GetAnimeSlug(ongoingList[i])
+		ongoingList[i].Score = client.FormatScore(ongoingList[i].Score)
+		ongoingList[i].Img = client.GetCleanHDImage(ongoingList[i].Img)
 	}
 
-	for i := range completedResp.Data {
-		completedResp.Data[i].Slug = client.GetAnimeSlug(completedResp.Data[i])
-		completedResp.Data[i].Score = client.FormatScore(completedResp.Data[i].Score)
-		completedResp.Data[i].Img = client.GetCleanHDImage(completedResp.Data[i].Img)
+	for i := range completedList {
+		completedList[i].Slug = client.GetAnimeSlug(completedList[i])
+		completedList[i].Score = client.FormatScore(completedList[i].Score)
+		completedList[i].Img = client.GetCleanHDImage(completedList[i].Img)
 	}
 
 	var heroList []client.AnimeItem
@@ -3594,9 +4453,9 @@ func handleAPIV1Home(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":    "ok",
 		"banners":   heroList,
-		"ongoing":   ongoingResp.Data,
-		"completed": completedResp.Data,
-		"genres":    genresResp.Data,
+		"ongoing":   ongoingList,
+		"completed": completedList,
+		"genres":    genresList,
 	})
 }
 
@@ -3612,11 +4471,21 @@ func handleAPIV1AnimeDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var detail client.AnimeDetailData
-	err := api.GetJSON("/detail-anime/"+slug, &detail)
-	if err != nil || detail.Title == "" {
-		var detailWrapper client.AnimeDetailResponse
-		_ = api.GetJSON("/detail-anime/"+slug, &detailWrapper)
-		detail = detailWrapper.Data
+	if localDetail, ok := scraper.GetStore().GetAnime(slug); ok && len(localDetail.Episodes) > 0 {
+		detail = *localDetail
+	} else {
+		err := api.GetJSON("/detail-anime/"+slug, &detail)
+		if err != nil || detail.Title == "" {
+			var detailWrapper client.AnimeDetailResponse
+			_ = api.GetJSON("/detail-anime/"+slug, &detailWrapper)
+			detail = detailWrapper.Data
+		}
+		if detail.Title == "" {
+			engine := scraper.NewScraperEngine()
+			if scrapedDetail, err := engine.ScrapeAnimeDetail(slug); err == nil && scrapedDetail != nil && scrapedDetail.Title != "" {
+				detail = *scrapedDetail
+			}
+		}
 	}
 
 	if detail.Title == "" {
@@ -3671,8 +4540,7 @@ func handleAPIV1Episode(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Query().Get("title")
 	ep := r.URL.Query().Get("ep")
 
-	var epsDetail client.EpisodeDetailResponse
-	_ = api.GetJSON(detailEps, &epsDetail)
+	epsDetail := resolveEpisodeDetail(detailEps)
 
 	autoSwitch := getAutoSwitchServerSetting(r, getLoggedInUser(r))
 	data := buildModalPlayerData(epsDetail, ep, title, autoSwitch)
@@ -3704,20 +4572,25 @@ func handleAPIV1Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var searchResp client.AnimeListResponse
-	_ = api.GetJSON("/search/"+url.PathEscape(q), &searchResp)
+	store := scraper.GetStore()
+	results := store.Search(q, 30)
+	if len(results) == 0 {
+		var searchResp client.AnimeListResponse
+		_ = api.GetJSON("/search/"+url.PathEscape(q), &searchResp)
+		results = searchResp.Data
+	}
 
-	for i := range searchResp.Data {
-		searchResp.Data[i].Slug = client.GetAnimeSlug(searchResp.Data[i])
-		searchResp.Data[i].Score = client.FormatScore(searchResp.Data[i].Score)
-		searchResp.Data[i].Img = client.GetCleanHDImage(searchResp.Data[i].Img)
+	for i := range results {
+		results[i].Slug = client.GetAnimeSlug(results[i])
+		results[i].Score = client.FormatScore(results[i].Score)
+		results[i].Img = client.GetCleanHDImage(results[i].Img)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "ok",
 		"query":   q,
-		"results": searchResp.Data,
+		"results": results,
 	})
 }
 
@@ -3736,6 +4609,67 @@ func handleGetHistoryAPI(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
 		"items":  items,
+	})
+}
+
+func handleAPIV1HistorySync(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var incomingItems []WatchHistoryItem
+	if err := json.NewDecoder(r.Body).Decode(&incomingItems); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	key := getHistoryStorageKey(w, r)
+
+	watchHistoryDbLock.Lock()
+	currentList := watchHistoryDb[key]
+	slugMap := make(map[string]WatchHistoryItem)
+
+	for _, item := range currentList {
+		slugMap[item.Slug] = item
+	}
+
+	for _, inc := range incomingItems {
+		if inc.Slug == "" {
+			continue
+		}
+		if inc.UpdatedAt == 0 {
+			inc.UpdatedAt = time.Now().Unix()
+		}
+		if existing, exists := slugMap[inc.Slug]; exists {
+			if inc.UpdatedAt >= existing.UpdatedAt {
+				slugMap[inc.Slug] = inc
+			}
+		} else {
+			slugMap[inc.Slug] = inc
+		}
+	}
+
+	var merged []WatchHistoryItem
+	for _, item := range slugMap {
+		merged = append(merged, item)
+	}
+	sort.Slice(merged, func(i, j int) bool {
+		return merged[i].UpdatedAt > merged[j].UpdatedAt
+	})
+
+	if len(merged) > 50 {
+		merged = merged[:50]
+	}
+
+	watchHistoryDb[key] = merged
+	saveWatchHistoryUnsafe()
+	watchHistoryDbLock.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"items":  merged,
 	})
 }
 

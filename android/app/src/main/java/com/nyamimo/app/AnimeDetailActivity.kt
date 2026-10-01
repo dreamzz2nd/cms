@@ -329,7 +329,11 @@ class AnimeDetailActivity : AppCompatActivity() {
     }
 
     private fun setupEpisodeList() {
-        binding.rvDetailEpisodes.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvDetailEpisodes.apply {
+            layoutManager = LinearLayoutManager(this@AnimeDetailActivity, LinearLayoutManager.HORIZONTAL, false)
+            setHasFixedSize(true)
+            setItemViewCacheSize(15)
+        }
         bstationEpisodeAdapter = BstationEpisodeAdapter(emptyList(), 0) { epItem, _ ->
             playEpisode(epItem)
         }
@@ -338,14 +342,22 @@ class AnimeDetailActivity : AppCompatActivity() {
 
     private fun setupRecommendations() {
         // Portrait Recommendation List
-        binding.rvRecommendedAnime.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        binding.rvRecommendedAnime.apply {
+            layoutManager = LinearLayoutManager(this@AnimeDetailActivity, LinearLayoutManager.VERTICAL, false)
+            setHasFixedSize(true)
+            setItemViewCacheSize(10)
+        }
         recommendedAnimeAdapter = RecommendedAnimeAdapter(emptyList(), isGrid = false) { item ->
             navigateToDetail(item)
         }
         binding.rvRecommendedAnime.adapter = recommendedAnimeAdapter
 
         // Landscape 3-Column Grid Recommendations (iQIYI Style)
-        binding.rvLandscapeRecommendations.layoutManager = GridLayoutManager(this, 3)
+        binding.rvLandscapeRecommendations.apply {
+            layoutManager = GridLayoutManager(this@AnimeDetailActivity, 3)
+            setHasFixedSize(true)
+            setItemViewCacheSize(12)
+        }
         landscapeRecAdapter = RecommendedAnimeAdapter(emptyList(), isGrid = true) { item ->
             navigateToDetail(item)
         }
@@ -386,7 +398,11 @@ class AnimeDetailActivity : AppCompatActivity() {
 
     private fun setupResolutionLists() {
         // 1. Portrait Resolution List
-        binding.rvDetailResolutions.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvDetailResolutions.apply {
+            layoutManager = LinearLayoutManager(this@AnimeDetailActivity, LinearLayoutManager.HORIZONTAL, false)
+            setHasFixedSize(true)
+            setItemViewCacheSize(8)
+        }
         resolutionAdapter = ResolutionAdapter(emptyList(), 0, isDarkMode = false) { option, index ->
             currentActiveEpisode?.let { ep ->
                 val epNum = if (ep.number.isNotEmpty()) ep.number else ep.episode
@@ -398,7 +414,11 @@ class AnimeDetailActivity : AppCompatActivity() {
         binding.rvDetailResolutions.adapter = resolutionAdapter
 
         // 2. Landscape Resolution List (Floating top bar)
-        binding.rvLandscapeResolutions.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvLandscapeResolutions.apply {
+            layoutManager = LinearLayoutManager(this@AnimeDetailActivity, LinearLayoutManager.HORIZONTAL, false)
+            setHasFixedSize(true)
+            setItemViewCacheSize(8)
+        }
         landscapeResolutionAdapter = ResolutionAdapter(emptyList(), 0, isDarkMode = true) { option, index ->
             currentActiveEpisode?.let { ep ->
                 val epNum = if (ep.number.isNotEmpty()) ep.number else ep.episode
@@ -544,13 +564,24 @@ class AnimeDetailActivity : AppCompatActivity() {
                         num ?: match ?: 9999
                     })
 
-                    val firstEpIndex = 0
-                    val firstEp = episodes[0]
+                    val targetEpNumber = intent.getStringExtra("target_episode") ?: ""
+                    var targetIndex = 0
+                    if (targetEpNumber.isNotEmpty()) {
+                        val foundIndex = episodes.indexOfFirst {
+                            val epNum = if (it.number.isNotEmpty()) it.number else it.episode
+                            epNum == targetEpNumber || it.title.contains("Episode $targetEpNumber", ignoreCase = true)
+                        }
+                        if (foundIndex >= 0) {
+                            targetIndex = foundIndex
+                        }
+                    }
 
-                    bstationEpisodeAdapter.updateData(episodes, firstEpIndex)
-                    binding.rvDetailEpisodes.scrollToPosition(0)
+                    val targetEp = episodes[targetIndex]
 
-                    playEpisode(firstEp)
+                    bstationEpisodeAdapter.updateData(episodes, targetIndex)
+                    binding.rvDetailEpisodes.scrollToPosition(targetIndex)
+
+                    playEpisode(targetEp)
                 } else {
                     showLoading(false)
                     Toast.makeText(this@AnimeDetailActivity, "Episode belum tersedia", Toast.LENGTH_SHORT).show()
@@ -656,9 +687,13 @@ class AnimeDetailActivity : AppCompatActivity() {
                 videoUrl
             }
 
-            if (embedSrc.isNotEmpty() && embedSrc.startsWith("http")) {
-                binding.detailPlayerWebView.loadUrl(embedSrc)
-            } else if (rawIframe.isNotEmpty()) {
+            if (embedSrc.isNotEmpty() || rawIframe.isNotEmpty()) {
+                val iframeCode = if (rawIframe.isNotEmpty()) {
+                    rawIframe
+                } else {
+                    "<iframe src=\"$embedSrc\" allowfullscreen=\"true\" allow=\"autoplay; fullscreen\"></iframe>"
+                }
+
                 val html = """
                     <!DOCTYPE html>
                     <html>
@@ -667,12 +702,17 @@ class AnimeDetailActivity : AppCompatActivity() {
                         <style>
                             * { margin:0 !important; padding:0 !important; box-sizing:border-box !important; background-color:#000000 !important; }
                             body, html { width:100% !important; height:100% !important; background:#000000 !important; overflow:hidden !important; }
-                            iframe, video { width:100vw !important; height:100vh !important; object-fit:cover !important; border:none !important; display:block !important; }
+                            iframe, video { 
+                                width: 100vw !important; 
+                                height: 100vh !important; 
+                                border: none !important; 
+                                display: block !important; 
+                            }
                             .vjs-big-play-button, .ytp-cued-thumbnail-overlay, .play-wrapper { display:none !important; }
                         </style>
                     </head>
                     <body style="background-color:#000000; margin:0; padding:0;">
-                        $rawIframe
+                        $iframeCode
                         <script>
                             window.addEventListener('DOMContentLoaded', function() {
                                 var v = document.querySelector('video');
@@ -778,7 +818,8 @@ class AnimeDetailActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
 
-            val playerHeightPx = (270 * resources.displayMetrics.density).toInt()
+            val screenWidthPx = resources.displayMetrics.widthPixels
+            val playerHeightPx = (screenWidthPx * 9f / 16f).toInt()
             binding.playerContainer.layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 playerHeightPx

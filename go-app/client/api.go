@@ -44,7 +44,7 @@ type APIClient struct {
 func NewAPIClient(ttl time.Duration) *APIClient {
 	return &APIClient{
 		httpClient: &http.Client{
-			Timeout: 12 * time.Second,
+			Timeout: 1500 * time.Millisecond,
 		},
 		ttl:      ttl,
 		baseURL:  BaseAPIURL,
