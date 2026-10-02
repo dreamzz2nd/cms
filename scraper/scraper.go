@@ -838,6 +838,49 @@ func (e *ScraperEngine) ScrapeEpisodeDetail(slug string) (*client.EpisodeDetailR
 		}
 	}
 
+	// Extract Mega & embeddable links from downloads into streamable videos
+	for _, df := range downloads {
+		for _, dlRes := range df.List {
+			resLabel := dlRes.Resolution
+			if resLabel == "" {
+				resLabel = df.Format
+			}
+			for _, link := range dlRes.Links {
+				lURL := link.Link
+				lName := strings.ToLower(link.Title + " " + df.Format + " " + dlRes.Resolution)
+				if strings.Contains(lURL, "mega.nz") || strings.Contains(lURL, "mega.co.nz") || strings.Contains(lName, "mega") {
+					embedMega := lURL
+					if strings.Contains(embedMega, "/file/") {
+						embedMega = strings.Replace(embedMega, "/file/", "/embed/", 1)
+					} else if strings.Contains(embedMega, "/#!") {
+						embedMega = strings.Replace(embedMega, "/#!", "/embed/", 1)
+					} else if strings.Contains(embedMega, "/#") {
+						embedMega = strings.Replace(embedMega, "/#", "/embed/", 1)
+					}
+					megaTitle := "Mega HD"
+					if strings.Contains(resLabel, "1080") || strings.Contains(df.Format, "1080") {
+						megaTitle = "Mega 1080p (Full HD)"
+					} else if strings.Contains(resLabel, "720") || strings.Contains(df.Format, "720") {
+						megaTitle = "Mega 720p (HD)"
+					} else if strings.Contains(resLabel, "480") || strings.Contains(df.Format, "480") {
+						megaTitle = "Mega 480p (SD)"
+					} else if strings.Contains(resLabel, "360") || strings.Contains(df.Format, "360") {
+						megaTitle = "Mega 360p (SD)"
+					} else if resLabel != "" {
+						megaTitle = fmt.Sprintf("Mega %s", resLabel)
+					}
+
+					videos = append(videos, client.PlayerOption{
+						ID:    fmt.Sprintf("mega-%d", len(videos)+1),
+						Title: megaTitle,
+						Type:  "embed",
+						Video: embedMega,
+					})
+				}
+			}
+		}
+	}
+
 	res := &client.EpisodeDetailResponse{
 		Title:         epTitle,
 		EpisodeNumber: epNum,

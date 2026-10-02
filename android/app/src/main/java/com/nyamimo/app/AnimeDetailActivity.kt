@@ -680,14 +680,19 @@ class AnimeDetailActivity : AppCompatActivity() {
             binding.ivVideoWatermark.bringToFront()
             binding.ivVideoWatermark.visibility = View.VISIBLE
 
-            val embedSrc = if (rawIframe.contains("src=\"") || rawIframe.contains("src='")) {
+            var embedSrc = if (rawIframe.contains("src=\"") || rawIframe.contains("src='")) {
                 val match = Regex("""src=["'](https?://[^"']+)["']""").find(rawIframe)
                 match?.groupValues?.getOrNull(1) ?: videoUrl
             } else {
                 videoUrl
             }
 
-            if (embedSrc.isNotEmpty() || rawIframe.isNotEmpty()) {
+            if (embedSrc.contains("mega.nz") || embedSrc.contains("mega.co.nz")) {
+                if (embedSrc.contains("/file/")) embedSrc = embedSrc.replace("/file/", "/embed/")
+                if (embedSrc.contains("/#!")) embedSrc = embedSrc.replace("/#!", "/embed/")
+                if (embedSrc.contains("/#")) embedSrc = embedSrc.replace("/#", "/embed/")
+                binding.detailPlayerWebView.loadUrl(embedSrc)
+            } else if (embedSrc.isNotEmpty() || rawIframe.isNotEmpty()) {
                 val iframeCode = if (rawIframe.isNotEmpty()) {
                     rawIframe
                 } else {

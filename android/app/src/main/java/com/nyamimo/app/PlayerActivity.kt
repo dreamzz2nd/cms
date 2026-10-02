@@ -12,7 +12,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
@@ -28,6 +30,7 @@ import com.nyamimo.app.model.AnimeItem
 import com.nyamimo.app.model.EpisodeDataResponse
 import com.nyamimo.app.model.PlayerOption
 import com.nyamimo.app.util.SessionManager
+import java.net.URLEncoder
 
 class PlayerActivity : AppCompatActivity() {
 
@@ -36,6 +39,8 @@ class PlayerActivity : AppCompatActivity() {
     private var isZoomMode = false
     private lateinit var resolutionAdapter: ResolutionAdapter
     private var availableOptions: List<PlayerOption> = emptyList()
+    private var currentSlug: String = ""
+    private var currentEp: String = "1"
 
     private val playbackSpeeds = listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
     private var currentSpeedIndex = 1 // default 1.0x
@@ -54,6 +59,9 @@ class PlayerActivity : AppCompatActivity() {
         val slug = intent.getStringExtra("slug") ?: ""
         val img = intent.getStringExtra("img") ?: ""
         val synopsis = intent.getStringExtra("synopsis") ?: "Terakhir ditonton episode $ep"
+
+        currentSlug = slug
+        currentEp = ep
 
         binding.tvPlayerTitle.text = title
         binding.tvPlayerEpisode.text = "Episode $ep"
@@ -231,7 +239,21 @@ class PlayerActivity : AppCompatActivity() {
             binding.playerWebView.visibility = View.GONE
             binding.playerView.visibility = View.VISIBLE
 
-            val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+            val baseRender = ApiClient.getBaseRenderUrl(this)
+            val cleanS = if (currentSlug.isNotEmpty()) currentSlug else "anime"
+            val subUrl = "$baseRender/api/v1/subtitle?lang=id&slug=${URLEncoder.encode(cleanS, "UTF-8")}&ep=${URLEncoder.encode(currentEp, "UTF-8")}"
+            val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(Uri.parse(subUrl))
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage("id")
+                .setLabel("Indonesia (AI)")
+                .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                .build()
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(Uri.parse(videoUrl))
+                .setSubtitleConfigurations(listOf(subtitleConfig))
+                .build()
+
             exoPlayer?.setMediaItem(mediaItem)
             exoPlayer?.prepare()
             exoPlayer?.playWhenReady = true
@@ -242,14 +264,19 @@ class PlayerActivity : AppCompatActivity() {
             binding.ivPlayerWatermark.bringToFront()
             binding.ivPlayerWatermark.visibility = View.VISIBLE
 
-            val embedSrc = if (rawIframe.contains("src=\"") || rawIframe.contains("src='")) {
+            var embedSrc = if (rawIframe.contains("src=\"") || rawIframe.contains("src='")) {
                 val match = Regex("""src=["'](https?://[^"']+)["']""").find(rawIframe)
                 match?.groupValues?.getOrNull(1) ?: videoUrl
             } else {
                 videoUrl
             }
 
-            if (embedSrc.isNotEmpty() || rawIframe.isNotEmpty()) {
+            if (embedSrc.contains("mega.nz") || embedSrc.contains("mega.co.nz")) {
+                if (embedSrc.contains("/file/")) embedSrc = embedSrc.replace("/file/", "/embed/")
+                if (embedSrc.contains("/#!")) embedSrc = embedSrc.replace("/#!", "/embed/")
+                if (embedSrc.contains("/#")) embedSrc = embedSrc.replace("/#", "/embed/")
+                binding.playerWebView.loadUrl(embedSrc)
+            } else if (embedSrc.isNotEmpty() || rawIframe.isNotEmpty()) {
                 val iframeCode = if (rawIframe.isNotEmpty()) {
                     rawIframe
                 } else {

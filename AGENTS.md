@@ -1,3 +1,13 @@
+# Mandatory Principle: Absolute Honesty & Zero Fake Data (No Gimmicks)
+
+Before doing any task, writing any backend/frontend/Android code, or responding to the user, you MUST strictly adhere to the `strict-honesty-no-fake-data` skill:
+- `file:///c:/Users/user/nyamimo/.agents/skills/strict-honesty-no-fake-data/SKILL.md`
+
+### Core Mandates:
+1. **Never Lie or Fake Data**: Never invent fake servers, sample resolutions (e.g. fake 1080p, fake 720p, `sample_1080p`), or gimmicks to make the user happy.
+2. **100% Truthful Data Representation**: Replicate exact resolutions and servers from the website/source 1:1. If only 480p exists, show only 480p. If a server is unavailable, state it clearly.
+3. **Honest Capabilities**: If a feature is not possible or failed, state it immediately without excuses or pretending.
+
 # Mandatory Design Standard: Anti-Slop Design
 
 Before designing, scaffolding, modifying, or creating any UI, frontend code, templates, CSS, Tailwind classes, or layout components in this repository, you MUST always read and strictly adhere to the `anti-slop-design` skill located at:

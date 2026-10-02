@@ -18,12 +18,55 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    private const val BASE_UPSTREAM = "https://api.animekudesu.web.id"
-    private const val BASE_RENDER = "https://nyamimo.onrender.com"
+    private const val DEFAULT_UPSTREAM = "https://api.animekudesu.web.id"
+    private const val DEFAULT_RENDER = "https://nyamimo.onrender.com"
+
+    var dynamicBaseUrl: String? = null
+
+    fun getCandidateUrls(context: Context? = null): List<String> {
+        val list = mutableListOf<String>()
+        if (!dynamicBaseUrl.isNullOrBlank()) {
+            list.add(dynamicBaseUrl!!.trimEnd('/'))
+        }
+        if (context != null) {
+            val cfg = SessionManager.getAppConfig(context)
+            if (cfg.apiBaseUrl.isNotBlank() && cfg.apiBaseUrl.startsWith("http")) {
+                list.add(cfg.apiBaseUrl.trimEnd('/'))
+            }
+        }
+        list.add("http://localhost:3000")
+        list.add("http://192.168.101.74:3000")
+        list.add("https://nyamimo.onrender.com")
+        return list.distinct()
+    }
+
+    fun getBaseRenderUrl(context: Context? = null): String {
+        return getCandidateUrls(context).firstOrNull() ?: DEFAULT_RENDER
+    }
+
+    fun getBaseUpstreamUrl(context: Context? = null): String {
+        return DEFAULT_UPSTREAM
+    }
+
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(12, TimeUnit.SECONDS)
+        .followRedirects(true)
+        .build()
+
+    private val gson = Gson()
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    interface Callback<T> {
+        fun onSuccess(result: T)
+        fun onError(error: String)
+    }
 
     fun fetchAppConfig(context: Context) {
+        val base = getBaseRenderUrl(context)
         val req = Request.Builder()
-            .url("$BASE_RENDER/api/app/config")
+            .url("$base/api/app/config")
+            .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .get()
             .build()
 
@@ -41,20 +84,6 @@ object ApiClient {
                 }
             }
         })
-    }
-
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(12, TimeUnit.SECONDS)
-        .followRedirects(true)
-        .build()
-
-    private val gson = Gson()
-    private val mainHandler = Handler(Looper.getMainLooper())
-
-    interface Callback<T> {
-        fun onSuccess(result: T)
-        fun onError(error: String)
     }
 
     private fun optString(obj: JsonObject?, key: String, fallback: String = ""): String {
@@ -142,11 +171,62 @@ object ApiClient {
         return list
     }
 
+    // 1. GET HOME (Nyamimo Backend REST V1 with Upstream Fallback)
     fun getHome(callback: Callback<HomeResponse>) {
-        val reqOngoing = Request.Builder().url("$BASE_UPSTREAM/ongoing-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
-        val reqPopular = Request.Builder().url("$BASE_UPSTREAM/order-anime/popular?page=1").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
-        val reqPopular2 = Request.Builder().url("$BASE_UPSTREAM/order-anime/popular?page=2").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
-        val reqCompleted = Request.Builder().url("$BASE_UPSTREAM/completed-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
+        val baseRender = getBaseRenderUrl()
+        val reqV1 = Request.Builder()
+            .url("$baseRender/api/v1/home")
+            .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
+            .build()
+
+        client.newCall(reqV1).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                fetchHomeFromUpstream(callback)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotEmpty()) {
+                    try {
+                        val json = gson.fromJson(body, JsonObject::class.java)
+                        if (json.has("ongoing") || json.has("banners")) {
+                            val type = object : com.google.gson.reflect.TypeToken<List<AnimeItem>>() {}.type
+                            val banners: List<AnimeItem> = if (json.has("banners")) gson.fromJson(json.getAsJsonArray("banners"), type) ?: emptyList() else emptyList()
+                            val ongoing: List<AnimeItem> = if (json.has("ongoing")) gson.fromJson(json.getAsJsonArray("ongoing"), type) ?: emptyList() else emptyList()
+                            val completed: List<AnimeItem> = if (json.has("completed")) gson.fromJson(json.getAsJsonArray("completed"), type) ?: emptyList() else emptyList()
+
+                            val allCombined = (banners + ongoing + completed).distinctBy { it.slug }
+                            val actionList = allCombined.filter { item ->
+                                item.genres.any { g -> g.contains("Action", true) || g.contains("Shounen", true) || g.contains("Martial", true) }
+                            }.ifEmpty { allCombined.take(12) }
+
+                            val fantasyList = allCombined.filter { item ->
+                                item.genres.any { g -> g.contains("Fantasy", true) || g.contains("Isekai", true) || g.contains("Magic", true) }
+                            }.ifEmpty { allCombined.drop(4).take(12) }
+
+                            val res = HomeResponse(
+                                status = "ok",
+                                banners = if (banners.isNotEmpty()) banners else ongoing.take(5),
+                                popular = if (banners.isNotEmpty()) banners else ongoing,
+                                ongoing = if (ongoing.isNotEmpty()) ongoing else getFallbackHome().ongoing,
+                                completed = if (completed.isNotEmpty()) completed else getFallbackHome().completed,
+                                action = actionList,
+                                fantasy = fantasyList
+                            )
+                            mainHandler.post { callback.onSuccess(res) }
+                            return
+                        }
+                    } catch (e: Exception) {}
+                }
+                fetchHomeFromUpstream(callback)
+            }
+        })
+    }
+
+    private fun fetchHomeFromUpstream(callback: Callback<HomeResponse>) {
+        val baseUpstream = getBaseUpstreamUrl()
+        val reqPopular = Request.Builder().url("$baseUpstream/order-anime/popular?page=1").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
+        val reqPopular2 = Request.Builder().url("$baseUpstream/order-anime/popular?page=2").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
 
         client.newCall(reqPopular).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: Call, e: IOException) {
@@ -177,8 +257,9 @@ object ApiClient {
         pop2: List<AnimeItem>,
         callback: Callback<HomeResponse>
     ) {
-        val reqOngoing = Request.Builder().url("$BASE_UPSTREAM/ongoing-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
-        val reqCompleted = Request.Builder().url("$BASE_UPSTREAM/completed-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
+        val baseUpstream = getBaseUpstreamUrl()
+        val reqOngoing = Request.Builder().url("$baseUpstream/ongoing-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
+        val reqCompleted = Request.Builder().url("$baseUpstream/completed-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
 
         client.newCall(reqOngoing).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: Call, e: IOException) {
@@ -217,12 +298,10 @@ object ApiClient {
         val allPop = (pop1 + pop2).distinctBy { it.slug }
         val allCombined = (allPop + ongoingList + completedList).distinctBy { it.slug }
 
-        // Action Genre List
         val actionList = allCombined.filter { item ->
             item.genres.any { g -> g.contains("Action", true) || g.contains("Shounen", true) || g.contains("Martial", true) || g.contains("Super Power", true) }
         }.ifEmpty { allPop.filter { it.title.contains("piece", true) || it.title.contains("naruto", true) || it.title.contains("bleach", true) || it.title.contains("titan", true) || it.title.contains("jujutsu", true) || it.title.contains("solo", true) } }
 
-        // Fantasy / Isekai Genre List
         val fantasyList = allCombined.filter { item ->
             item.genres.any { g -> g.contains("Fantasy", true) || g.contains("Isekai", true) || g.contains("Magic", true) || g.contains("Supernatural", true) || g.contains("Adventure", true) }
         }.ifEmpty { allPop.filter { it.title.contains("slime", true) || it.title.contains("mushoku", true) || it.title.contains("tensei", true) || it.title.contains("re:zero", true) || it.title.contains("overlord", true) } }
@@ -242,7 +321,8 @@ object ApiClient {
     }
 
     private fun fetchOngoingHome(callback: Callback<HomeResponse>) {
-        val req = Request.Builder().url("$BASE_UPSTREAM/ongoing-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
+        val baseUpstream = getBaseUpstreamUrl()
+        val req = Request.Builder().url("$baseUpstream/ongoing-anime").header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0").build()
         client.newCall(req).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: Call, e: IOException) {
                 mainHandler.post { callback.onSuccess(getFallbackHome()) }
@@ -261,10 +341,43 @@ object ApiClient {
         })
     }
 
+    // 2. GET ANIME DETAIL (Nyamimo Backend V1 with Upstream Fallback)
     fun getAnimeDetail(slug: String, callback: Callback<AnimeDetailData>) {
         val cleanSlug = slug.trim('/').removePrefix("detail-anime/").removePrefix("anime/").trim('/')
+        val baseRender = getBaseRenderUrl()
+
+        val reqV1 = Request.Builder()
+            .url("$baseRender/api/v1/anime/$cleanSlug")
+            .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
+            .build()
+
+        client.newCall(reqV1).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                getAnimeDetailUpstream(cleanSlug, callback)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotEmpty()) {
+                    try {
+                        val json = gson.fromJson(body, JsonObject::class.java)
+                        val detailObj = if (json.has("data") && !json.get("data").isJsonNull) json.getAsJsonObject("data") else json
+                        val parsed = parseAnimeDetailObject(cleanSlug, detailObj)
+                        if (parsed.title.isNotEmpty()) {
+                            mainHandler.post { callback.onSuccess(parsed) }
+                            return
+                        }
+                    } catch (e: Exception) {}
+                }
+                getAnimeDetailUpstream(cleanSlug, callback)
+            }
+        })
+    }
+
+    private fun getAnimeDetailUpstream(cleanSlug: String, callback: Callback<AnimeDetailData>) {
+        val baseUpstream = getBaseUpstreamUrl()
         val request = Request.Builder()
-            .url("$BASE_UPSTREAM/detail-anime/$cleanSlug")
+            .url("$baseUpstream/detail-anime/$cleanSlug")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
@@ -279,99 +392,7 @@ object ApiClient {
                     try {
                         val json = gson.fromJson(body, JsonObject::class.java)
                         val detailObj = if (json.has("data") && !json.get("data").isJsonNull) json.getAsJsonObject("data") else json
-
-                        val rawTitle = optString(detailObj, "title", "Anime")
-                        val cleanTitle = cleanAnimeTitle(rawTitle)
-                        val img = optString(detailObj, "img").ifEmpty { optString(detailObj, "poster") }
-                        val score = optString(detailObj, "score").ifEmpty { optString(detailObj, "rating", "8.5") }
-                        val status = optString(detailObj, "status", "Tersedia")
-
-                        var synopsis = ""
-                        if (detailObj.has("descriptions") && !detailObj.get("descriptions").isJsonNull) {
-                            val descElem = detailObj.get("descriptions")
-                            if (descElem.isJsonArray) {
-                                val list = mutableListOf<String>()
-                                for (p in descElem.asJsonArray) {
-                                    val text = p.asString.trim()
-                                    if (text.isNotEmpty() && !text.startsWith("Tonton Juga", ignoreCase = true)) {
-                                        list.add(text)
-                                    }
-                                }
-                                synopsis = list.joinToString("\n\n")
-                            } else if (descElem.isJsonPrimitive) {
-                                synopsis = descElem.asString.trim()
-                            }
-                        }
-                        if (synopsis.isEmpty()) {
-                            synopsis = optString(detailObj, "synopsis").ifEmpty {
-                                optString(detailObj, "description", "Sinopsis belum tersedia.")
-                            }
-                        }
-
-                        val episodes = mutableListOf<EpisodeItem>()
-                        val epsArray = if (detailObj.has("episodes") && !detailObj.get("episodes").isJsonNull) {
-                            detailObj.getAsJsonArray("episodes")
-                        } else if (detailObj.has("episodeList") && !detailObj.get("episodeList").isJsonNull) {
-                            detailObj.getAsJsonArray("episodeList")
-                        } else {
-                            null
-                        }
-
-                        if (epsArray != null) {
-                            for (epElem in epsArray) {
-                                if (epElem.isJsonObject) {
-                                    val epObj = epElem.asJsonObject
-                                    val epTitle = optString(epObj, "title")
-                                    var epNum = optString(epObj, "episode").ifEmpty { optString(epObj, "episodeNumber") }
-                                    if (epNum.isEmpty() || epNum == "null") {
-                                        val numMatch = Regex("""\b(?:Episode|Eps|Ep)\s*(\d+)""", RegexOption.IGNORE_CASE).find(epTitle)
-                                        epNum = if (numMatch != null) numMatch.groupValues[1] else "1"
-                                    }
-                                    val epLink = optString(epObj, "link").ifEmpty { optString(epObj, "href") }
-                                    val detailEps = optString(epObj, "detail_eps").ifEmpty { epLink }
-
-                                    if (detailEps.isNotEmpty()) {
-                                        episodes.add(EpisodeItem(epTitle, epNum, epNum, epLink, detailEps))
-                                    }
-                                }
-                            }
-                        }
-
-                        val type = optString(detailObj, "type").ifEmpty { "TV Series" }
-                        val studio = optString(detailObj, "studio").ifEmpty { optString(detailObj, "studios", "Nyamimo Animation") }
-                        val season = optString(detailObj, "season").ifEmpty { optString(detailObj, "release", "2024") }
-                        val duration = optString(detailObj, "duration").ifEmpty { "24 Menit" }
-
-                        val genresList = mutableListOf<String>()
-                        if (detailObj.has("genres") && detailObj.get("genres").isJsonArray) {
-                            for (g in detailObj.getAsJsonArray("genres")) {
-                                if (g.isJsonObject) {
-                                    val tag = optString(g.asJsonObject, "name").ifEmpty { optString(g.asJsonObject, "tag") }
-                                    if (tag.isNotEmpty()) genresList.add(tag)
-                                } else if (g.isJsonPrimitive) {
-                                    genresList.add(g.asString)
-                                }
-                            }
-                        }
-                        if (genresList.isEmpty()) {
-                            genresList.addAll(listOf("Action", "Adventure", "Fantasy", "Super Power"))
-                        }
-
-                        val result = AnimeDetailData(
-                            title = cleanTitle,
-                            slug = cleanSlug,
-                            img = img,
-                            score = score,
-                            status = status,
-                            type = type,
-                            studio = studio,
-                            season = season,
-                            duration = duration,
-                            synopsis = synopsis,
-                            genres = emptyList(),
-                            genreNames = genresList,
-                            episodes = episodes
-                        )
+                        val result = parseAnimeDetailObject(cleanSlug, detailObj)
                         mainHandler.post { callback.onSuccess(result) }
                     } catch (e: Exception) {
                         mainHandler.post { callback.onError("Gagal mengurai detail anime") }
@@ -383,15 +404,192 @@ object ApiClient {
         })
     }
 
+    private fun parseAnimeDetailObject(cleanSlug: String, detailObj: JsonObject): AnimeDetailData {
+        val rawTitle = optString(detailObj, "title", "Anime")
+        val cleanTitle = cleanAnimeTitle(rawTitle)
+        val img = optString(detailObj, "img").ifEmpty { optString(detailObj, "poster") }
+        val score = optString(detailObj, "score").ifEmpty { optString(detailObj, "rating", "8.5") }
+        val status = optString(detailObj, "status", "Tersedia")
+
+        var synopsis = ""
+        if (detailObj.has("descriptions") && !detailObj.get("descriptions").isJsonNull) {
+            val descElem = detailObj.get("descriptions")
+            if (descElem.isJsonArray) {
+                val list = mutableListOf<String>()
+                for (p in descElem.asJsonArray) {
+                    val text = p.asString.trim()
+                    if (text.isNotEmpty() && !text.startsWith("Tonton Juga", ignoreCase = true)) {
+                        list.add(text)
+                    }
+                }
+                synopsis = list.joinToString("\n\n")
+            } else if (descElem.isJsonPrimitive) {
+                synopsis = descElem.asString.trim()
+            }
+        }
+        if (synopsis.isEmpty()) {
+            synopsis = optString(detailObj, "synopsis").ifEmpty {
+                optString(detailObj, "description", "Sinopsis belum tersedia.")
+            }
+        }
+
+        val episodes = mutableListOf<EpisodeItem>()
+        val epsArray = if (detailObj.has("episodes") && !detailObj.get("episodes").isJsonNull) {
+            detailObj.getAsJsonArray("episodes")
+        } else if (detailObj.has("episodeList") && !detailObj.get("episodeList").isJsonNull) {
+            detailObj.getAsJsonArray("episodeList")
+        } else {
+            null
+        }
+
+        if (epsArray != null) {
+            for (epElem in epsArray) {
+                if (epElem.isJsonObject) {
+                    val epObj = epElem.asJsonObject
+                    val epTitle = optString(epObj, "title")
+                    var epNum = optString(epObj, "episode").ifEmpty { optString(epObj, "episodeNumber") }
+                    if (epNum.isEmpty() || epNum == "null") {
+                        val numMatch = Regex("""\b(?:Episode|Eps|Ep)\s*(\d+)""", RegexOption.IGNORE_CASE).find(epTitle)
+                        epNum = if (numMatch != null) numMatch.groupValues[1] else "1"
+                    }
+                    val epLink = optString(epObj, "link").ifEmpty { optString(epObj, "href") }
+                    val detailEps = optString(epObj, "detail_eps").ifEmpty { epLink }
+
+                    if (detailEps.isNotEmpty()) {
+                        episodes.add(EpisodeItem(epTitle, epNum, epNum, epLink, detailEps))
+                    }
+                }
+            }
+        }
+
+        val type = optString(detailObj, "type").ifEmpty { "TV Series" }
+        val studio = optString(detailObj, "studio").ifEmpty { optString(detailObj, "studios", "Nyamimo Animation") }
+        val season = optString(detailObj, "season").ifEmpty { optString(detailObj, "release", "2024") }
+        val duration = optString(detailObj, "duration").ifEmpty { "24 Menit" }
+
+        val genresList = mutableListOf<String>()
+        if (detailObj.has("genres") && detailObj.get("genres").isJsonArray) {
+            for (g in detailObj.getAsJsonArray("genres")) {
+                if (g.isJsonObject) {
+                    val tag = optString(g.asJsonObject, "name").ifEmpty { optString(g.asJsonObject, "tag") }
+                    if (tag.isNotEmpty()) genresList.add(tag)
+                } else if (g.isJsonPrimitive) {
+                    genresList.add(g.asString)
+                }
+            }
+        }
+        if (genresList.isEmpty()) {
+            genresList.addAll(listOf("Action", "Adventure", "Fantasy", "Super Power"))
+        }
+
+        return AnimeDetailData(
+            title = cleanTitle,
+            slug = cleanSlug,
+            img = img,
+            score = score,
+            status = status,
+            type = type,
+            studio = studio,
+            season = season,
+            duration = duration,
+            synopsis = synopsis,
+            genres = emptyList(),
+            genreNames = genresList,
+            episodes = episodes
+        )
+    }
+
+    // 3. GET EPISODE DATA (Nyamimo Backend V1 with Upstream Cascade)
     fun getEpisodeData(detailEps: String, title: String, ep: String, callback: Callback<EpisodeDataResponse>) {
+        val candidates = getCandidateUrls()
+        tryEpisodeCandidates(candidates, 0, detailEps, title, ep, callback)
+    }
+
+    private fun tryEpisodeCandidates(
+        candidates: List<String>,
+        index: Int,
+        detailEps: String,
+        title: String,
+        ep: String,
+        callback: Callback<EpisodeDataResponse>
+    ) {
+        if (index >= candidates.size) {
+            getEpisodeDataUpstream(detailEps, title, ep, callback)
+            return
+        }
+
+        val baseRender = candidates[index]
+        val cleanPath = detailEps.trim()
+        val encodedEps = try { URLEncoder.encode(cleanPath, "UTF-8") } catch (e: Exception) { cleanPath }
+        val encodedTitle = try { URLEncoder.encode(title, "UTF-8") } catch (e: Exception) { title }
+        val encodedEp = try { URLEncoder.encode(ep, "UTF-8") } catch (e: Exception) { ep }
+
+        val reqV1 = Request.Builder()
+            .url("$baseRender/api/v1/episode?detail_eps=$encodedEps&title=$encodedTitle&ep=$encodedEp")
+            .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
+            .build()
+
+        client.newCall(reqV1).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                tryEpisodeCandidates(candidates, index + 1, detailEps, title, ep, callback)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotEmpty()) {
+                    try {
+                        val json = gson.fromJson(body, JsonObject::class.java)
+                        val videoUrl = optString(json, "videoURL")
+                        val rawIframe = optString(json, "rawIframe")
+                        val isDirect = json.has("isDirectVideo") && json.get("isDirectVideo").asBoolean
+                        val activeServer = optString(json, "activeServerTitle", "Server Utama")
+
+                        val videosList = mutableListOf<PlayerOption>()
+                        if (json.has("videos") && json.get("videos").isJsonArray) {
+                            for (elem in json.getAsJsonArray("videos")) {
+                                if (elem.isJsonObject) {
+                                    val vObj = elem.asJsonObject
+                                    val vTitle = optString(vObj, "title", "Server")
+                                    val vPath = optString(vObj, "video").ifEmpty { optString(vObj, "url") }
+                                    if (vPath.isNotEmpty()) {
+                                        videosList.add(PlayerOption(vTitle, vPath))
+                                    }
+                                }
+                            }
+                        }
+
+                        if (videosList.isNotEmpty() || videoUrl.isNotEmpty() || rawIframe.isNotEmpty()) {
+                            dynamicBaseUrl = baseRender
+                            val res = EpisodeDataResponse(
+                                status = "ok",
+                                episodeNum = ep,
+                                title = title,
+                                videoURL = videoUrl,
+                                rawIframe = rawIframe,
+                                isDirectVideo = isDirect,
+                                videos = if (videosList.isNotEmpty()) videosList else listOf(PlayerOption(activeServer, videoUrl)),
+                                activeServerTitle = activeServer
+                            )
+                            mainHandler.post { callback.onSuccess(res) }
+                            return
+                        }
+                    } catch (e: Exception) {}
+                }
+                tryEpisodeCandidates(candidates, index + 1, detailEps, title, ep, callback)
+            }
+        })
+    }
+
+    private fun getEpisodeDataUpstream(detailEps: String, title: String, ep: String, callback: Callback<EpisodeDataResponse>) {
         var cleanPath = detailEps.trim()
         if (!cleanPath.startsWith("/")) cleanPath = "/$cleanPath"
         if (!cleanPath.startsWith("/detail-anime-episode/") && !cleanPath.startsWith("/episode/")) {
             cleanPath = "/detail-anime-episode$cleanPath"
         }
 
+        val baseUpstream = getBaseUpstreamUrl()
         val request = Request.Builder()
-            .url("$BASE_UPSTREAM$cleanPath")
+            .url("$baseUpstream$cleanPath")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
@@ -424,21 +622,41 @@ object ApiClient {
                         if (json.has("downloads") && json.get("downloads").isJsonArray) {
                             val downloads = json.getAsJsonArray("downloads")
                             for (dFormat in downloads) {
-                                if (dFormat.isJsonObject && dFormat.asJsonObject.has("list")) {
-                                    val listArr = dFormat.asJsonObject.getAsJsonArray("list")
-                                    for (item in listArr) {
-                                        if (item.isJsonObject && item.asJsonObject.has("links")) {
-                                            val resName = optString(item.asJsonObject, "resolution", "HD")
-                                            val linksArr = item.asJsonObject.getAsJsonArray("links")
-                                            for (lObj in linksArr) {
-                                                if (lObj.isJsonObject) {
-                                                    val lTitle = optString(lObj.asJsonObject, "title")
-                                                    val lUrl = optString(lObj.asJsonObject, "link")
-                                                    if (lUrl.contains("wibufile.com") || lUrl.contains("mega.nz")) {
-                                                        val embedLink = if (lUrl.contains("wibufile.com") && lUrl.contains("/watch")) {
-                                                            lUrl.replace("/watch", "").replace("wibufile.com/", "wibufile.com/embed/")
-                                                        } else lUrl
-                                                        playerOptions.add(PlayerOption("$lTitle $resName", embedLink))
+                                if (dFormat.isJsonObject) {
+                                    val formatObj = dFormat.asJsonObject
+                                    val formatName = optString(formatObj, "format", "")
+                                    if (formatObj.has("list") && formatObj.get("list").isJsonArray) {
+                                        val listArr = formatObj.getAsJsonArray("list")
+                                        for (item in listArr) {
+                                            if (item.isJsonObject && item.asJsonObject.has("links")) {
+                                                val resName = optString(item.asJsonObject, "resolution", formatName.ifEmpty { "HD" })
+                                                val linksArr = item.asJsonObject.getAsJsonArray("links")
+                                                for (lObj in linksArr) {
+                                                    if (lObj.isJsonObject) {
+                                                        val lTitle = optString(lObj.asJsonObject, "title")
+                                                        val lUrl = optString(lObj.asJsonObject, "link")
+                                                        if (lUrl.contains("wibufile.com") || lUrl.contains("mega.nz") || lUrl.contains("mega.co.nz") || lTitle.contains("mega", ignoreCase = true)) {
+                                                            var embedLink = lUrl
+                                                            if (lUrl.contains("wibufile.com") && lUrl.contains("/watch")) {
+                                                                embedLink = lUrl.replace("/watch", "").replace("wibufile.com/", "wibufile.com/embed/")
+                                                            } else if (lUrl.contains("mega.nz") || lUrl.contains("mega.co.nz")) {
+                                                                if (embedLink.contains("/file/")) {
+                                                                    embedLink = embedLink.replace("/file/", "/embed/")
+                                                                } else if (embedLink.contains("/#!")) {
+                                                                    embedLink = embedLink.replace("/#!", "/embed/")
+                                                                } else if (embedLink.contains("/#")) {
+                                                                    embedLink = embedLink.replace("/#", "/embed/")
+                                                                }
+                                                            }
+                                                            val serverTitle = if (lTitle.contains("mega", ignoreCase = true) || embedLink.contains("mega.")) {
+                                                                "Mega $resName"
+                                                            } else {
+                                                                "$lTitle $resName"
+                                                            }
+                                                            if (!playerOptions.any { it.video == embedLink || it.title == serverTitle }) {
+                                                                playerOptions.add(PlayerOption(serverTitle, embedLink))
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -453,11 +671,13 @@ object ApiClient {
                         } else if (videoUrl.isNotEmpty() && videoUrl != "belum tersedia (segera)") {
                             val (parsedUrl, parsedIframe) = formatStreamPayload("", videoUrl)
                             val isDirect = parsedUrl.endsWith(".mp4") || parsedUrl.endsWith(".m3u8")
-                            val defaultOpt = listOf(PlayerOption("Auto (HD)", parsedUrl.ifEmpty { videoUrl }))
-                            val res = EpisodeDataResponse("ok", ep, title, parsedUrl.ifEmpty { videoUrl }, parsedIframe, isDirect, defaultOpt, "Auto (HD)")
+                            val singleOpt = listOf(
+                                PlayerOption("Server Utama", parsedUrl.ifEmpty { videoUrl })
+                            )
+                            val res = EpisodeDataResponse("ok", ep, title, parsedUrl.ifEmpty { videoUrl }, parsedIframe, isDirect, singleOpt, "Server Utama")
                             mainHandler.post { callback.onSuccess(res) }
                         } else {
-                            mainHandler.post { callback.onError("Server video sedang offline") }
+                            mainHandler.post { callback.onError("Server video belum tersedia untuk episode ini") }
                         }
                     } catch (e: Exception) {
                         mainHandler.post { callback.onError("Gagal membaca link episode") }
@@ -484,11 +704,12 @@ object ApiClient {
             return
         }
 
+        val baseUpstream = getBaseUpstreamUrl()
         var path = option.video
         if (!path.startsWith("/")) path = "/$path"
 
         val req = Request.Builder()
-            .url("$BASE_UPSTREAM$path")
+            .url("$baseUpstream$path")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
@@ -546,11 +767,12 @@ object ApiClient {
             return
         }
 
+        val baseUpstream = getBaseUpstreamUrl()
         var path = option.video
         if (!path.startsWith("/")) path = "/$path"
 
         val req = Request.Builder()
-            .url("$BASE_UPSTREAM$path")
+            .url("$baseUpstream$path")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
@@ -676,10 +898,17 @@ object ApiClient {
         }
 
         // 5. Mega embed
-        if (targetUrl.contains("mega.nz") || iframeHtml.contains("mega.nz")) {
-            if (targetUrl.isEmpty() || !targetUrl.contains("mega.nz")) {
-                val megaMatch = Regex("""https?://mega\.nz/embed/[^\s"'<>]+""").find(iframeHtml)?.value
+        if (targetUrl.contains("mega.nz") || targetUrl.contains("mega.co.nz") || iframeHtml.contains("mega.nz") || iframeHtml.contains("mega.co.nz")) {
+            if (targetUrl.isEmpty() || (!targetUrl.contains("mega.nz") && !targetUrl.contains("mega.co.nz"))) {
+                val megaMatch = Regex("""https?://(?:mega\.nz|mega\.co\.nz)/[^\s"'<>]+""").find(iframeHtml)?.value
                 if (!megaMatch.isNullOrEmpty()) targetUrl = megaMatch
+            }
+            if (targetUrl.contains("/file/")) {
+                targetUrl = targetUrl.replace("/file/", "/embed/")
+            } else if (targetUrl.contains("/#!")) {
+                targetUrl = targetUrl.replace("/#!", "/embed/")
+            } else if (targetUrl.contains("/#")) {
+                targetUrl = targetUrl.replace("/#", "/embed/")
             }
             if (targetUrl.isNotEmpty()) {
                 return Pair(targetUrl, "<iframe src=\"$targetUrl\" allowfullscreen=\"true\" webkitallowfullscreen=\"true\" mozallowfullscreen=\"true\" allow=\"autoplay; fullscreen; encrypted-media\"></iframe>")
@@ -702,16 +931,42 @@ object ApiClient {
         return Pair("", "")
     }
 
+    // 4. SEARCH ANIME (Nyamimo Backend V1 with Upstream Fallback)
     fun searchAnime(query: String, callback: Callback<List<AnimeItem>>) {
         val q = query.trim()
         val encoded = try { URLEncoder.encode(q, "UTF-8") } catch (e: Exception) { q }
+        val baseRender = getBaseRenderUrl()
 
         val primaryReq = Request.Builder()
-            .url("$BASE_UPSTREAM/search-anime?search=$encoded")
+            .url("$baseRender/api/v1/search?q=$encoded")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
         client.newCall(primaryReq).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                searchAnimeUpstream(encoded, callback)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: ""
+                val list = parseAnimeListFromJSON(body)
+                if (list.isNotEmpty()) {
+                    mainHandler.post { callback.onSuccess(list) }
+                } else {
+                    searchAnimeUpstream(encoded, callback)
+                }
+            }
+        })
+    }
+
+    private fun searchAnimeUpstream(encoded: String, callback: Callback<List<AnimeItem>>) {
+        val baseUpstream = getBaseUpstreamUrl()
+        val req = Request.Builder()
+            .url("$baseUpstream/search-anime?search=$encoded")
+            .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
+            .build()
+
+        client.newCall(req).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: Call, e: IOException) {
                 searchAnimeSecondary(encoded, callback)
             }
@@ -729,8 +984,9 @@ object ApiClient {
     }
 
     private fun searchAnimeSecondary(encoded: String, callback: Callback<List<AnimeItem>>) {
+        val baseUpstream = getBaseUpstreamUrl()
         val secReq = Request.Builder()
-            .url("$BASE_UPSTREAM/search/$encoded")
+            .url("$baseUpstream/search/$encoded")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
@@ -747,14 +1003,16 @@ object ApiClient {
         })
     }
 
+    // 5. USER AUTH & SESSION
     fun loginUser(username: String, pass: String, callback: Callback<JsonObject>) {
         val formBody = FormBody.Builder()
             .add("username", username)
             .add("password", pass)
             .build()
 
+        val baseRender = getBaseRenderUrl()
         val request = Request.Builder()
-            .url("$BASE_RENDER/api/login")
+            .url("$baseRender/api/login")
             .post(formBody)
             .build()
 
@@ -795,8 +1053,9 @@ object ApiClient {
     }
 
     fun fetchAppConfig(callback: Callback<JsonObject>) {
+        val baseRender = getBaseRenderUrl()
         val request = Request.Builder()
-            .url("$BASE_RENDER/api/v1/app-config")
+            .url("$baseRender/api/v1/app-config")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
@@ -817,16 +1076,18 @@ object ApiClient {
         })
     }
 
+    // 6. SYNC WATCH HISTORY
     fun syncWatchHistory(username: String, localHistory: List<AnimeItem>, callback: Callback<List<AnimeItem>>) {
         if (username.isEmpty()) {
             callback.onSuccess(localHistory)
             return
         }
+        val baseRender = getBaseRenderUrl()
         val jsonPayload = gson.toJson(localHistory)
         val body = jsonPayload.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
 
         val request = Request.Builder()
-            .url("$BASE_RENDER/api/v1/history/sync?user=${URLEncoder.encode(username, "UTF-8")}")
+            .url("$baseRender/api/v1/history/sync?user=${URLEncoder.encode(username, "UTF-8")}")
             .header("X-Nyamimo-User", username)
             .post(body)
             .build()

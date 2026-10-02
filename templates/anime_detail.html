@@ -37,6 +37,35 @@
                 {{template "inline_player_area" .}}
             </div>
 
+            <!-- Card: AI Subtitle & Multi-Bahasa Selector -->
+            <div class="bg-white border border-[#E2E2DC] rounded-xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#FFCC00]/15 border border-[#FFCC00]/40 flex items-center justify-center text-[#17171B] shrink-0">
+                        <i data-lucide="subtitles" class="w-5 h-5 text-[#17171B]"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-title font-bold text-sm text-[#1A1A1E]">AI Subtitle & Multi-Bahasa</h3>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-[#FFCC00] text-[#17171B] shadow-xs">AUTO TRANSLATE</span>
+                        </div>
+                        <p class="text-xs text-[#55555B] leading-relaxed mt-0.5">
+                            Ganti bahasa teks subtitle anime secara instan & realtime dengan AI.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap" id="detail-subtitle-group">
+                    <button type="button" onclick="switchDetailSubtitle('id')" class="sub-btn-detail px-3.5 py-1.5 rounded-lg bg-[#FFCC00] text-[#17171B] font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm border border-[#FFCC00] cursor-pointer">
+                        <span>🇮🇩</span> Indonesia (AI)
+                    </button>
+                    <button type="button" onclick="switchDetailSubtitle('en')" class="sub-btn-detail px-3.5 py-1.5 rounded-lg bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-medium text-xs border border-[#E2E2DC] flex items-center gap-1.5 transition-all cursor-pointer">
+                        <span>🇬🇧</span> English (Original)
+                    </button>
+                    <button type="button" onclick="switchDetailSubtitle('off')" class="sub-btn-detail px-3.5 py-1.5 rounded-lg bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#55555B] hover:text-[#17171B] font-medium text-xs border border-[#E2E2DC] flex items-center gap-1.5 transition-all cursor-pointer">
+                        <span>❌</span> Off
+                    </button>
+                </div>
+            </div>
+
             <!-- Card: Pilihan Server Streaming (Provider) -->
             <div class="bg-white border border-[#E2E2DC] rounded-xl p-4 sm:p-5 shadow-sm space-y-3">
                 <div
@@ -1021,7 +1050,7 @@
         var directUrl = '';
 
         if (!isEmbedWrapper) {
-            if (combined.includes('.m3u8') || (videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('googlevideo.com')))) {
+            if (combined.includes('.m3u8') || (videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('/api/v1/stream') || videoUrl.includes('stream/play') || videoUrl.includes('googlevideo.com')))) {
                 directUrl = videoUrl;
                 isDirect = true;
             }
@@ -1084,6 +1113,19 @@
                                 art.notice.show = 'Format HLS tidak didukung browser ini';
                             }
                         },
+                    },
+                    subtitle: {
+                        url: '/api/v1/subtitle?lang=id&slug=' + encodeURIComponent('{{.Slug}}') + '&ep=' + encodeURIComponent('{{.ActiveEpisodeNum}}'),
+                        type: 'vtt',
+                        style: {
+                            color: '#FFFFFF',
+                            fontSize: '20px',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.9), 0 0 3px #000',
+                            fontWeight: 'bold',
+                            marginBottom: '22px',
+                        },
+                        encoding: 'utf-8',
+                        escape: true,
                     },
                     theme: '#FFCC00',
                     volume: 0.8,
@@ -1972,7 +2014,8 @@
         } else {
             clearAllServerTimers();
         }
-        htmx.ajax('GET', '/api/video-url?path=' + encodeURIComponent(videoPath), {
+        var targetUrl = '/api/video-url?path=' + encodeURIComponent(videoPath) + '&slug=' + encodeURIComponent('{{.Slug}}') + '&ep=' + encodeURIComponent('{{.ActiveEpisodeNum}}');
+        htmx.ajax('GET', targetUrl, {
             target: '#player-iframe-container',
             swap: 'innerHTML'
         });
@@ -1987,10 +2030,56 @@
             window.activeServerIdx = nextIdx;
             setActiveServerByIdx(nextIdx);
             showServerToast('⚠️ Server lambat/bermasalah, beralih ke ' + nextServer.title + '...');
-            htmx.ajax('GET', '/api/video-url?path=' + encodeURIComponent(nextServer.videoPath), {
+            var targetUrl = '/api/video-url?path=' + encodeURIComponent(nextServer.videoPath) + '&slug=' + encodeURIComponent('{{.Slug}}') + '&ep=' + encodeURIComponent('{{.ActiveEpisodeNum}}');
+            htmx.ajax('GET', targetUrl, {
                 target: '#player-iframe-container',
                 swap: 'innerHTML'
             });
+        }
+    };
+
+    window.switchDetailSubtitle = function(lang) {
+        if (window.activeArtplayerInstance && window.activeArtplayerInstance.subtitle) {
+            if (lang === 'off') {
+                window.activeArtplayerInstance.subtitle.show = false;
+            } else {
+                var subUrl = '/api/v1/subtitle?lang=' + lang + '&slug=' + encodeURIComponent('{{.Slug}}') + '&ep=' + encodeURIComponent('{{.ActiveEpisodeNum}}');
+                window.activeArtplayerInstance.subtitle.switch(subUrl, {
+                    name: lang === 'id' ? 'Indonesia (AI)' : 'English',
+                });
+                window.activeArtplayerInstance.subtitle.show = true;
+            }
+        }
+        var container = document.getElementById('player-iframe-container');
+        if (container) {
+            var video = container.querySelector('video');
+            if (video) {
+                var existing = video.querySelector('track');
+                if (existing) existing.remove();
+                if (lang !== 'off') {
+                    var track = document.createElement('track');
+                    track.kind = 'subtitles';
+                    track.label = lang === 'id' ? 'Indonesia (AI)' : 'English';
+                    track.srclang = lang;
+                    track.default = true;
+                    track.src = '/api/v1/subtitle?lang=' + lang + '&slug=' + encodeURIComponent('{{.Slug}}') + '&ep=' + encodeURIComponent('{{.ActiveEpisodeNum}}');
+                    video.appendChild(track);
+                }
+            }
+        }
+        document.querySelectorAll('#detail-subtitle-group .sub-btn-detail').forEach(function(btn) {
+            var txt = btn.innerText.toLowerCase();
+            var match = (lang === 'id' && txt.includes('indonesia')) ||
+                        (lang === 'en' && txt.includes('english')) ||
+                        (lang === 'off' && txt.includes('off'));
+            if (match) {
+                btn.className = 'sub-btn-detail px-3.5 py-1.5 rounded-lg bg-[#FFCC00] text-[#17171B] font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm border border-[#FFCC00] cursor-pointer';
+            } else {
+                btn.className = 'sub-btn-detail px-3.5 py-1.5 rounded-lg bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-medium text-xs border border-[#E2E2DC] flex items-center gap-1.5 transition-all cursor-pointer';
+            }
+        });
+        if (typeof showServerToast === 'function') {
+            showServerToast(lang === 'id' ? '🇮🇩 Subtitle Indonesia (AI Auto Translate) Aktif' : lang === 'en' ? '🇬🇧 Subtitle English Aktif' : '❌ Subtitle Dimatikan');
         }
     };
 

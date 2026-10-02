@@ -1,6 +1,33 @@
 {{define "content"}}
-<div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ 
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #D5D5CF;
+        border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #FFCC00;
+    }
+</style>
+
+<div class="max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8" x-data="{ 
     activeTab: (window.location.hash && ['overview','users','trending','ads','watermark','player','apps','site','gdrive','scraper','reports'].includes(window.location.hash.substring(1))) ? window.location.hash.substring(1) : 'overview',
+    mobileSidebarOpen: false,
+    desktopSidebarCollapsed: localStorage.getItem('nyamimo_sidebar_collapsed') === 'true',
+    toggleDesktopSidebar() {
+        this.desktopSidebarCollapsed = !this.desktopSidebarCollapsed;
+        localStorage.setItem('nyamimo_sidebar_collapsed', this.desktopSidebarCollapsed);
+    },
+    selectTab(tab) {
+        this.activeTab = tab;
+        this.mobileSidebarOpen = false;
+        window.location.hash = tab;
+    },
     heroSlides: {{if .Config.App.HeroCarousel.Slides}}{{.Config.App.HeroCarousel.Slides | toJson}}{{else}}[]{{end}},
     previewSlideIdx: 0,
     addHeroSlide() {
@@ -86,12 +113,34 @@
     </div>
     {{end}}
     
-    <!-- Admin Header Banner -->
-    <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
+    <!-- Admin Header Banner with Responsive Controls -->
+    <div class="bg-white border border-[#E2E2DC] rounded-3xl p-5 sm:p-8 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 relative overflow-hidden">
         <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#FFCC00] via-[#17171B] to-[#FFCC00]"></div>
         
         <div class="space-y-2">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Mobile Sidebar Toggle Button -->
+                <button 
+                    type="button" 
+                    @click="mobileSidebarOpen = true" 
+                    class="lg:hidden p-2 rounded-xl bg-[#17171B] text-[#FFCC00] hover:bg-[#26262e] transition-all flex items-center gap-1.5 text-xs font-bold font-title shadow-sm cursor-pointer"
+                    title="Buka Menu Sidebar"
+                >
+                    <i data-lucide="menu" class="w-4 h-4"></i>
+                    <span>Menu Admin</span>
+                </button>
+
+                <!-- Desktop Sidebar Toggle Collapse Button -->
+                <button 
+                    type="button" 
+                    @click="toggleDesktopSidebar()" 
+                    class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] text-xs font-bold font-title border border-[#E2E2DC] transition-all cursor-pointer shadow-2xs"
+                    title="Buka / Tutup Sidebar"
+                >
+                    <i :data-lucide="desktopSidebarCollapsed ? 'panel-left-open' : 'panel-left-close'" class="w-4 h-4 text-[#17171B]"></i>
+                    <span x-text="desktopSidebarCollapsed ? 'Buka Sidebar' : 'Tutup Sidebar'"></span>
+                </button>
+
                 <span class="px-3 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-extrabold text-[11px] uppercase tracking-wider font-title shadow-sm flex items-center gap-1.5">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#FFCC00]"></i> ADMINISTRATOR PANEL
                 </span>
@@ -108,218 +157,360 @@
         </div>
 
         <!-- Quick Top Action Buttons -->
-        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
             <form action="/api/admin/clear-cache" method="POST" onsubmit="return confirm('Bersihkan memory cache API Animekudesu?');">
-                <button type="submit" class="px-4 py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-bold text-xs border border-[#E2E2DC] transition-all flex items-center gap-2 font-title shadow-sm cursor-pointer" title="Bersihkan API in-memory cache">
+                <button type="submit" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-bold text-xs border border-[#E2E2DC] transition-all flex items-center gap-2 font-title shadow-sm cursor-pointer" title="Bersihkan API in-memory cache">
                     <i data-lucide="refresh-cw" class="w-4 h-4 text-[#55555B]"></i> Clear API Cache
                 </button>
             </form>
-            <a href="/admin/carousel" class="px-4 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-all flex items-center gap-2 font-title shadow-sm">
+            <a href="/admin/carousel" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-all flex items-center gap-2 font-title shadow-sm">
                 <i data-lucide="image" class="w-4 h-4"></i> Kelola Carousel
             </a>
-            <a href="/" class="px-4 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-all flex items-center gap-2 shadow-sm font-title">
+            <a href="/" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-bold text-xs transition-all flex items-center gap-2 shadow-sm font-title">
                 <i data-lucide="external-link" class="w-4 h-4"></i> Buka Website
             </a>
         </div>
     </div>
 
-    <!-- Main Layout Container: Left Sidebar + Right Content Viewport -->
+    <!-- MOBILE / TABLET SLIDE-OUT BACKDROP & DRAWER -->
+    <div 
+        x-show="mobileSidebarOpen" 
+        x-transition:enter="transition-opacity ease-linear duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity ease-linear duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="mobileSidebarOpen = false" 
+        class="fixed inset-0 bg-black/60 z-50 lg:hidden backdrop-blur-xs"
+        style="display: none;"
+    ></div>
+
+    <div 
+        x-show="mobileSidebarOpen" 
+        x-transition:enter="transition ease-in-out duration-300 transform"
+        x-transition:enter-start="-translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in-out duration-300 transform"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="-translate-x-full"
+        class="fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-white p-5 shadow-2xl flex flex-col justify-between overflow-y-auto overscroll-contain custom-scrollbar lg:hidden"
+        style="display: none;"
+    >
+        <div class="space-y-6">
+            <!-- Mobile Drawer Header -->
+            <div class="flex items-center justify-between border-b border-[#E2E2DC] pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-extrabold font-title text-base shadow-sm">
+                        {{if .User}}{{slice .User.Name 0 1}}{{else}}A{{end}}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-extrabold font-title text-[#1A1A1E] truncate">{{if .User}}{{.User.Name}}{{else}}Administrator{{end}}</div>
+                        <div class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Panel Admin
+                        </div>
+                    </div>
+                </div>
+                <button @click="mobileSidebarOpen = false" class="p-2 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Nav Items -->
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <div class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">Menu Utama</div>
+                    <button type="button" @click="selectTab('overview')" :class="activeTab === 'overview' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="layout-grid" class="w-4 h-4"></i><span>Ringkasan & Carousel</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                    <button type="button" @click="selectTab('users')" :class="activeTab === 'users' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="users" class="w-4 h-4"></i><span>Pengguna ({{.TotalUsersCount}})</span></div>
+                        {{if gt .OnlineUsersCount 0}}<span class="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500 text-white shadow-sm">{{.OnlineUsersCount}} On</span>{{end}}
+                    </button>
+                    <button type="button" @click="selectTab('trending')" :class="activeTab === 'trending' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="trending-up" class="w-4 h-4"></i><span>Populer & Rilis Baru</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                    <button type="button" @click="selectTab('reports')" :class="activeTab === 'reports' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="flag" class="w-4 h-4 text-rose-500"></i><span>Laporan Error ({{len .Reports}})</span></div>
+                        {{if gt .UnresolvedReportsCount 0}}<span class="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500 text-white shadow-sm">{{.UnresolvedReportsCount}} Baru</span>{{end}}
+                    </button>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">Player & Media</div>
+                    <button type="button" @click="selectTab('ads')" :class="activeTab === 'ads' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="dollar-sign" class="w-4 h-4 text-[#FFCC00]"></i><span>Pengaturan Iklan</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                    <button type="button" @click="selectTab('watermark')" :class="activeTab === 'watermark' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="stamp" class="w-4 h-4 text-[#FFCC00]"></i><span>Watermark Player</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                    <button type="button" @click="selectTab('player')" :class="activeTab === 'player' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="sliders" class="w-4 h-4 text-[#FFCC00]"></i><span>Posisi Player Blogger</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                    <button type="button" @click="selectTab('apps')" :class="activeTab === 'apps' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="smartphone" class="w-4 h-4 text-[#FFCC00]"></i><span>Apps Android</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">Sistem & Server</div>
+                    <button type="button" @click="selectTab('site')" :class="activeTab === 'site' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="settings" class="w-4 h-4"></i><span>Website & API</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                    <button type="button" @click="selectTab('gdrive')" :class="activeTab === 'gdrive' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="hard-drive" class="w-4 h-4 text-[#FFCC00]"></i><span>Google Drive 5TB</span></div>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
+                    </button>
+                    <button type="button" @click="selectTab('scraper')" :class="activeTab === 'scraper' ? 'bg-[#17171B] text-[#FFCC00] font-bold shadow-sm' : 'text-[#55555B] hover:bg-[#F6F5F0] font-semibold'" class="w-full px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between font-title cursor-pointer">
+                        <div class="flex items-center gap-2.5"><i data-lucide="bot" class="w-4 h-4 text-[#FFCC00]"></i><span>Bot Scraper Logs</span></div>
+                        <span class="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-white shadow-sm">Auto</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t border-[#E2E2DC] pt-4 mt-6 space-y-2">
+            <a href="/admin/carousel" class="w-full px-3.5 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs flex items-center gap-2 font-title shadow-sm">
+                <i data-lucide="image" class="w-4 h-4"></i> Kelola Carousel Banner
+            </a>
+            <a href="/" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-bold text-xs flex items-center gap-2 font-title">
+                <i data-lucide="external-link" class="w-4 h-4 text-[#55555B]"></i> Buka Beranda Website
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN LAYOUT CONTAINER: COLLAPSIBLE & SCROLLABLE DESKTOP SIDEBAR + CONTENT -->
     <div class="flex flex-col lg:flex-row gap-6 items-start">
         
-        <!-- LEFT SIDEBAR NAVIGATION -->
-        <aside class="w-full lg:w-72 xl:w-80 shrink-0 bg-white border border-[#E2E2DC] rounded-3xl p-5 shadow-sm lg:sticky lg:top-24 space-y-6">
-            <!-- Administrator Profile Pill -->
-            <div class="p-3.5 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-extrabold font-title text-base shadow-sm">
-                    {{if .User}}{{slice .User.Name 0 1}}{{else}}A{{end}}
+        <!-- DESKTOP COLLAPSIBLE & SCROLLABLE SIDEBAR -->
+        <aside 
+            :class="desktopSidebarCollapsed ? 'lg:w-20' : 'lg:w-72 xl:w-80'"
+            class="hidden lg:block shrink-0 bg-white border border-[#E2E2DC] rounded-3xl p-4 sm:p-5 shadow-sm lg:sticky lg:top-20 transition-all duration-300 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain pr-2 custom-scrollbar"
+        >
+            <div class="space-y-5">
+                <!-- Administrator Profile Pill & Collapse Trigger -->
+                <div class="p-3 rounded-2xl bg-[#F6F5F0] border border-[#E2E2DC] flex items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-9 h-9 shrink-0 rounded-xl bg-[#17171B] text-[#FFCC00] flex items-center justify-center font-extrabold font-title text-sm shadow-sm">
+                            {{if .User}}{{slice .User.Name 0 1}}{{else}}A{{end}}
+                        </div>
+                        <div class="min-w-0" x-show="!desktopSidebarCollapsed" x-transition.opacity>
+                            <div class="text-xs font-extrabold font-title text-[#1A1A1E] truncate">{{if .User}}{{.User.Name}}{{else}}Administrator{{end}}</div>
+                            <div class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Panel Admin
+                            </div>
+                        </div>
+                    </div>
+                    <button 
+                        type="button" 
+                        @click="toggleDesktopSidebar()" 
+                        class="p-1.5 rounded-lg hover:bg-[#E2E2DC] text-[#55555B] hover:text-[#1A1A1E] transition-all cursor-pointer shrink-0" 
+                        :title="desktopSidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'"
+                    >
+                        <i :data-lucide="desktopSidebarCollapsed ? 'chevron-right' : 'chevron-left'" class="w-4 h-4"></i>
+                    </button>
                 </div>
-                <div class="min-w-0">
-                    <div class="text-xs font-extrabold font-title text-[#1A1A1E] truncate">{{if .User}}{{.User.Name}}{{else}}Administrator{{end}}</div>
-                    <div class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Panel Admin Aktif
+
+                <!-- Group 1: MENU UTAMA -->
+                <div class="space-y-1">
+                    <div x-show="!desktopSidebarCollapsed" class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">
+                        Menu Utama
                     </div>
+                    <button 
+                        type="button" 
+                        @click="selectTab('overview')" 
+                        :class="activeTab === 'overview' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Ringkasan & Carousel' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="layout-grid" class="w-4 h-4 shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Ringkasan & Carousel</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
+
+                    <button 
+                        type="button" 
+                        @click="selectTab('users')" 
+                        :class="activeTab === 'users' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Pengguna ({{.TotalUsersCount}})' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Pengguna ({{.TotalUsersCount}})</span>
+                        </div>
+                        {{if gt .OnlineUsersCount 0}}
+                        <span x-show="!desktopSidebarCollapsed" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500 text-white shadow-sm shrink-0">
+                            {{.OnlineUsersCount}} On
+                        </span>
+                        {{end}}
+                    </button>
+
+                    <button 
+                        type="button" 
+                        @click="selectTab('trending')" 
+                        :class="activeTab === 'trending' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Populer & Rilis Baru' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="trending-up" class="w-4 h-4 shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Populer & Rilis Baru</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
+
+                    <button 
+                        type="button" 
+                        @click="selectTab('reports')" 
+                        :class="activeTab === 'reports' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Laporan Error ({{len .Reports}})' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="flag" class="w-4 h-4 text-rose-500 shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Laporan Error ({{len .Reports}})</span>
+                        </div>
+                        {{if gt .UnresolvedReportsCount 0}}
+                        <span x-show="!desktopSidebarCollapsed" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500 text-white shadow-sm animate-pulse shrink-0">
+                            {{.UnresolvedReportsCount}} Baru
+                        </span>
+                        {{end}}
+                    </button>
                 </div>
-            </div>
 
-            <!-- Group 1: MENU UTAMA -->
-            <div class="space-y-1">
-                <div class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">
-                    Menu Utama
+                <!-- Group 2: PLAYER & MEDIA -->
+                <div class="space-y-1">
+                    <div x-show="!desktopSidebarCollapsed" class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">
+                        Player & Media
+                    </div>
+                    <button 
+                        type="button" 
+                        @click="selectTab('ads')" 
+                        :class="activeTab === 'ads' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Pengaturan Iklan' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="dollar-sign" class="w-4 h-4 text-[#FFCC00] shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Pengaturan Iklan</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
+
+                    <button 
+                        type="button" 
+                        @click="selectTab('watermark')" 
+                        :class="activeTab === 'watermark' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Watermark Player' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="stamp" class="w-4 h-4 text-[#FFCC00] shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Watermark Player</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
+
+                    <button 
+                        type="button" 
+                        @click="selectTab('player')" 
+                        :class="activeTab === 'player' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Posisi Player Blogger' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="sliders" class="w-4 h-4 text-[#FFCC00] shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Posisi Player Blogger</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
+
+                    <button 
+                        type="button" 
+                        @click="selectTab('apps')" 
+                        :class="activeTab === 'apps' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Apps Android' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="smartphone" class="w-4 h-4 text-[#FFCC00] shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Apps Android</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
                 </div>
-                <button 
-                    type="button" 
-                    @click="activeTab = 'overview'" 
-                    :class="activeTab === 'overview' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                        <span>Ringkasan & Carousel</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
 
-                <button 
-                    type="button" 
-                    @click="activeTab = 'users'" 
-                    :class="activeTab === 'users' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="users" class="w-4 h-4"></i>
-                        <span>Pengguna ({{.TotalUsersCount}})</span>
+                <!-- Group 3: SISTEM & SERVER -->
+                <div class="space-y-1">
+                    <div x-show="!desktopSidebarCollapsed" class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">
+                        Sistem & Server
                     </div>
-                    {{if gt .OnlineUsersCount 0}}
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500 text-white shadow-sm">
-                        {{.OnlineUsersCount}} On
-                    </span>
-                    {{end}}
-                </button>
+                    <button 
+                        type="button" 
+                        @click="selectTab('site')" 
+                        :class="activeTab === 'site' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Website & API' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="settings" class="w-4 h-4 shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Website & API</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
 
-                <button 
-                    type="button" 
-                    @click="activeTab = 'trending'" 
-                    :class="activeTab === 'trending' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="trending-up" class="w-4 h-4"></i>
-                        <span>Populer & Rilis Baru</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
+                    <button 
+                        type="button" 
+                        @click="selectTab('gdrive')" 
+                        :class="activeTab === 'gdrive' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Google Drive 5TB' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="hard-drive" class="w-4 h-4 text-[#FFCC00] shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Google Drive 5TB</span>
+                        </div>
+                        <i x-show="!desktopSidebarCollapsed" data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                    </button>
 
-                <button 
-                    type="button" 
-                    @click="activeTab = 'reports'" 
-                    :class="activeTab === 'reports' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="flag" class="w-4 h-4 text-rose-500"></i>
-                        <span>Laporan Error ({{len .Reports}})</span>
-                    </div>
-                    {{if gt .UnresolvedReportsCount 0}}
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500 text-white shadow-sm animate-pulse">
-                        {{.UnresolvedReportsCount}} Baru
-                    </span>
-                    {{end}}
-                </button>
-            </div>
-
-            <!-- Group 2: PLAYER & MEDIA -->
-            <div class="space-y-1">
-                <div class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">
-                    Player & Media
+                    <button 
+                        type="button" 
+                        @click="selectTab('scraper')" 
+                        :class="activeTab === 'scraper' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
+                        class="w-full px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
+                        :title="desktopSidebarCollapsed ? 'Bot Scraper Logs' : ''"
+                    >
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i data-lucide="bot" class="w-4 h-4 text-[#FFCC00] shrink-0"></i>
+                            <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Bot Scraper Logs</span>
+                        </div>
+                        <span x-show="!desktopSidebarCollapsed" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-white shadow-sm shrink-0">
+                            Auto
+                        </span>
+                    </button>
                 </div>
-                <button 
-                    type="button" 
-                    @click="activeTab = 'ads'" 
-                    :class="activeTab === 'ads' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="dollar-sign" class="w-4 h-4 text-[#FFCC00]"></i>
-                        <span>Pengaturan Iklan</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
 
-                <button 
-                    type="button" 
-                    @click="activeTab = 'watermark'" 
-                    :class="activeTab === 'watermark' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="stamp" class="w-4 h-4 text-[#FFCC00]"></i>
-                        <span>Watermark Player</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
-
-                <button 
-                    type="button" 
-                    @click="activeTab = 'player'" 
-                    :class="activeTab === 'player' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="sliders" class="w-4 h-4 text-[#FFCC00]"></i>
-                        <span>Posisi Player Blogger</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
-
-                <button 
-                    type="button" 
-                    @click="activeTab = 'apps'" 
-                    :class="activeTab === 'apps' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="smartphone" class="w-4 h-4 text-[#FFCC00]"></i>
-                        <span>Apps Android</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
-            </div>
-
-            <!-- Group 3: SISTEM & SERVER -->
-            <div class="space-y-1">
-                <div class="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-[#A0A0A8] font-title">
-                    Sistem & Server
+                <!-- Quick Action Links -->
+                <div class="border-t border-[#E2E2DC] pt-4 space-y-2">
+                    <a href="/admin/carousel" class="w-full px-3 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-colors flex items-center gap-2 font-title shadow-sm" :title="desktopSidebarCollapsed ? 'Kelola Carousel' : ''">
+                        <i data-lucide="image" class="w-4 h-4 shrink-0"></i>
+                        <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Kelola Carousel</span>
+                    </a>
+                    <a href="/" class="w-full px-3 py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-bold text-xs transition-colors flex items-center gap-2 font-title" :title="desktopSidebarCollapsed ? 'Buka Beranda' : ''">
+                        <i data-lucide="external-link" class="w-4 h-4 text-[#55555B] shrink-0"></i>
+                        <span x-show="!desktopSidebarCollapsed" x-transition.opacity class="truncate">Buka Beranda</span>
+                    </a>
                 </div>
-                <button 
-                    type="button" 
-                    @click="activeTab = 'site'" 
-                    :class="activeTab === 'site' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="settings" class="w-4 h-4"></i>
-                        <span>Website & API</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
-
-                <button 
-                    type="button" 
-                    @click="activeTab = 'gdrive'" 
-                    :class="activeTab === 'gdrive' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="hard-drive" class="w-4 h-4 text-[#FFCC00]"></i>
-                        <span>Google Drive 5TB</span>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-50"></i>
-                </button>
-
-                <button 
-                    type="button" 
-                    @click="activeTab = 'scraper'" 
-                    :class="activeTab === 'scraper' ? 'bg-[#17171B] text-[#FFCC00] shadow-sm font-bold' : 'text-[#55555B] hover:text-[#1A1A1E] hover:bg-[#F6F5F0] font-semibold'"
-                    class="w-full px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between font-title cursor-pointer active:scale-[0.98]"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <i data-lucide="bot" class="w-4 h-4 text-[#FFCC00]"></i>
-                        <span>Bot Scraper Logs</span>
-                    </div>
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-white shadow-sm">
-                        Auto
-                    </span>
-                </button>
-            </div>
-
-            <!-- Quick Action Links -->
-            <div class="border-t border-[#E2E2DC] pt-4 space-y-2">
-                <a href="/admin/carousel" class="w-full px-3.5 py-2.5 rounded-xl bg-[#17171B] hover:bg-[#212126] text-[#FFCC00] font-bold text-xs transition-colors flex items-center gap-2 font-title shadow-sm">
-                    <i data-lucide="image" class="w-4 h-4"></i> Kelola Carousel Banner
-                </a>
-                <a href="/" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] font-bold text-xs transition-colors flex items-center gap-2 font-title">
-                    <i data-lucide="external-link" class="w-4 h-4 text-[#55555B]"></i> Buka Beranda Website
-                </a>
             </div>
         </aside>
 
@@ -2532,95 +2723,101 @@
                 });
         }
     }">
-        <!-- Top Status Hero Banner -->
-        <div class="bg-gradient-to-r from-[#17171B] via-[#212126] to-[#17171B] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-[#FFCC00]/30">
-            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none"></div>
-            
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                <div class="space-y-2">
+        <!-- Top Status Hero Banner (Clean & Responsive) -->
+        <div class="bg-white border border-[#E2E2DC] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 relative overflow-hidden">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-[#E2E2DC] pb-6">
+                <div class="space-y-2 max-w-2xl">
                     <div class="flex items-center gap-2">
-                        <span class="px-3 py-1 rounded-lg bg-[#FFCC00] text-[#17171B] font-extrabold text-[11px] uppercase tracking-wider font-title flex items-center gap-1.5 shadow">
-                            <i data-lucide="bot" class="w-3.5 h-3.5 text-[#17171B]"></i> NYAMIMO ENGINE BOT
+                        <span class="px-3 py-1 rounded-lg bg-[#17171B] text-[#FFCC00] font-extrabold text-[11px] uppercase tracking-wider font-title flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="bot" class="w-3.5 h-3.5 text-[#FFCC00]"></i> NYAMIMO ENGINE BOT
                         </span>
                         <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold" 
-                            :class="stats.is_running ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse' : 'bg-green-500/20 text-green-400 border border-green-500/30'">
+                            :class="stats.is_running ? 'bg-amber-50 text-amber-700 border border-amber-200 animate-pulse' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
                             <span x-text="stats.is_running ? '● Sedang Bekerja Scrape Anime' : '● Bot Siaga (Idle)'"></span>
                         </span>
                     </div>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold font-title tracking-tight text-white">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold font-title tracking-tight text-[#1A1A1E]">
                         Bot Scraper Mandiri & Database Lokal
                     </h2>
-                    <p class="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-                        Bot internal cerdas yang mengikis langsung dari sumber anime (Otakudesu/Kuramanime) dan menyimpannya ke <strong>Database Lokal Nyamimo</strong>. Bebas dari ketergantungan API eksternal pihak ketiga, data tersimpan rapi, dan anti-down.
+                    <p class="text-xs sm:text-sm text-[#55555B] leading-relaxed">
+                        Bot internal cerdas yang mengikis langsung dari sumber anime (Otakudesu & Samehadaku) dan menyimpannya ke <strong class="text-[#1A1A1E]">Database Lokal Nyamimo</strong>. Bebas dari ketergantungan API eksternal pihak ketiga, data tersimpan rapi, dan anti-down.
                     </p>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 flex-wrap">
-                    <button type="button" @click="startScraper('samehadaku_all')" :disabled="stats.is_running || loadingAction"
-                        class="px-4 py-2.5 rounded-2xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
-                        <i data-lucide="play-circle" class="w-4 h-4"></i>
-                        <span>Scrape Samehadaku (A - Z)</span>
-                    </button>
-
-                    <button type="button" @click="startScraper('samehadaku_ongoing')" :disabled="stats.is_running || loadingAction"
-                        class="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
-                        <i data-lucide="zap" class="w-4 h-4"></i>
-                        <span>Samehadaku Ongoing</span>
-                    </button>
-
-                    <button type="button" @click="startScraper('scrape_all_sources')" :disabled="stats.is_running || loadingAction"
-                        class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
-                        <i data-lucide="layers" class="w-4 h-4"></i>
-                        <span>Scrape Semua Sumber (Otakudesu + Samehadaku)</span>
-                    </button>
-
-                    <button type="button" @click="startScraper('all')" :disabled="stats.is_running || loadingAction"
-                        class="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
-                        <i data-lucide="globe" class="w-4 h-4 text-purple-400"></i>
-                        <span>Otakudesu (A - Z)</span>
-                    </button>
-
-                    <button type="button" @click="if(confirm('Apakah Anda yakin ingin mereset database dan mengikis ulang seluruh anime & episode dari A-Z?')) startScraper('rescrape_all')" :disabled="stats.is_running || loadingAction"
-                        class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer disabled:opacity-50 font-title">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        <span>Scrape Ulang Bersih</span>
-                    </button>
-
-                    <button type="button" @click="stopScraper()" x-show="stats.is_running"
-                        class="px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg cursor-pointer font-title">
+                <!-- Stop Button (if running) -->
+                <div x-show="stats.is_running" class="shrink-0">
+                    <button type="button" @click="stopScraper()"
+                        class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-all flex items-center gap-2 shadow-sm cursor-pointer font-title active:scale-[0.98]">
                         <i data-lucide="square" class="w-4 h-4"></i>
-                        <span>Stop</span>
+                        <span>Hentikan Scraper</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Stats Bar -->
-            <div class="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
-                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Koleksi Anime</div>
-                    <div class="text-xl sm:text-2xl font-extrabold text-[#FFCC00] font-title mt-1" x-text="stats.total_anime + ' Anime'"></div>
-                    <div class="text-[10px] text-gray-400 mt-0.5">Tersimpan di Database Lokal</div>
+            <!-- Action Buttons Grid (Responsive & Wrapped) -->
+            <div class="space-y-2.5">
+                <div class="text-[11px] font-bold text-[#A0A0A8] uppercase tracking-wider font-title">
+                    Pilih Perintah Scrape:
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                    <button type="button" @click="startScraper('samehadaku_all')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-3 rounded-2xl bg-[#FFCC00] hover:bg-[#e6b800] text-[#17171B] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50 font-title active:scale-[0.98]">
+                        <i data-lucide="play-circle" class="w-4 h-4 shrink-0"></i>
+                        <span class="truncate">Samehadaku (A - Z)</span>
+                    </button>
+
+                    <button type="button" @click="startScraper('samehadaku_ongoing')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-3 rounded-2xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] border border-[#E2E2DC] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer disabled:opacity-50 font-title active:scale-[0.98]">
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-500 shrink-0"></i>
+                        <span class="truncate">Samehadaku Ongoing</span>
+                    </button>
+
+                    <button type="button" @click="startScraper('scrape_all_sources')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-3 rounded-2xl bg-[#17171B] hover:bg-[#26262e] text-[#FFCC00] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50 font-title active:scale-[0.98]">
+                        <i data-lucide="layers" class="w-4 h-4 shrink-0"></i>
+                        <span class="truncate">Semua Sumber (Otaku + Same)</span>
+                    </button>
+
+                    <button type="button" @click="startScraper('all')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-3 rounded-2xl bg-[#F6F5F0] hover:bg-[#E2E2DC] text-[#1A1A1E] border border-[#E2E2DC] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer disabled:opacity-50 font-title active:scale-[0.98]">
+                        <i data-lucide="globe" class="w-4 h-4 text-purple-600 shrink-0"></i>
+                        <span class="truncate">Otakudesu (A - Z)</span>
+                    </button>
+
+                    <button type="button" @click="if(confirm('Apakah Anda yakin ingin mereset database dan mengikis ulang seluruh anime & episode dari A-Z?')) startScraper('rescrape_all')" :disabled="stats.is_running || loadingAction"
+                        class="px-4 py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer disabled:opacity-50 font-title active:scale-[0.98]">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 shrink-0"></i>
+                        <span class="truncate">Scrape Ulang Bersih</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar (Unified Theme) -->
+            <div class="pt-4 border-t border-[#E2E2DC] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div class="bg-[#F6F5F0] border border-[#E2E2DC] rounded-2xl p-4">
+                    <div class="text-[10px] font-bold text-[#71717A] uppercase tracking-wider font-title">Total Koleksi Anime</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-[#1A1A1E] font-title mt-1" x-text="stats.total_anime + ' Anime'"></div>
+                    <div class="text-[10px] text-[#A0A0A8] mt-0.5">Tersimpan di Database Lokal</div>
                 </div>
 
-                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
-                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Anime On-Going</div>
-                    <div class="text-xl sm:text-2xl font-extrabold text-green-400 font-title mt-1" x-text="stats.total_ongoing + ' Judul'"></div>
-                    <div class="text-[10px] text-green-400 mt-0.5">Update Tiap Minggu</div>
+                <div class="bg-[#F6F5F0] border border-[#E2E2DC] rounded-2xl p-4">
+                    <div class="text-[10px] font-bold text-[#71717A] uppercase tracking-wider font-title">Anime On-Going</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-emerald-600 font-title mt-1" x-text="stats.total_ongoing + ' Judul'"></div>
+                    <div class="text-[10px] text-emerald-600 mt-0.5">Update Tiap Minggu</div>
                 </div>
 
-                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
-                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Anime Tamat (Completed)</div>
-                    <div class="text-xl sm:text-2xl font-extrabold text-blue-400 font-title mt-1" x-text="stats.total_completed + ' Judul'"></div>
-                    <div class="text-[10px] text-gray-400 mt-0.5">Koleksi Lengkap</div>
+                <div class="bg-[#F6F5F0] border border-[#E2E2DC] rounded-2xl p-4">
+                    <div class="text-[10px] font-bold text-[#71717A] uppercase tracking-wider font-title">Anime Tamat (Completed)</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-blue-600 font-title mt-1" x-text="stats.total_completed + ' Judul'"></div>
+                    <div class="text-[10px] text-[#A0A0A8] mt-0.5">Koleksi Lengkap</div>
                 </div>
 
-                <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
-                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status & Task Aktif</div>
-                    <div class="text-sm font-extrabold font-title mt-1 truncate" 
-                        :class="stats.is_running ? 'text-amber-400' : 'text-gray-300'"
+                <div class="bg-[#F6F5F0] border border-[#E2E2DC] rounded-2xl p-4">
+                    <div class="text-[10px] font-bold text-[#71717A] uppercase tracking-wider font-title">Status & Task Aktif</div>
+                    <div class="text-sm sm:text-base font-extrabold font-title mt-1 truncate" 
+                        :class="stats.is_running ? 'text-amber-600' : 'text-[#1A1A1E]'"
                         x-text="stats.is_running ? stats.current_task : 'Siaga'"></div>
-                    <div class="text-[10px] text-gray-400 mt-0.5">Multi-Threading Engine</div>
+                    <div class="text-[10px] text-[#A0A0A8] mt-0.5">Multi-Threading Engine</div>
                 </div>
             </div>
         </div>
