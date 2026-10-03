@@ -34,8 +34,10 @@ object ApiClient {
                 list.add(cfg.apiBaseUrl.trimEnd('/'))
             }
         }
+        list.add("http://192.168.100.245:3000")
+        list.add("http://192.168.137.1:3000")
         list.add("http://localhost:3000")
-        list.add("http://192.168.101.74:3000")
+        list.add("http://10.0.2.2:3000")
         list.add("https://nyamimo.onrender.com")
         return list.distinct()
     }
@@ -171,17 +173,26 @@ object ApiClient {
         return list
     }
 
-    // 1. GET HOME (Nyamimo Backend REST V1 with Upstream Fallback)
+    // 1. GET HOME (Nyamimo Backend REST V1 with Failover Loop)
     fun getHome(callback: Callback<HomeResponse>) {
-        val baseRender = getBaseRenderUrl()
+        val candidates = getCandidateUrls()
+        tryHomeCandidate(candidates, 0, callback)
+    }
+
+    private fun tryHomeCandidate(candidates: List<String>, index: Int, callback: Callback<HomeResponse>) {
+        if (index >= candidates.size) {
+            fetchHomeFromUpstream(callback)
+            return
+        }
+        val baseUrl = candidates[index]
         val reqV1 = Request.Builder()
-            .url("$baseRender/api/v1/home")
+            .url("$baseUrl/api/v1/home")
             .header("User-Agent", "Mozilla/5.0 NyamimoApp/1.0.0")
             .build()
 
         client.newCall(reqV1).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: Call, e: IOException) {
-                fetchHomeFromUpstream(callback)
+                tryHomeCandidate(candidates, index + 1, callback)
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -190,6 +201,7 @@ object ApiClient {
                     try {
                         val json = gson.fromJson(body, JsonObject::class.java)
                         if (json.has("ongoing") || json.has("banners")) {
+                            dynamicBaseUrl = baseUrl
                             val type = object : com.google.gson.reflect.TypeToken<List<AnimeItem>>() {}.type
                             val banners: List<AnimeItem> = if (json.has("banners")) gson.fromJson(json.getAsJsonArray("banners"), type) ?: emptyList() else emptyList()
                             val ongoing: List<AnimeItem> = if (json.has("ongoing")) gson.fromJson(json.getAsJsonArray("ongoing"), type) ?: emptyList() else emptyList()
@@ -218,7 +230,7 @@ object ApiClient {
                         }
                     } catch (e: Exception) {}
                 }
-                fetchHomeFromUpstream(callback)
+                tryHomeCandidate(candidates, index + 1, callback)
             }
         })
     }
@@ -1119,18 +1131,40 @@ object ApiClient {
     }
 
     fun getFallbackHome(): HomeResponse {
-        val ongoing = listOf(
-            AnimeItem("One Piece", "one-piece", "https://wallpapercat.com/w/full/4/1/0/33422-3840x2160-desktop-4k-one-piece-background.jpg", "1122", "8.9", "Anime", "Ongoing", "Petualangan Luffy dan kru Topi Jerami menuju Laugh Tale.", listOf("Action", "Adventure", "Shounen")),
-            AnimeItem("(Tensura) Tensei shitara Slime Datta Ken OVA", "tensei-shitara-slime-datta-ken-ova", "https://v2.samehadaku.how/wp-content/uploads/2020/07/104615.jpg", "OVA", "7.45", "Anime", "Completed", "OVA dari Serial Tensei shitara Slime Datta Ken.", listOf("Fantasy", "Isekai")),
-            AnimeItem("Naruto Shippuden", "naruto-shippuden", "https://wallpapercat.com/w/full/5/3/1/141742-3840x2160-desktop-4k-naruto-wallpaper-photo.jpg", "500", "8.7", "Anime", "Completed", "Kisah perjalanan ninja Naruto Uzumaki menjadi Hokage.", listOf("Action", "Martial Arts", "Shounen")),
-            AnimeItem("Princess Connect!", "princess-connect", "https://v2.samehadaku.how/wp-content/uploads/2020/04/princessconnect.jpg", "ONA", "7.5", "Anime", "Completed", "Adaptasi dari Game Mobile dengan Judul yang Sama.", listOf("Fantasy", "Comedy")),
-            AnimeItem("Shingeki no Kyojin The Final Season Part 3", "shingeki-no-kyojin-the-final-season-part-3", "https://v2.samehadaku.how/wp-content/uploads/2023/03/131078l.jpg", "Special", "9.21", "Anime", "Completed", "Attack on Titan Final.", listOf("Action", "Drama", "Suspense"))
-        )
         val popular = listOf(
-            AnimeItem("Solo Leveling", "solo-leveling", "https://wallpapercat.com/w/full/d/3/2/1898744-3840x2160-desktop-4k-solo-leveling-background-photo.jpg", "12", "9.0", "Anime", "Completed", "Sung Jin-woo bangkit menjadi hunter terkuat di dunia.", listOf("Action", "Fantasy", "Super Power")),
-            AnimeItem("Jujutsu Kaisen Season 2", "jujutsu-kaisen-season-2", "https://wallpapercat.com/w/full/9/0/f/135372-3840x2160-desktop-4k-jujutsu-kaisen-wallpaper.jpg", "23", "8.85", "Anime", "Completed", "Insiden Shibuya yang menentukan takdir para penyihir jujutsu.", listOf("Action", "Supernatural")),
-            AnimeItem("Bleach: Sennen Kessen-hen", "bleach-sennen-kessen-hen", "https://wallpapercat.com/w/full/3/3/0/188804-3840x2160-desktop-4k-bleach-thousand-year-blood-war-wallpaper-photo.jpg", "26", "9.1", "Anime", "Ongoing", "Perang ribuan tahun antara Shinigami dan Quincy.", listOf("Action", "Shounen"))
+            AnimeItem("Solo Leveling", "solo-leveling", "https://cdn.myanimelist.net/images/anime/1370/140362.jpg", "12", "9.0", "Anime", "Completed", "Sung Jin-woo bangkit menjadi hunter terkuat di dunia.", listOf("Action", "Fantasy", "Super Power")),
+            AnimeItem("Jujutsu Kaisen Season 2", "jujutsu-kaisen-season-2", "https://cdn.myanimelist.net/images/anime/1792/138022.jpg", "23", "8.85", "Anime", "Completed", "Insiden Shibuya yang menentukan takdir para penyihir jujutsu.", listOf("Action", "Supernatural")),
+            AnimeItem("Bleach: Sennen Kessen-hen", "bleach-sennen-kessen-hen", "https://cdn.myanimelist.net/images/anime/1908/120036.jpg", "26", "9.1", "Anime", "Ongoing", "Perang ribuan tahun antara Shinigami dan Quincy.", listOf("Action", "Shounen")),
+            AnimeItem("One Piece", "one-piece", "https://cdn.myanimelist.net/images/anime/6/73245.jpg", "1122", "8.9", "Anime", "Ongoing", "Petualangan Luffy dan kru Topi Jerami menuju Laugh Tale.", listOf("Action", "Adventure", "Shounen")),
+            AnimeItem("Sousou no Frieren", "sousou-no-frieren", "https://cdn.myanimelist.net/images/anime/1015/138006.jpg", "28", "9.38", "Anime", "Completed", "Petualangan Frieren sang elf setelah mengalahkan Raja Iblis.", listOf("Adventure", "Drama", "Fantasy")),
+            AnimeItem("Kimetsu no Yaiba: Hashira Geiko-hen", "kimetsu-no-yaiba-hashira-geiko-hen", "https://cdn.myanimelist.net/images/anime/1096/142145.jpg", "8", "8.65", "Anime", "Completed", "Pelatihan para Hashira untuk mempersiapkan pertempuran terakhir.", listOf("Action", "Supernatural", "Historical")),
+            AnimeItem("Naruto Shippuden", "naruto-shippuden", "https://cdn.myanimelist.net/images/anime/1565/111305.jpg", "500", "8.7", "Anime", "Completed", "Kisah perjalanan ninja Naruto Uzumaki menjadi Hokage.", listOf("Action", "Martial Arts", "Shounen")),
+            AnimeItem("Chainsaw Man", "chainsaw-man", "https://cdn.myanimelist.net/images/anime/1806/126216.jpg", "12", "8.52", "Anime", "Completed", "Denji hidup bersama iblis gergaji Pochita dan menjadi Pemburu Iblis.", listOf("Action", "Supernatural", "Gore")),
+            AnimeItem("Spy x Family Season 2", "spy-x-family-season-2", "https://cdn.myanimelist.net/images/anime/1506/138982.jpg", "12", "8.25", "Anime", "Completed", "Keluarga Forger menjalani misi rahasia penuh komedi dan aksi.", listOf("Action", "Comedy", "Shounen")),
+            AnimeItem("Boku no Hero Academia Season 7", "boku-no-hero-academia-season-7", "https://cdn.myanimelist.net/images/anime/1031/142207.jpg", "21", "8.40", "Anime", "Completed", "Pertarungan puncak para pahlawan melawan All For One.", listOf("Action", "School", "Super Power")),
+            AnimeItem("Hunter x Hunter (2011)", "hunter-x-hunter-2011", "https://cdn.myanimelist.net/images/anime/1337/99013.jpg", "148", "9.04", "Anime", "Completed", "Gon Freecss berusaha menjadi Hunter demi menemukan ayahnya.", listOf("Action", "Adventure", "Fantasy")),
+            AnimeItem("Black Clover", "black-clover", "https://cdn.myanimelist.net/images/anime/2/88336.jpg", "170", "8.15", "Anime", "Completed", "Asta yang lahir tanpa sihir bertekad menjadi Kaisar Sihir.", listOf("Action", "Comedy", "Magic"))
         )
-        return HomeResponse("ok", popular, popular, ongoing, ongoing, ongoing, ongoing, emptyList())
+
+        val ongoing = listOf(
+            AnimeItem("Re:Zero kara Hajimeru Isekai Seikatsu Season 3", "rezero-season-3", "https://cdn.myanimelist.net/images/anime/1109/142078.jpg", "16", "8.80", "Anime", "Ongoing", "Subaru menghadapi ancaman baru di kota Priestella.", listOf("Drama", "Fantasy", "Suspense", "Isekai")),
+            AnimeItem("Gachiakuta", "gachiakuta", "https://cdn.myanimelist.net/images/anime/1647/144131.jpg", "24", "8.45", "Anime", "Ongoing", "Rudo yang dibuang ke jurang sampah bangkit mencari kebenaran.", listOf("Action", "Fantasy", "Shounen")),
+            AnimeItem("Mushoku Tensei: Isekai Ittara Honki Dasu", "mushoku-tensei-isekai-ittara-honki-dasu", "https://cdn.myanimelist.net/images/anime/1530/117776.jpg", "24", "8.75", "Anime", "Ongoing", "Rudeus Greyrat bereinkarnasi dan hidup bersungguh-sungguh.", listOf("Adventure", "Drama", "Fantasy", "Isekai")),
+            AnimeItem("Made in Abyss Season 2", "made-in-abyss-retsujitsu-no-ougonkyou", "https://cdn.myanimelist.net/images/anime/1183/123985.jpg", "12", "8.72", "Anime", "Completed", "Riko, Reg, dan Nanachi menjelajah lapisan keenam Abyss.", listOf("Adventure", "Drama", "Fantasy", "Sci-Fi")),
+            AnimeItem("(Tensura) Tensei shitara Slime Datta Ken OVA", "tensei-shitara-slime-datta-ken-ova", "https://v2.samehadaku.how/wp-content/uploads/2020/07/104615.jpg", "OVA", "7.45", "Anime", "Completed", "OVA dari Serial Tensei shitara Slime Datta Ken.", listOf("Fantasy", "Isekai")),
+            AnimeItem("Princess Connect!", "princess-connect", "https://v2.samehadaku.how/wp-content/uploads/2020/04/princessconnect.jpg", "ONA", "7.5", "Anime", "Completed", "Adaptasi dari Game Mobile dengan Judul yang Sama.", listOf("Fantasy", "Comedy")),
+            AnimeItem("Shingeki no Kyojin The Final Season Part 3", "shingeki-no-kyojin-the-final-season-part-3", "https://v2.samehadaku.how/wp-content/uploads/2023/03/131078l.jpg", "Special", "9.21", "Anime", "Completed", "Attack on Titan Final.", listOf("Action", "Drama", "Suspense")),
+            AnimeItem("Dr. Stone: New World", "dr-stone-new-world", "https://cdn.myanimelist.net/images/anime/1208/135948.jpg", "22", "8.30", "Anime", "Completed", "Senku dan Kerajaan Sains menjelajahi lautan luas.", listOf("Adventure", "Comedy", "Sci-Fi")),
+            AnimeItem("Haikyuu!! To the Top", "haikyuu-to-the-top", "https://cdn.myanimelist.net/images/anime/1517/106363.jpg", "25", "8.60", "Anime", "Completed", "SMA Karasuno bertarung di Kejuaraan Nasional Bola Voli.", listOf("Sports", "School", "Shounen")),
+            AnimeItem("Tokyo Revengers: Tenjiku-hen", "tokyo-revengers-tenjiku-hen", "https://cdn.myanimelist.net/images/anime/1764/138024.jpg", "13", "8.10", "Anime", "Completed", "Takemichi menghadapi geng Tenjiku yang dipimpin Izana.", listOf("Action", "Drama", "Supernatural")),
+            AnimeItem("Vinland Saga Season 2", "vinland-saga-season-2", "https://cdn.myanimelist.net/images/anime/1170/124312.jpg", "24", "8.85", "Anime", "Completed", "Thorfinn mencari arti kedamaian sejati di tanah perbudakan.", listOf("Action", "Adventure", "Drama", "Historical")),
+            AnimeItem("K-On!", "k-on", "https://cdn.myanimelist.net/images/anime/10/76120.jpg", "14", "7.86", "Anime", "Completed", "Kisah seru klub musik ringan di SMA Sakuragaoka.", listOf("Comedy", "Music", "School", "Slice of Life"))
+        )
+
+        val completed = popular.filter { it.status.equals("Completed", true) } + ongoing.filter { it.status.equals("Completed", true) }
+        val action = (popular + ongoing).filter { item -> item.genres.any { it.contains("Action", true) || it.contains("Shounen", true) } }
+        val fantasy = (popular + ongoing).filter { item -> item.genres.any { it.contains("Fantasy", true) || it.contains("Isekai", true) } }
+
+        return HomeResponse("ok", popular.take(5), popular, ongoing, completed, action, fantasy, emptyList())
     }
 }

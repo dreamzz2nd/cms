@@ -18,19 +18,19 @@
   ],
   "user:admin": [
     {
-      "slug": "snowball-earth",
-      "title": "Snowball Earth",
-      "img": "https://i1.wp.com/samehadaku.li/wp-content/uploads/2026/04/1775229293-9827-156390.jpg?resize=247,350",
+      "slug": "made-abyss-season-2-sub-indo",
+      "title": "Made in Abyss Season 2",
+      "img": "https://otakudesu.blog/wp-content/uploads/2022/10/Made-in-Abyss-Season-2-Sub-Indo.jpg",
       "episode": "Episode 1",
       "episodeNum": "1",
-      "episodeTitle": "",
-      "time": 11,
+      "episodeTitle": "Made in Abyss: Retsujitsu no Ougonkyou",
+      "time": 2,
       "duration": 1440,
-      "timeFormatted": "00:11",
+      "timeFormatted": "00:02",
       "durationFormatted": "24:00",
-      "progressPercent": 1,
-      "link": "/anime/snowball-earth/?ep=1\u0026t=11",
-      "updatedAt": 1790954363059
+      "progressPercent": 0,
+      "link": "/anime/made-abyss-season-2-sub-indo/?ep=1",
+      "updatedAt": 1790993258307
     },
     {
       "slug": "made-abyss-subtitle-indonesia",
@@ -45,22 +45,22 @@
       "durationFormatted": "24:00",
       "progressPercent": 1,
       "link": "/anime/made-abyss-subtitle-indonesia/?ep=1\u0026t=11",
-      "updatedAt": 1790954349910
+      "updatedAt": 1790993245362
     },
     {
-      "slug": "made-abyss-season-2-sub-indo",
-      "title": "Made in Abyss Season 2",
-      "img": "https://otakudesu.blog/wp-content/uploads/2022/10/Made-in-Abyss-Season-2-Sub-Indo.jpg",
+      "slug": "snowball-earth",
+      "title": "Snowball Earth",
+      "img": "https://i1.wp.com/samehadaku.li/wp-content/uploads/2026/04/1775229293-9827-156390.jpg?resize=247,350",
       "episode": "Episode 1",
       "episodeNum": "1",
-      "episodeTitle": "Made in Abyss: Retsujitsu no Ougonkyou",
-      "time": 2,
+      "episodeTitle": "",
+      "time": 420,
       "duration": 1440,
-      "timeFormatted": "00:02",
+      "timeFormatted": "07:00",
       "durationFormatted": "24:00",
-      "progressPercent": 0,
-      "link": "/anime/made-abyss-season-2-sub-indo/?ep=1",
-      "updatedAt": 1790953873318
+      "progressPercent": 29,
+      "link": "/anime/snowball-earth/?ep=1\u0026t=420",
+      "updatedAt": 1790988639050
     },
     {
       "slug": "date-live-subtitle-indonesia",
@@ -768,3 +768,4 @@
       "updatedAt": 1790785384173
     }
   ]
+}

@@ -59,26 +59,24 @@ class KoleksiAnimeAdapter(
         holder.tvEpisodeInfo.text = epText
 
         // Top Right Badge (Gratis / TOP 10 / VIP / Gratis Terbatas)
+        holder.tvTopRightBadge.setTextColor(Color.parseColor("#17171B"))
+        holder.tvTopRightBadge.setBackgroundResource(R.drawable.badge_green_gratis)
         when (position % 4) {
             0 -> {
                 holder.tvTopRightBadge.visibility = View.VISIBLE
                 holder.tvTopRightBadge.text = "Gratis"
-                holder.tvTopRightBadge.setBackgroundResource(R.drawable.badge_green_gratis)
             }
             1 -> {
                 holder.tvTopRightBadge.visibility = View.VISIBLE
                 holder.tvTopRightBadge.text = "TOP 10"
-                holder.tvTopRightBadge.setBackgroundResource(R.drawable.badge_green_gratis)
             }
             2 -> {
                 holder.tvTopRightBadge.visibility = View.VISIBLE
                 holder.tvTopRightBadge.text = "Gratis"
-                holder.tvTopRightBadge.setBackgroundResource(R.drawable.badge_green_gratis)
             }
             else -> {
                 holder.tvTopRightBadge.visibility = View.VISIBLE
                 holder.tvTopRightBadge.text = "VIP"
-                holder.tvTopRightBadge.setBackgroundColor(Color.parseColor("#E6A100"))
             }
         }
 

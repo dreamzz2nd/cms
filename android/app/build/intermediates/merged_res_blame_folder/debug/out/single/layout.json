@@ -36,6 +36,10 @@
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_anime_card.xml"
     },
     {
+        "merged": "com.nyamimo.app-mergeDebugResources-42:/layout/item_continue_watching.xml",
+        "source": "com.nyamimo.app-main-45:/layout/item_continue_watching.xml"
+    },
+    {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_parallax_hero_banner.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_parallax_hero_banner.xml"
     },
@@ -70,10 +74,6 @@
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_download_full_card.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\item_download_full_card.xml"
-    },
-    {
-        "merged": "com.nyamimo.app-mergeDebugResources-42:/layout/activity_main.xml",
-        "source": "com.nyamimo.app-main-45:/layout/activity_main.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_banner.xml",
@@ -126,6 +126,10 @@
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\activity_player.xml",
         "source": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-main-45:\\layout\\activity_player.xml"
+    },
+    {
+        "merged": "com.nyamimo.app-mergeDebugResources-42:/layout/item_koleksi_anime_card.xml",
+        "source": "com.nyamimo.app-main-45:/layout/item_koleksi_anime_card.xml"
     },
     {
         "merged": "C:\\Users\\user\\.gradle\\daemon\\8.5\\com.nyamimo.app-mergeDebugResources-42:\\layout\\item_episode_pill.xml",

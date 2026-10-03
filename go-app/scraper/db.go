@@ -250,22 +250,63 @@ func (s *AnimeStore) GetAnime(slug string) (*client.AnimeDetailData, bool) {
 	return &detail, true
 }
 
+func normalizeSearchString(str string) string {
+	str = strings.ToLower(str)
+	var sb strings.Builder
+	for _, r := range str {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			sb.WriteRune(r)
+		} else {
+			sb.WriteRune(' ')
+		}
+	}
+	return strings.Join(strings.Fields(sb.String()), " ")
+}
+
 func (s *AnimeStore) Search(query string, limit int) []client.AnimeItem {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	q := strings.ToLower(strings.TrimSpace(query))
-	if q == "" {
+	normQ := normalizeSearchString(query)
+	if normQ == "" {
 		return s.GetOngoing(limit)
 	}
 
+	qTokens := strings.Fields(normQ)
+	compactQ := strings.ReplaceAll(normQ, " ", "")
+
 	var result []client.AnimeItem
 	for _, a := range s.Animes {
-		titleLower := strings.ToLower(a.Title)
-		synopsisLower := strings.ToLower(a.Synopsis)
-		genresLower := strings.ToLower(strings.Join(a.GenreNames, " "))
+		normTitle := normalizeSearchString(a.Title)
+		normSlug := normalizeSearchString(strings.ReplaceAll(a.Slug, "-", " "))
+		normSynopsis := normalizeSearchString(a.Synopsis)
+		normGenres := normalizeSearchString(strings.Join(a.GenreNames, " "))
+		combinedText := normTitle + " " + normSlug + " " + normSynopsis + " " + normGenres
+		compactTitle := strings.ReplaceAll(normTitle, " ", "")
 
-		if strings.Contains(titleLower, q) || strings.Contains(synopsisLower, q) || strings.Contains(genresLower, q) {
+		// Check 1: Exact normalized substring match in title
+		matched := strings.Contains(normTitle, normQ) || strings.Contains(normSlug, normQ)
+
+		// Check 2: Compact string match (e.g. "rezero" matches "re zero", "onepiece" matches "one piece")
+		if !matched && compactQ != "" && (strings.Contains(compactTitle, compactQ) || strings.Contains(strings.ReplaceAll(normSlug, " ", ""), compactQ)) {
+			matched = true
+		}
+
+		// Check 3: Multi-token match (all tokens in query exist in title/slug/genres/synopsis)
+		if !matched && len(qTokens) > 0 {
+			allTokensMatch := true
+			for _, token := range qTokens {
+				if !strings.Contains(combinedText, token) {
+					allTokensMatch = false
+					break
+				}
+			}
+			if allTokensMatch {
+				matched = true
+			}
+		}
+
+		if matched {
 			result = append(result, a.ToAnimeItem())
 			if limit > 0 && len(result) >= limit {
 				break

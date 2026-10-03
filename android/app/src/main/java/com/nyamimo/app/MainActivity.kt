@@ -17,6 +17,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.view.Window
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -80,9 +81,11 @@ class MainActivity : AppCompatActivity() {
     private var selectedAkses: String = "all"
     private var selectedSort: String = "populer"
     private var koleksiSearchQuery: String = ""
+    private var koleksiNetworkSearchResults: List<AnimeItem> = emptyList()
 
     private val searchHandler = Handler(Looper.getMainLooper())
     private var searchRunnable: Runnable? = null
+    private val koleksiSearchHandler = Handler(Looper.getMainLooper())
     private val heroSlideHandler = Handler(Looper.getMainLooper())
     private var heroSlideRunnable: Runnable? = null
     private var currentHeroSlides: List<ParallaxSlideItem> = emptyList()
@@ -1348,7 +1351,6 @@ class MainActivity : AppCompatActivity() {
     private fun selectBottomNav(navKey: String) {
         currentNav = navKey
         val activeGold = Color.parseColor("#FFCC00")
-        val activeGreen = Color.parseColor("#00D26A")
         val activeDark = Color.parseColor("#17171B")
         val inactiveGray = Color.parseColor("#8E8E93")
 
@@ -1437,14 +1439,35 @@ class MainActivity : AppCompatActivity() {
             if (binding.layoutKoleksiSearchBar.visibility == View.VISIBLE) {
                 binding.layoutKoleksiSearchBar.visibility = View.GONE
                 binding.etKoleksiSearch.setText("")
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+                imm?.hideSoftInputFromWindow(binding.etKoleksiSearch.windowToken, 0)
             } else {
                 binding.layoutKoleksiSearchBar.visibility = View.VISIBLE
                 binding.etKoleksiSearch.requestFocus()
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+                imm?.showSoftInput(binding.etKoleksiSearch, InputMethodManager.SHOW_IMPLICIT)
             }
         }
 
         binding.btnKoleksiClearSearch.setOnClickListener {
             binding.etKoleksiSearch.setText("")
+            koleksiNetworkSearchResults = emptyList()
+            applyKoleksiFilters()
+        }
+
+        // Handle keyboard search action (Enter / Search button on soft keyboard)
+        binding.etKoleksiSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                val q = binding.etKoleksiSearch.text.toString().trim()
+                if (q.isNotEmpty()) {
+                    performKoleksiNetworkSearch(q)
+                }
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+                imm?.hideSoftInputFromWindow(binding.etKoleksiSearch.windowToken, 0)
+                true
+            } else {
+                false
+            }
         }
 
         binding.etKoleksiSearch.addTextChangedListener(object : TextWatcher {
@@ -1453,7 +1476,17 @@ class MainActivity : AppCompatActivity() {
                 val query = s?.toString()?.trim() ?: ""
                 binding.btnKoleksiClearSearch.visibility = if (query.isNotEmpty()) View.VISIBLE else View.GONE
                 koleksiSearchQuery = query
-                applyKoleksiFilters()
+
+                koleksiSearchHandler.removeCallbacksAndMessages(null)
+                if (query.isNotEmpty()) {
+                    applyKoleksiFilters()
+                    koleksiSearchHandler.postDelayed({
+                        performKoleksiNetworkSearch(query)
+                    }, 350)
+                } else {
+                    koleksiNetworkSearchResults = emptyList()
+                    applyKoleksiFilters()
+                }
             }
             override fun afterTextChanged(s: Editable?) {}
         })
@@ -1498,6 +1531,22 @@ class MainActivity : AppCompatActivity() {
         binding.chipSortPopuler.setOnClickListener { setSortFilter("populer") }
         binding.chipSortTerbaru.setOnClickListener { setSortFilter("terbaru") }
         binding.chipSortRating.setOnClickListener { setSortFilter("rating") }
+    }
+
+    private fun performKoleksiNetworkSearch(query: String) {
+        val q = query.trim()
+        if (q.isEmpty()) return
+
+        ApiClient.searchAnime(q, object : ApiClient.Callback<List<AnimeItem>> {
+            override fun onSuccess(result: List<AnimeItem>) {
+                koleksiNetworkSearchResults = result
+                applyKoleksiFilters()
+            }
+
+            override fun onError(error: String) {
+                // If offline, continue showing local matches
+            }
+        })
     }
 
     private fun setKoleksiTopTab(tab: String) {
@@ -1577,50 +1626,71 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyKoleksiFilters() {
         val data = homeData ?: ApiClient.getFallbackHome()
-        val allAnime = (data.banners + data.popular + data.ongoing + data.completed).distinctBy { it.slug.ifEmpty { it.title.lowercase() } }
+        val localAnime = (data.banners + data.popular + data.ongoing + data.completed).distinctBy { it.slug.ifEmpty { it.title.lowercase() } }
+        val allAnime = if (koleksiSearchQuery.isNotEmpty()) {
+            (koleksiNetworkSearchResults + localAnime).distinctBy { it.slug.ifEmpty { it.title.lowercase() } }
+        } else {
+            localAnime
+        }
 
         var result = allAnime.filter { item ->
+            val hasQuery = koleksiSearchQuery.isNotEmpty()
+
             // Filter Tab
-            val tabMatch = when (selectedKoleksiTab) {
-                "film" -> item.type.contains("Movie", ignoreCase = true) || item.title.contains("Movie", ignoreCase = true) || item.type.contains("Film", ignoreCase = true)
-                "donghua" -> item.title.contains("Soul Land", ignoreCase = true) || item.title.contains("Gods", ignoreCase = true) || item.synopsis.contains("China", ignoreCase = true) || item.synopsis.contains("Donghua", ignoreCase = true)
-                "drama", "shorts" -> item.type.contains("ONA", ignoreCase = true) || item.type.contains("Special", ignoreCase = true) || item.episode.contains("24") || item.episode.contains("12")
-                "variety" -> true
-                else -> true
+            val tabMatch = if (hasQuery) {
+                true
+            } else {
+                when (selectedKoleksiTab) {
+                    "film" -> item.type.contains("Movie", ignoreCase = true) || item.title.contains("Movie", ignoreCase = true) || item.type.contains("Film", ignoreCase = true)
+                    "donghua" -> item.title.contains("Soul Land", ignoreCase = true) || item.title.contains("Gods", ignoreCase = true) || item.synopsis.contains("China", ignoreCase = true) || item.synopsis.contains("Donghua", ignoreCase = true)
+                    "drama", "shorts" -> item.type.contains("ONA", ignoreCase = true) || item.type.contains("Special", ignoreCase = true) || item.episode.contains("24") || item.episode.contains("12")
+                    "variety" -> true
+                    else -> true
+                }
             }
 
             // Filter Wilayah
-            val wilayahMatch = when (selectedWilayah) {
-                "japan" -> !item.title.contains("Soul Land", ignoreCase = true) && !item.synopsis.contains("Donghua", ignoreCase = true)
-                "china" -> item.title.contains("Soul Land", ignoreCase = true) || item.title.contains("Against", ignoreCase = true) || item.synopsis.contains("China", ignoreCase = true) || item.synopsis.contains("Donghua", ignoreCase = true)
-                "korea" -> item.title.contains("Solo", ignoreCase = true) || item.title.contains("Tower", ignoreCase = true) || item.synopsis.contains("Korea", ignoreCase = true)
-                else -> true
+            val wilayahMatch = if (hasQuery && selectedWilayah == "all") {
+                true
+            } else {
+                when (selectedWilayah) {
+                    "japan" -> !item.title.contains("Soul Land", ignoreCase = true) && !item.synopsis.contains("Donghua", ignoreCase = true)
+                    "china" -> item.title.contains("Soul Land", ignoreCase = true) || item.title.contains("Against", ignoreCase = true) || item.synopsis.contains("China", ignoreCase = true) || item.synopsis.contains("Donghua", ignoreCase = true)
+                    "korea" -> item.title.contains("Solo", ignoreCase = true) || item.title.contains("Tower", ignoreCase = true) || item.synopsis.contains("Korea", ignoreCase = true)
+                    else -> true
+                }
             }
 
             // Filter Genre
-            val genreMatch = when (selectedGenre) {
-                "aksi" -> item.title.contains("Hunter", ignoreCase = true) || item.title.contains("Solo", ignoreCase = true) || item.title.contains("Piece", ignoreCase = true) || item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Gachiakuta", ignoreCase = true) || item.synopsis.contains("Aksi", ignoreCase = true) || item.synopsis.contains("Action", ignoreCase = true)
-                "petualangan" -> item.title.contains("Piece", ignoreCase = true) || item.title.contains("Hunter", ignoreCase = true) || item.synopsis.contains("Adventure", ignoreCase = true) || item.synopsis.contains("Petualangan", ignoreCase = true)
-                "komedi" -> item.title.contains("Chiikawa", ignoreCase = true) || item.title.contains("Bocchi", ignoreCase = true) || item.title.contains("Dating", ignoreCase = true) || item.synopsis.contains("Komedi", ignoreCase = true) || item.synopsis.contains("Comedy", ignoreCase = true)
-                "fiksi" -> item.title.contains("86", ignoreCase = true) || item.title.contains("Digimon", ignoreCase = true) || item.synopsis.contains("Sci-Fi", ignoreCase = true)
-                "percintaan" -> item.title.contains("Kanojo", ignoreCase = true) || item.title.contains("Villainess", ignoreCase = true) || item.synopsis.contains("Romance", ignoreCase = true) || item.synopsis.contains("Percintaan", ignoreCase = true)
-                "bergairah" -> item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Boruto", ignoreCase = true) || item.title.contains("Black Clover", ignoreCase = true) || item.synopsis.contains("Shounen", ignoreCase = true)
-                "fantasi" -> item.title.contains("Gods", ignoreCase = true) || item.title.contains("Solo", ignoreCase = true) || item.title.contains("Isekai", ignoreCase = true) || item.synopsis.contains("Fantasy", ignoreCase = true) || item.synopsis.contains("Fantasi", ignoreCase = true)
-                "isekai" -> item.title.contains("Dating Sim", ignoreCase = true) || item.title.contains("Villainess", ignoreCase = true) || item.synopsis.contains("Isekai", ignoreCase = true)
-                else -> true
+            val genreMatch = if (hasQuery && selectedGenre == "all") {
+                true
+            } else {
+                when (selectedGenre) {
+                    "aksi" -> item.title.contains("Hunter", ignoreCase = true) || item.title.contains("Solo", ignoreCase = true) || item.title.contains("Piece", ignoreCase = true) || item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Gachiakuta", ignoreCase = true) || item.synopsis.contains("Aksi", ignoreCase = true) || item.synopsis.contains("Action", ignoreCase = true)
+                    "petualangan" -> item.title.contains("Piece", ignoreCase = true) || item.title.contains("Hunter", ignoreCase = true) || item.synopsis.contains("Adventure", ignoreCase = true) || item.synopsis.contains("Petualangan", ignoreCase = true)
+                    "komedi" -> item.title.contains("Chiikawa", ignoreCase = true) || item.title.contains("Bocchi", ignoreCase = true) || item.title.contains("Dating", ignoreCase = true) || item.synopsis.contains("Komedi", ignoreCase = true) || item.synopsis.contains("Comedy", ignoreCase = true)
+                    "fiksi" -> item.title.contains("86", ignoreCase = true) || item.title.contains("Digimon", ignoreCase = true) || item.synopsis.contains("Sci-Fi", ignoreCase = true)
+                    "percintaan" -> item.title.contains("Kanojo", ignoreCase = true) || item.title.contains("Villainess", ignoreCase = true) || item.synopsis.contains("Romance", ignoreCase = true) || item.synopsis.contains("Percintaan", ignoreCase = true)
+                    "bergairah" -> item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Boruto", ignoreCase = true) || item.title.contains("Black Clover", ignoreCase = true) || item.synopsis.contains("Shounen", ignoreCase = true)
+                    "fantasi" -> item.title.contains("Gods", ignoreCase = true) || item.title.contains("Solo", ignoreCase = true) || item.title.contains("Isekai", ignoreCase = true) || item.synopsis.contains("Fantasy", ignoreCase = true) || item.synopsis.contains("Fantasi", ignoreCase = true)
+                    "isekai" -> item.title.contains("Dating Sim", ignoreCase = true) || item.title.contains("Villainess", ignoreCase = true) || item.synopsis.contains("Isekai", ignoreCase = true)
+                    else -> true
+                }
             }
 
             // Filter Subtitle
-            val subMatch = when (selectedSubtitle) {
-                "manual" -> true
-                "dub" -> item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Piece", ignoreCase = true)
-                else -> true
+            val subMatch = if (hasQuery && selectedSubtitle == "all") {
+                true
+            } else {
+                when (selectedSubtitle) {
+                    "manual" -> true
+                    "dub" -> item.title.contains("Naruto", ignoreCase = true) || item.title.contains("Piece", ignoreCase = true)
+                    else -> true
+                }
             }
 
             // Filter Search Query
-            val qMatch = if (koleksiSearchQuery.isEmpty()) true else {
-                item.title.contains(koleksiSearchQuery, ignoreCase = true) || item.synopsis.contains(koleksiSearchQuery, ignoreCase = true)
-            }
+            val qMatch = if (!hasQuery) true else matchAnimeQuery(item, koleksiSearchQuery)
 
             tabMatch && wilayahMatch && genreMatch && subMatch && qMatch
         }
@@ -1639,15 +1709,60 @@ class MainActivity : AppCompatActivity() {
         binding.tvKoleksiEmpty.visibility = if (sortedList.isEmpty()) View.VISIBLE else View.GONE
     }
 
+    private fun normalizeSearchText(text: String): String {
+        return text.lowercase()
+            .replace(Regex("[^a-z0-9\\s]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun matchAnimeQuery(item: AnimeItem, query: String): Boolean {
+        val qRaw = query.trim().lowercase()
+        if (qRaw.isEmpty()) return true
+
+        val normQ = normalizeSearchText(qRaw)
+        val normTitle = normalizeSearchText(item.title)
+        val normSlug = normalizeSearchText(item.slug.replace("-", " "))
+        val normSynopsis = normalizeSearchText(item.synopsis)
+        val normGenres = normalizeSearchText(item.genres.joinToString(" "))
+        val normCombined = "$normTitle $normSlug $normSynopsis $normGenres"
+
+        // 1. Direct raw or normalized substring
+        if (item.title.contains(qRaw, ignoreCase = true) ||
+            item.slug.contains(qRaw, ignoreCase = true) ||
+            normTitle.contains(normQ) ||
+            normSlug.contains(normQ) ||
+            normCombined.contains(normQ)) {
+            return true
+        }
+
+        // 2. Compact character check (e.g. "rezero" matches "re:zero" or "re zero")
+        val compactQ = normQ.replace(" ", "")
+        val compactTitle = normTitle.replace(" ", "")
+        val compactSlug = normSlug.replace(" ", "")
+        if (compactQ.isNotEmpty() && (compactTitle.contains(compactQ) || compactSlug.contains(compactQ))) {
+            return true
+        }
+
+        // 3. Multi-token match: all typed search terms must exist in the item
+        val tokens = normQ.split(" ").filter { it.length >= 2 }
+        if (tokens.isNotEmpty()) {
+            val allTokensMatch = tokens.all { token ->
+                normCombined.contains(token) || compactTitle.contains(token)
+            }
+            if (allTokensMatch) return true
+        }
+
+        return false
+    }
+
     private fun performSearch(query: String) {
         val q = query.trim().lowercase()
         if (q.isEmpty()) return
 
         val data = homeData ?: ApiClient.getFallbackHome()
         val allAnime = (data.banners + data.popular + data.ongoing + data.completed).distinctBy { it.slug }
-        val localMatches = allAnime.filter {
-            it.title.lowercase().contains(q) || it.slug.lowercase().contains(q) || it.synopsis.lowercase().contains(q)
-        }
+        val localMatches = allAnime.filter { matchAnimeQuery(it, q) }
 
         if (localMatches.isNotEmpty()) {
             searchSuggestionAdapter.updateData(localMatches)

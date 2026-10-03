@@ -2,12 +2,16 @@ package com.nyamimo.app
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.PictureInPictureParams
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.Rational
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -95,7 +99,7 @@ class AnimeDetailActivity : AppCompatActivity() {
             if (isImmersiveFullscreen || customView != null) {
                 toggleFullscreen()
             } else {
-                finish()
+                enterPipOrMinimize()
             }
         }
 
@@ -866,6 +870,88 @@ class AnimeDetailActivity : AppCompatActivity() {
         updateLayoutMode()
     }
 
+    private fun enterPipOrMinimize() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                // Immediately isolate the player and hide all non-player views so PiP contains only video
+                binding.playerTopControls.visibility = View.GONE
+                binding.detailContentScroll.visibility = View.GONE
+                binding.rightColumnLayout.visibility = View.GONE
+                binding.columnDivider.visibility = View.GONE
+                binding.portraitRecommendationsContainer.visibility = View.GONE
+                binding.bstationTabBar.visibility = View.GONE
+                binding.detailContentDivider.visibility = View.GONE
+                binding.playerLandscapeServerBar.visibility = View.GONE
+                binding.detailPlayerView.useController = false
+
+                binding.mainContentRow.orientation = LinearLayout.VERTICAL
+                binding.leftColumnLayout.layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                binding.playerContainer.layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+
+                binding.rootAnimeDetail.requestLayout()
+
+                binding.playerContainer.post {
+                    try {
+                        val rect = Rect()
+                        binding.playerContainer.getGlobalVisibleRect(rect)
+                        val pipBuilder = PictureInPictureParams.Builder()
+                            .setAspectRatio(Rational(16, 9))
+                        if (rect.width() > 0 && rect.height() > 0) {
+                            pipBuilder.setSourceRectHint(rect)
+                        }
+                        enterPictureInPictureMode(pipBuilder.build())
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        finish()
+                    }
+                }
+                return
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        finish()
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        if (isInPictureInPictureMode) {
+            binding.playerTopControls.visibility = View.GONE
+            binding.detailContentScroll.visibility = View.GONE
+            binding.rightColumnLayout.visibility = View.GONE
+            binding.columnDivider.visibility = View.GONE
+            binding.portraitRecommendationsContainer.visibility = View.GONE
+            binding.bstationTabBar.visibility = View.GONE
+            binding.detailContentDivider.visibility = View.GONE
+            binding.playerLandscapeServerBar.visibility = View.GONE
+            binding.detailPlayerView.useController = false
+        } else {
+            // When returning from PiP mode, restore normal non-fullscreen view
+            isImmersiveFullscreen = false
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            binding.detailPlayerView.useController = true
+            binding.playerTopControls.visibility = View.VISIBLE
+            updateLayoutMode()
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val isExoPlaying = exoPlayer?.isPlaying == true
+            val isWebVisible = binding.detailPlayerWebView.visibility == View.VISIBLE
+            if (isExoPlaying || isWebVisible) {
+                enterPipOrMinimize()
+            }
+        }
+    }
+
     override fun onBackPressed() {
         if (customView != null) {
             (binding.detailPlayerWebView.webChromeClient as? WebChromeClient)?.onHideCustomView()
@@ -874,12 +960,16 @@ class AnimeDetailActivity : AppCompatActivity() {
         if (isImmersiveFullscreen) {
             toggleFullscreen()
         } else {
-            super.onBackPressed()
+            enterPipOrMinimize()
         }
     }
 
     override fun onPause() {
         super.onPause()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode) {
+            // Keep video playing smoothly in minimized floating PiP window
+            return
+        }
         exoPlayer?.pause()
         binding.detailPlayerWebView.onPause()
     }

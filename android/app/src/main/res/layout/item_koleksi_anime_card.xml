@@ -69,7 +69,7 @@
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
                 android:text="Gratis"
-                android:textColor="#FFFFFF"
+                android:textColor="#17171B"
                 android:textSize="9sp"
                 android:textStyle="bold" />
 
